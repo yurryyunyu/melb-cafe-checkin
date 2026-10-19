@@ -97,20 +97,25 @@ const SFX = {
     const seq = {blip: [[988, .04]], confirm: [[659, .06], [988, .09]], step: [[180, .03, 'triangle', .03]],
       encounter: [[262, .07], [330, .07], [392, .07], [523, .07], [392, .07], [523, .16]],
       chest: [[523, .07], [659, .07], [784, .07], [1047, .07], [1319, .22]],
-      fanfare: [[392, .12], [392, .12], [392, .12], [523, .36], [440, .12], [494, .12], [523, .45]]}[name] || [];
-    let at = t; seq.forEach(([f, d, ty, v]) => { this.tone(f, at, d * 0.95, ty, v); if (ty === undefined) this.tone(f / 2, at, d * 0.95, 'triangle', 0.035); at += d; });
+      fanfare: [[392, .12], [392, .12], [392, .12], [523, .36], [440, .12], [494, .12], [523, .45]],
+      coin: [[988, .05], [1319, .14]], harvest: [[523, .08], [784, .08], [1047, .16]], heart: [[659, .1], [880, .18]],
+      sleep: [[523, .25], [440, .25], [392, .25], [330, .5], [392, .6]]}[name] || [];
+    const soft = document.documentElement.dataset.skin === 'valley'; // cozy theme: gentle triangle/sine chimes
+    let at = t; seq.forEach(([f, d, ty, v]) => { if (soft) { this.tone(f, at, d * 1.4, ty === 'triangle' ? 'triangle' : 'sine', (v || 0.05) * 1.2); if (ty === undefined) this.tone(f * 2, at, d, 'triangle', 0.012); }
+      else { this.tone(f, at, d * 0.95, ty, v); if (ty === undefined) this.tone(f / 2, at, d * 0.95, 'triangle', 0.035); } at += d; });
   },
 };
 
 // ---------- typewriter dialogue with NPC barista ----------
 let dlgTimer = null, dlgHide = null;
-function say(msg, ms = 2600, name = '咖啡师 小豆') {
+function say(msg, ms = 2600, name = '咖啡师 小豆', face = null, faceBg = '') {
   let d = document.getElementById('dlg');
   if (!d) { d = document.createElement('div'); d.id = 'dlg'; d.className = 'jwin'; d.innerHTML = '<canvas class="dlg-face" width="16" height="16"></canvas><div class="dlg-body"><div class="dlg-name"></div><div class="dlg-text"></div></div><span class="dlg-next">▼</span>';
-    document.body.appendChild(d); d.querySelector('.dlg-face').getContext('2d').drawImage(fromRows(BARISTA), 0, 0);
+    document.body.appendChild(d);
     d.addEventListener('click', () => { if (d._full && d.querySelector('.dlg-text').textContent !== d._full) { clearInterval(dlgTimer); d.querySelector('.dlg-text').textContent = d._full; d.classList.add('done'); } else d.classList.remove('show'); }); }
+  const fc = d.querySelector('.dlg-face'), src = face || fromRows(BARISTA); fc.width = src.width; fc.height = src.height; const fg = fc.getContext('2d'); fg.imageSmoothingEnabled = false; fg.clearRect(0, 0, fc.width, fc.height); fg.drawImage(src, 0, 0); fc.style.background = faceBg || '';
   const txt = d.querySelector('.dlg-text'); d.querySelector('.dlg-name').textContent = name;
-  clearInterval(dlgTimer); clearTimeout(dlgHide); d._full = String(msg); txt.textContent = ''; d.classList.remove('done'); d.classList.add('show');
+  clearInterval(dlgTimer); clearTimeout(dlgHide); d._at = Date.now(); d._full = String(msg); txt.textContent = ''; d.classList.remove('done'); d.classList.add('show');
   const chars = [...d._full]; let i = 0;
   dlgTimer = setInterval(() => { txt.textContent += chars[i++] || ''; if (i % 3 === 0) SFX.play('blip'); if (i >= chars.length) { clearInterval(dlgTimer); d.classList.add('done'); } }, 32);
   dlgHide = setTimeout(() => d.classList.remove('show'), ms + chars.length * 32);
