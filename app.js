@@ -319,6 +319,16 @@ function checkBadges() {
 // ---------- views ----------
 let mapRef = null, mapToken = 0, pendingFocus = null;
 const mapState = {region: 'city', zoom: 1};
+// ---- 3D map (three.js, lazy-loaded only when opened) ----
+const can3D = (() => { try { const c = document.createElement('canvas'); return !!(window.WebGL2RenderingContext && c.getContext('webgl2')); } catch (e) { return false; } })();
+let map3dFailed = false, map3dMod = null;
+mapState.mode = load('mcc.mapMode', null) || (can3D ? '3d' : '2d');
+const dynImport = (() => { try { return new Function('u', 'return import(u)'); } catch (e) { return () => Promise.reject(new Error('dynamic import unsupported')); } })();
+function loadMap3d() {
+  if (map3dMod) return Promise.resolve(map3dMod);
+  const url = new URL('map3d.js?v=6', document.baseURI).href;
+  return Promise.race([dynImport(url), new Promise((_, rej) => setTimeout(() => rej(new Error('3D 模块加载超时')), 15000))]).then(m => (map3dMod = m));
+}
 const app = $('#app');
 const listState = {q: '', suburb: '', filter: 'all'};
 
@@ -388,16 +398,34 @@ const views = {
     } else {
       const R = REGIONS.find(r => r.id === ms.region) || REGIONS[0];
       const prog = regions().find(r => r.id === R.id);
+      const use3d = ms.mode === '3d' && can3D && !map3dFailed;
       const {svg, meIn} = SketchMap.render(R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M});
       const ids = Object.keys(R.cafes);
+      const toggle = `<span class="dim-toggle" id="dimT"><button data-m="2d" class="${use3d ? '' : 'on'}">2D</button><button data-m="3d" class="${use3d ? 'on' : ''}" ${can3D ? '' : 'disabled title="此设备不支持 3D"'}>3D</button></span>`;
       app.innerHTML = head + `<div class="region-head"><div><b>${esc(R.name)}</b> <span class="hint">${esc(R.zh)}</span></div><div class="rg-count">${prog.done}/${prog.total}${prog.done === prog.total ? ' 👑' : ''}</div></div>
         <div class="progress" style="margin:0 14px 6px"><i style="width:${Math.round(prog.done / prog.total * 100)}%"></i></div>
-        <div class="sk-wrap" id="skWrap"><div class="sk-inner" style="width:${ms.zoom * 100}%">${svg}</div></div>
-        <div class="sk-tools"><button id="zOut">－</button><button id="zIn">＋</button><button id="skLoc">🎯 ${lastPos ? (meIn ? '我在这里' : '你不在这个区域') : '定位我'}</button></div>
+        ${use3d ? `<div class="m3d-wrap" id="m3d" data-region="${R.id}"><div class="m3d-loading">✏️ 正在搭建 3D 小镇…</div><div class="m3d-hint">单指旋转 · 双指缩放/平移</div></div>`
+          : `<div class="sk-wrap" id="skWrap"><div class="sk-inner" style="width:${ms.zoom * 100}%">${svg}</div></div>`}
+        <div class="sk-tools">${toggle}<button id="zOut">－</button><button id="zIn">＋</button>${use3d ? '<button id="m3dReset" aria-label="重置视角">⟲</button>' : ''}<button id="skLoc">🎯 ${lastPos ? (meIn ? '我在这里' : '不在此区') : '定位我'}</button></div>
         <div class="sk-list">${ids.map(id => cafeById(id)).filter(Boolean).map(cafeCard).join('')}</div>`;
-      $('#skWrap').onclick = e => { const g = e.target.closest('[data-id]'); if (g) location.hash = '#/cafe/' + g.dataset.id; };
-      const zoom = z => { ms.zoom = Math.min(2.4, Math.max(1, z)); $('.sk-inner').style.width = ms.zoom * 100 + '%'; };
-      $('#zIn').onclick = () => zoom(ms.zoom + 0.35); $('#zOut').onclick = () => zoom(ms.zoom - 0.35);
+      $('#dimT').onclick = e => { const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; ms.mode = b.dataset.m; save('mcc.mapMode', ms.mode); if (ms.mode === '3d') map3dFailed = false; render(); };
+      if (use3d) {
+        const token = ++mapToken, wrap = $('#m3d');
+        const fail = e => { console.warn('3D map failed, falling back to 2D', e); if (token !== mapToken) return; map3dFailed = true; if (mapRef && mapRef.kind === '3d') { try { mapRef.remove(); } catch (x) {} mapRef = null; } toast('3D 地图暂不可用，已切换为 2D 手绘地图'); render(); };
+        const seen = new Set(load('mcc.seen3d', [])), pop = new Set([...v].filter(id => R.cafes[id] && !seen.has(id)));
+        loadMap3d().then(mod => mod.create(wrap, R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
+          .then(m => {
+            if (token !== mapToken) return m.remove();
+            mapRef = m; const ld = wrap.querySelector('.m3d-loading'); if (ld) ld.remove();
+            if (pop.size) { pop.forEach(id => seen.add(id)); save('mcc.seen3d', [...seen]); }
+          }).catch(fail);
+        $('#zIn').onclick = () => mapRef && mapRef.zoom && mapRef.zoom(0.75); $('#zOut').onclick = () => mapRef && mapRef.zoom && mapRef.zoom(1.33);
+        $('#m3dReset').onclick = () => mapRef && mapRef.reset && mapRef.reset();
+      } else {
+        $('#skWrap').onclick = e => { const g = e.target.closest('[data-id]'); if (g) location.hash = '#/cafe/' + g.dataset.id; };
+        const zoom = z => { ms.zoom = Math.min(2.4, Math.max(1, z)); $('.sk-inner').style.width = ms.zoom * 100 + '%'; };
+        $('#zIn').onclick = () => zoom(ms.zoom + 0.35); $('#zOut').onclick = () => zoom(ms.zoom - 0.35);
+      }
       $('#skLoc').onclick = async () => { toast('🎯 正在定位…'); const p = await locate(); if (!p) return toast('无法获取定位，请允许定位权限');
         const best = REGIONS.map(r => ({r, d: Math.min(...Object.keys(r.cafes).map(id => cafeById(id)).filter(Boolean).map(c => distM(p, [c.lat, c.lng])))})).sort((a, b) => a.d - b.d)[0];
         if (best && best.d < 1500 && best.r.id !== ms.region) { ms.region = best.r.id; toast('📍 你在 ' + best.r.name); } views.map(); };
@@ -531,6 +559,6 @@ render();
 // quietly fetch location if already permitted (for distances), never prompt on load
 if (navigator.permissions) navigator.permissions.query({name: 'geolocation'}).then(p => { if (p.state === 'granted') locate().then(() => render()); }).catch(() => {});
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-window.__mcc = {get checkins() { return checkins; }}; // for testing
+window.__mcc = {get checkins() { return checkins; }, get map() { return mapRef; }}; // for testing
 window.__appBooted = true; document.documentElement.classList.add('booted');
 })();

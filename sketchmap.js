@@ -106,5 +106,5 @@ function render(region, {visited, cafeById, me, rangeM = 250}) {
     </g>${labels}${pill}${avatar}${marks}</svg>`;
   return {svg, meIn};
 }
-window.SketchMap = {render, inkCircle, scribble};
+window.SketchMap = {render, inkCircle, scribble, fitAffine};
 })();

@@ -236,3 +236,27 @@ a{color:inherit}
 .rmk .cafe-label{left:32px;top:0;font-size:20px}
 .hero-reg{font-family:"Josefin Sans",sans-serif;font-weight:700;letter-spacing:.2em;font-size:13px;color:#3b4652;display:flex;align-items:center;gap:6px;margin-bottom:2px}
 .hero-reg .num{width:26px;height:26px;font-size:17px;letter-spacing:0}
+/* ---- 3D sketch diorama ---- */
+.m3d-wrap{position:relative;height:min(62vh,520px);min-height:340px;margin:0 6px;border:2px solid var(--pencil);border-radius:var(--r1);overflow:hidden;background:radial-gradient(120% 90% at 50% 30%,#fffdf8,#efe9da);touch-action:none;-webkit-user-select:none;user-select:none}
+.m3d-canvas{position:absolute;inset:0;display:block;touch-action:none}
+.m3d-labels{position:absolute!important;inset:0;pointer-events:none}
+.m3d-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--hand);font-size:22px;color:var(--slate-d,#6f879c)}
+.m3d-hint{position:absolute;left:8px;bottom:6px;font-family:var(--hand);font-size:15px;color:#8a8a8a;pointer-events:none;z-index:2}
+.m3d-pill{font-family:"Josefin Sans",sans-serif;font-weight:700;letter-spacing:.16em;font-size:16px;color:#fff;padding:4px 14px;border:2.4px solid var(--pencil);border-radius:999px 980px 999px 990px;background:radial-gradient(circle at 4px 4px,#6f879c 2.2px,transparent 2.6px) 0 0/9px 9px,#c4d1dc;-webkit-text-stroke:3px #6f879c;paint-order:stroke fill;box-shadow:2px 3px 0 rgba(74,74,74,.35);white-space:nowrap;pointer-events:none}
+.m3d-mk{position:relative;top:-22px;pointer-events:auto;cursor:pointer;width:30px;height:30px;-webkit-tap-highlight-color:transparent}
+.m3d-no{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Caveat",cursive;font-weight:700;font-size:20px;color:#c94a6b;background:#f7f4ec;border:2px solid #c94a6b;border-radius:52% 48% 50% 46%/48% 52% 47% 53%;box-shadow:1px 2px 0 rgba(74,74,74,.35)}
+.m3d-mk.locked .m3d-no{border-style:dashed;opacity:.92}
+.m3d-mk.done .m3d-no{background:repeating-linear-gradient(-40deg,#ef6f8f 0 3px,#fbd6df 3px 6px);color:#fff;-webkit-text-stroke:2px #c94a6b;paint-order:stroke fill;border-width:2.6px}
+.m3d-mk.done{animation:m3dbob 2.2s ease-in-out infinite}
+.m3d-mk.done::after{content:"✓";position:absolute;right:-9px;top:-11px;z-index:1;font:700 17px/1 sans-serif;color:var(--pencil)}
+.m3d-name{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-family:"Caveat",cursive;font-weight:700;font-size:19px;line-height:.95;color:#555;text-shadow:0 0 3px #f7f4ec,0 0 3px #f7f4ec,0 0 5px #f7f4ec}
+.m3d-mk.done .m3d-name{color:#222}
+.side-r .m3d-name{left:35px;text-align:left}.side-l .m3d-name{right:35px;text-align:right}
+.m3d-mk.pop{animation:m3dpop .9s cubic-bezier(.2,1.6,.4,1) .35s both,m3dbob 2.2s ease-in-out 1.4s infinite}
+@keyframes m3dbob{0%,100%{translate:0 0}50%{translate:0 -4px}}
+@keyframes m3dpop{0%{scale:.2;opacity:0}60%{scale:1.35;opacity:1}100%{scale:1}}
+.m3d-me{font-family:var(--hand);font-weight:700;font-size:15px;background:#3aa0ff;color:#fff;border:2px solid var(--pencil);border-radius:12px;padding:0 7px;pointer-events:none}
+.dim-toggle{display:inline-flex;border:2px solid var(--pencil);border-radius:var(--r2);overflow:hidden;box-shadow:2px 2px 0 var(--pencil)}
+.sk-tools .dim-toggle button{border:0;box-shadow:none;border-radius:0;padding:0 10px;font-family:"Josefin Sans",sans-serif;font-size:15px}
+.sk-tools .dim-toggle button.on{background:var(--pink,#ef6f8f);color:#fff}
+.sk-tools .dim-toggle button:disabled{opacity:.4}

@@ -1,6 +1,6 @@
-// v5: network-first for pages/scripts (with timeout), cache only as offline fallback.
-const C = 'melb-cafe-v5';
-const A = ['./', './index.html', './style.css', './app.js', './data.js', './config.js', './maps.js', './sketchmap.js', './integrations.js', './icon.svg', './manifest.webmanifest', './vendor/leaflet/leaflet.js', './vendor/leaflet/leaflet.css'];
+// v6 (adds lazy 3D map): network-first for pages/scripts (with timeout), cache only as offline fallback.
+const C = 'melb-cafe-v6';
+const A = ['./', './index.html', './style.css', './app.js', './data.js', './config.js', './maps.js', './sketchmap.js', './integrations.js', './map3d.js', './icon.svg', './manifest.webmanifest', './vendor/leaflet/leaflet.js', './vendor/leaflet/leaflet.css'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(A)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== C).map(x => caches.delete(x)))).then(() => self.clients.claim())); });
 function netFirst(req, ms) {
