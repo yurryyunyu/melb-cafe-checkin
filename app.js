@@ -326,7 +326,7 @@ mapState.mode = load('mcc.mapMode', null) || (can3D ? '3d' : '2d');
 const dynImport = (() => { try { return new Function('u', 'return import(u)'); } catch (e) { return () => Promise.reject(new Error('dynamic import unsupported')); } })();
 function loadMap3d() {
   if (map3dMod) return Promise.resolve(map3dMod);
-  const url = new URL('map3d.js?v=6', document.baseURI).href;
+  const url = new URL('map3d.js?v=8', document.baseURI).href;
   return Promise.race([dynImport(url), new Promise((_, rej) => setTimeout(() => rej(new Error('3D 模块加载超时')), 15000))]).then(m => (map3dMod = m));
 }
 const app = $('#app');

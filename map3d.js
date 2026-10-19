@@ -145,7 +145,7 @@ export async function create(el, region, opt) {
   // floating region pill
   if (pl) {
     const d = document.createElement('div'); d.className = 'm3d-pill'; d.textContent = region.name;
-    const o = new CSS2DObject(d); const [px, pz] = W(pl.x, pl.y); o.position.set(px, 0.3, pz); scene.add(o);
+    const o = new CSS2DObject(d); const [px, pz] = W(pl.x, pl.y); o.position.set(px, 0.06, pz); scene.add(o);
   }
 
   // cafe markers: pink coffee-cup pins on a pencil pillar
@@ -207,14 +207,19 @@ export async function create(el, region, opt) {
   controls.enableDamping = true; controls.dampingFactor = 0.12; controls.screenSpacePanning = false;
   controls.minPolarAngle = 0.12; controls.maxPolarAngle = 1.18; controls.rotateSpeed = 0.7;
   controls.touches = {ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN};
-  const home = {polar: 0.66, az: -0.22};
+  const home = {polar: 0.66, az: -0.13};
   let fitR = 16;
+  // frame the cafes (not the whole sheet) so clustered regions like Brunswick aren't squeezed to one side
+  const cps = Object.values(region.cafes), m = 150;
+  const fx0 = Math.min(...cps.map(c => c[0] - (c[2] === 'l' ? 280 : 70))), fx1 = Math.max(...cps.map(c => c[0] + (c[2] === 'l' ? 70 : 280)));
+  const fy0 = Math.max(vy, Math.min(...cps.map(c => c[1])) - m), fy1 = Math.min(vy + vh, Math.max(...cps.map(c => c[1])) + m);
+  const [fcx, fcz] = W((fx0 + fx1) / 2, (fy0 + fy1) / 2), FW = (fx1 - fx0) * S, FH = (fy1 - fy0) * S;
   const fit = () => {
     const a = camera.aspect, vf = THREE.MathUtils.degToRad(camera.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * a);
-    const needW = (vw * S / 2 + 0.4) / Math.tan(hf / 2), needH = (vh * S / 2 * Math.cos(home.polar) + 1.2) / Math.tan(vf / 2);
-    fitR = Math.max(needW * 0.97, needH, 6); controls.minDistance = fitR * 0.3; controls.maxDistance = fitR * 1.5;
+    const needW = (FW / 2 + 0.4) / Math.tan(hf / 2), needH = (FH / 2 * Math.cos(home.polar) + 1.2) / Math.tan(vf / 2);
+    fitR = Math.max(needW * 1.04, needH, 6); controls.minDistance = fitR * 0.3; controls.maxDistance = fitR * 1.5;
   };
-  const homePose = () => { const sph = new THREE.Spherical(fitR, home.polar, home.az); return {pos: new THREE.Vector3().setFromSpherical(sph), target: new THREE.Vector3(0, 0, 0.3)}; };
+  const homePose = () => { const sph = new THREE.Spherical(fitR, home.polar, home.az); const target = new THREE.Vector3(fcx, 0, fcz + 0.3); return {pos: new THREE.Vector3().setFromSpherical(sph).add(target), target}; };
 
   let raf = null, alive = true, interacting = false, frames = 0;
   const anims = [];
