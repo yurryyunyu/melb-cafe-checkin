@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f4ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="咖啡打卡">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>墨尔本咖啡打卡</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Josefin+Sans:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaigbscreen.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="topbar"><button id="backBtn" class="icon-btn hidden" aria-label="返回">‹</button><h1 id="title">墨尔本咖啡打卡</h1><span class="top-right" id="topRight"></span><div id="hud"></div></header>
+<main id="app"></main>
+<input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+<input type="file" id="pickInput" accept="image/*" hidden>
+<nav id="tabbar">
+  <a href="#/list" data-tab="list"><span class="ti">☕</span><span>发现</span></a>
+  <a href="#/map" data-tab="map"><span class="ti">🗺️</span><span>地图</span></a>
+  <button id="camBtn" aria-label="拍照打卡"><span class="cam-circle">📷</span><span class="cam-label">拍照打卡</span></button>
+  <a href="#/records" data-tab="records"><span class="ti">📒</span><span>记录</span></a>
+  <a href="#/footprint" data-tab="footprint"><span class="ti">👣</span><span>足迹</span></a>
+</nav>
+<div id="sheetWrap" class="hidden"><div id="sheetBg"></div><div id="sheet"></div></div>
+<div id="toast"></div>
+<div id="celebrate" class="hidden"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="maps.js"></script>
+<script src="sketchmap.js"></script>
+<script src="integrations.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
