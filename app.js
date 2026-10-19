@@ -1,5 +1,10 @@
 (() => {
 'use strict';
+// Optional modules must never take the main UI down: stub them if they failed to load.
+if (!window.MapKit) window.MapKit = {hasKey: false, provider: 'none', create: () => Promise.reject(new Error('map module unavailable')), nearbyCafes: async () => [], gmapsLink: c => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((c.name || '') + ' ' + (c.address || c.suburb || 'Melbourne'))};
+if (!window.Integrations) window.Integrations = {visionOn: false, formOn: false, recognizeFood: async () => null, submitToGoogleForm: async () => ({ok: false})};
+if (!window.SketchMap) window.SketchMap = {render: () => ({svg: '<div class="empty">草图地图暂不可用</div>', meIn: false})};
+
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const K = {cafes: 'mcc.customCafes', checkins: 'mcc.checkins'};
@@ -198,7 +203,7 @@ function levelInfo(xp = totalXP()) {
   return {lv, xp, into: xp - a, need: b - a, pct: Math.round((xp - a) / (b - a) * 100), title: TITLES.filter(t => lv >= t[0]).pop()[1]};
 }
 const REGION_OF = {};
-REGIONS.forEach(r => Object.keys(r.cafes).forEach((id, i) => { REGION_OF[id] ||= {r, no: i + 1}; }));
+REGIONS.forEach(r => Object.keys(r.cafes).forEach((id, i) => { if (!REGION_OF[id]) REGION_OF[id] = {r, no: i + 1}; }));
 const regionOf = id => REGION_OF[id] || {r: REGION_MORE, no: null};
 function regions() { // progress per sketch region (+ 更多 for everything else)
   const v = visitedIds();
@@ -378,7 +383,7 @@ const views = {
         if (lastPos) { map.showMe(lastPos, NEAR_M); map.setView(lastPos, 15); }
         map.resize();
         if (pendingFocus) { const c = pendingFocus; pendingFocus = null; map.setView([c.lat, c.lng], 16); setTimeout(() => map.openAt(c.lat, c.lng), 300); }
-      });
+      }).catch(e => { console.warn('real map failed', e); const m = $('#map'); if (m && token === mapToken) m.innerHTML = '<div class="empty" style="padding:40px 16px"><div class="e">🗺️</div>真实地图暂时加载不了（网络问题），可以先用上面的草图区域地图</div>'; });
       $('#locBtn').onclick = async () => { toast('🎯 正在定位…'); const p = await locate(); if (!p) return toast('无法获取定位，请允许定位权限'); if (mapRef) { mapRef.showMe(p, NEAR_M); mapRef.setView(p, 15); } };
     } else {
       const R = REGIONS.find(r => r.id === ms.region) || REGIONS[0];
@@ -517,7 +522,8 @@ function render() {
   const [, name = 'list', arg] = (location.hash || '#/list').split('/');
   const v = views[name] ? name : 'list';
   document.querySelectorAll('#tabbar a').forEach(a => a.classList.toggle('active', a.dataset.tab === v));
-  views[v](arg && decodeURIComponent(arg));
+  try { views[v](arg && decodeURIComponent(arg)); }
+  catch (e) { console.error('view render failed', e); app.innerHTML = `<div class="card"><b>页面出了点问题 😵</b><div class="hint">${String(e && e.message || e).replace(/[<>&]/g, '')}</div><a class="btn" href="#/list">回到发现页</a></div>`; }
   if (!['cafe', 'add'].includes(v)) window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', () => { closeSheet(); render(); });
@@ -526,4 +532,5 @@ render();
 if (navigator.permissions) navigator.permissions.query({name: 'geolocation'}).then(p => { if (p.state === 'granted') locate().then(() => render()); }).catch(() => {});
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 window.__mcc = {get checkins() { return checkins; }}; // for testing
+window.__appBooted = true; document.documentElement.classList.add('booted');
 })();
