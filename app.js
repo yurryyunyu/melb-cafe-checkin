@@ -28,10 +28,27 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const stars = n => n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '';
 
+// ---------- 🎨 theme: JRPG (default) or sketch ----------
+let THEME = load('mcc.theme', 'jrpg'); if (THEME !== 'jrpg' && THEME !== 'sketch') THEME = 'jrpg';
+const isJ = () => THEME === 'jrpg' && !!window.JRPG;
+const SFXplay = n => { try { if (window.JRPG) JRPG.SFX.play(n); } catch (e) {} };
+function applyTheme() {
+  const t = isJ() ? 'jrpg' : 'sketch'; document.documentElement.dataset.theme = t;
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t === 'jrpg' ? '#0b0f2a' : '#f7f4ec';
+}
+applyTheme();
+function setTheme(t) { THEME = t; save('mcc.theme', t); applyTheme(); const d = $('#dlg'); if (d) d.classList.remove('show'); render(); }
+document.addEventListener('click', e => { const b = e.target.closest('[data-snd]'); if (b && window.JRPG) { JRPG.SFX.set(!JRPG.SFX.on); } });
+function caffeine() { // 咖啡因: each check-in in the last 12h adds up to 40, fading out
+  const now = Date.now(); let v = 0; checkins.forEach(c => { const age = (now - (c.createdAt || 0)) / 3.6e6; if (age >= 0 && age < 12) v += 40 * (1 - age / 12); });
+  return Math.min(100, Math.round(v));
+}
+
 // ---------- utils ----------
 function toast(msg, ms = 2400) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms);
+  if (isJ()) try { JRPG.say(msg, ms); } catch (e) {}
 }
 function distM(a, b) {
   const R = 6371000, r = x => x * Math.PI / 180;
@@ -77,10 +94,10 @@ function pickPhoto(useCamera) {
 
 // ---------- sheet ----------
 function openSheet(html, onMount) {
-  $('#sheet').innerHTML = html; $('#sheetWrap').classList.remove('hidden');
+  $('#sheet').innerHTML = html; $('#sheetWrap').classList.remove('hidden'); document.documentElement.classList.add('sheet-open');
   onMount && onMount($('#sheet'));
 }
-function closeSheet() { $('#sheetWrap').classList.add('hidden'); $('#sheet').innerHTML = ''; }
+function closeSheet() { $('#sheetWrap').classList.add('hidden'); document.documentElement.classList.remove('sheet-open'); $('#sheet').innerHTML = ''; }
 $('#sheetBg').onclick = () => { closeSheet(); render(); };
 
 // ---------- cafe picker ----------
@@ -174,10 +191,11 @@ async function quickPhotoCheckin() {
     near = allCafes().map(c => ({c, d: distM(pos, [c.lat, c.lng])})).sort((a, b) => a.d - b.d)[0];
     if (near && near.d > NEAR_M) near = null;
   }
-  const assign = id => {
+  const assign = async id => {
     const x = checkins.find(c => c.id === ci.id); if (!x) return;
     x.cafeId = id; saveCheckins();
-    toast(`📍 ${cafeById(id).name}`);
+    if (isJ()) { render(); await JRPG.encounter(cafeById(id), before.visited.has(id)); }
+    else toast(`📍 ${cafeById(id).name}`);
     render(); openRateSheet(x, before); // recognise + rate (optional), then unlock animation
   };
   if (near) return assign(near.c.id);
@@ -214,6 +232,12 @@ function regions() { // progress per sketch region (+ 更多 for everything else
 }
 function drawHud() {
   const L = levelInfo();
+  if (isJ()) { const cf = caffeine(), on = JRPG.SFX.on;
+    $('#hud').innerHTML = `<div class="hud-lv">Lv.${L.lv}</div><div class="hud-main"><div class="hud-title">${L.title}</div>
+      <div class="hud-bar"><span>咖啡因</span><div class="xpbar cfbar"><i style="width:${cf}%"></i></div><em>${cf}/100</em></div>
+      <div class="hud-bar"><span>XP</span><div class="xpbar"><i style="width:${L.pct}%"></i></div><em>${L.into}/${L.need}</em></div></div>
+      <button class="snd-btn" data-snd aria-label="音效开关" aria-pressed="${on}">${on ? '🔊' : '🔇'}</button>`;
+    return; }
   $('#hud').innerHTML = `<div class="hud-lv">Lv.${L.lv}</div><div class="hud-main"><div class="hud-title">${L.title}</div><div class="xpbar"><i style="width:${L.pct}%"></i></div></div><div class="hud-xp">${L.into}/${L.need}</div>`;
 }
 function snapshot() { return {xp: totalXP(), lv: levelInfo().lv, badges: new Set(BADGES.filter(b => b.test(stats())).map(b => b.id)), visited: new Set(visitedIds())}; }
@@ -225,6 +249,19 @@ function celebrate(before, cafeId, extra = '') {
   save('mcc.badges', [...after.badges]);
   const reg = c && regions().find(r => r.id === regionOf(c.id).r.id);
   const el = $('#celebrate');
+  if (isJ()) {
+    const last = checkins.filter(x => x.cafeId === cafeId).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+    const lines = [reg ? `<div class="cel-reg">🗺️ ${esc(reg.name)} 巡礼 ${reg.done}/${reg.total}${reg.done === reg.total ? ' 👑 区域制霸！' : ''}</div>` : '',
+      ...newBadges.map(b => `<div class="cel-badge">🎒 获得装备：${b.e} ${b.name}</div>`), extra];
+    let stage = 'chest';
+    const done = () => { clearTimeout(celebrate._t); el.classList.add('hidden'); el.className = 'hidden'; el.innerHTML = ''; render(); };
+    const next = () => { clearTimeout(celebrate._t); if (lvUp && stage === 'chest') { stage = 'lv'; JRPG.levelUp(el, {from: before.lv, to: after.lv, title: levelInfo().title}, done); celebrate._t = setTimeout(done, 9000); } else done(); };
+    JRPG.chest(el, {cafe: c && c.name, gain, item: JRPG.itemName(last && last.drink), lines, isNew}, next);
+    clearTimeout(celebrate._t); celebrate._t = setTimeout(next, 9000);
+    if (navigator.vibrate) navigator.vibrate([40, 60, 80]);
+    drawHud(); return;
+  }
+  el.className = '';
   el.innerHTML = `<div class="cel-rays"></div><div class="confetti">${Array.from({length: 26}, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 7) * .08}s;background:${['#ef6f8f', '#fbd6df', '#8fa5b8', '#f7f4ec', '#c94a6b'][i % 5]}"></i>`).join('')}</div>
     <div class="cel-card">
       <div class="cel-pin"><span>${isNew ? '🔓' : '☕'}</span></div>
@@ -248,19 +285,22 @@ function openRateSheet(ci, before) {
   const c = cafeById(ci.cafeId), menu = menuFor(ci.cafeId);
   const d = {item: ci.drink || '', rating: ci.rating || 0, taste: 0, look: 0, value: 0, note: ci.note || ''};
   const starRow = (k, size) => `<div class="star-input ${size || ''}" data-k="${k}">${[1, 2, 3, 4, 5].map(n => `<span data-n="${n}">★</span>`).join('')}</div>`;
-  openSheet(`<h3>🍽️ 这次点了什么？</h3>
+  openSheet(`<h3>${isJ() ? '⚔️ 品尝时间！选择你的战利品' : '🍽️ 这次点了什么？'}</h3>
     <div class="rate-head">${ci.photo ? `<img src="${ci.photo}" alt="">` : ''}<div><b>${esc(c.name)}</b><div class="hint" id="rcStatus">${Integrations.visionOn ? '🔍 AI 正在识别照片…' : '从菜单里选一个吧'}</div></div></div>
     <div class="chips wrap" id="menuChips">${menu.map(m => `<button class="chip" data-item="${esc(m.name)}">${m.type === 'food' ? '🥐' : '☕'} ${esc(m.name)}</button>`).join('')}<button class="chip" data-item="__other">✏️ 其他</button></div>
     <div class="hint">${MENU_VERIFIED ? '' : '＊示例菜单，非该店官方菜单'}</div>
     <div class="field hidden" id="otherWrap"><input id="otherIn" placeholder="输入你点的东西"></div>
-    <div class="field"><label>总评分</label>${starRow('rating')}</div>
+    ${isJ() ? `<div class="field"><label>评价这一杯</label><div class="jmenu rate-menu" id="rateMenu">${[[5, '传说之杯'], [4, '稀有珍品'], [3, '冒险者之选'], [2, '普通补给'], [1, '苦涩药水']].map(([n, t]) => `<button class="jmenu-item" data-n="${n}"><span class="st">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span> ${t}</button>`).join('')}</div><div class="hidden">${starRow('rating')}</div></div>`
+      : `<div class="field"><label>总评分</label>${starRow('rating')}</div>`}
     <div class="subrates"><div><label>口味</label>${starRow('taste', 'sm')}</div><div><label>颜值</label>${starRow('look', 'sm')}</div><div><label>性价比</label>${starRow('value', 'sm')}</div></div>
     <div class="field"><textarea id="rNote" rows="2" placeholder="一句话心得（可选）">${esc(d.note)}</textarea></div>
-    <button class="btn game-btn" id="rDone">🔓 完成${Integrations.formOn ? '并提交' : ''}</button>
+    <button class="btn game-btn" id="rDone">${isJ() ? '🎁 打开宝箱' : '🔓 完成'}${Integrations.formOn ? '并提交' : ''}</button>
     <button class="btn ghost" id="rSkip">跳过，直接解锁</button>`, el => {
     const drawChips = () => el.querySelectorAll('#menuChips .chip').forEach(b => b.classList.toggle('on', b.dataset.item === d.item || (b.dataset.item === '__other' && d.item && !menu.some(m => m.name === d.item))));
-    const drawStars = () => el.querySelectorAll('.star-input').forEach(r => r.querySelectorAll('span').forEach(s => s.classList.toggle('on', +s.dataset.n <= d[r.dataset.k])));
+    const drawStars = () => { el.querySelectorAll('.star-input').forEach(r => r.querySelectorAll('span').forEach(s => s.classList.toggle('on', +s.dataset.n <= d[r.dataset.k])));
+      el.querySelectorAll('#rateMenu .jmenu-item').forEach(b => b.classList.toggle('on', +b.dataset.n === d.rating)); };
     drawChips(); drawStars();
+    const rm = $('#rateMenu', el); if (rm) rm.onclick = e => { const b = e.target.closest('[data-n]'); if (!b) return; d.rating = +b.dataset.n; SFXplay('blip'); drawStars(); };
     $('#menuChips', el).onclick = e => { const b = e.target.closest('.chip'); if (!b) return;
       if (b.dataset.item === '__other') { $('#otherWrap', el).classList.remove('hidden'); $('#otherIn', el).focus(); d.item = $('#otherIn', el).value.trim(); }
       else { d.item = b.dataset.item; $('#otherWrap', el).classList.add('hidden'); } drawChips(); };
@@ -323,10 +363,12 @@ const mapState = {region: 'city', zoom: 1};
 const can3D = (() => { try { const c = document.createElement('canvas'); return !!(window.WebGL2RenderingContext && c.getContext('webgl2')); } catch (e) { return false; } })();
 let map3dFailed = false, map3dMod = null;
 mapState.mode = load('mcc.mapMode', null) || (can3D ? '3d' : '2d');
+mapState.jmode = load('mcc.mapMode.jrpg', null) || 'px';
+let pxFailed = false; const heroAt = {};
 const dynImport = (() => { try { return new Function('u', 'return import(u)'); } catch (e) { return () => Promise.reject(new Error('dynamic import unsupported')); } })();
 function loadMap3d() {
   if (map3dMod) return Promise.resolve(map3dMod);
-  const url = new URL('map3d.js?v=8', document.baseURI).href;
+  const url = new URL('map3d.js?v=9', document.baseURI).href;
   return Promise.race([dynImport(url), new Promise((_, rej) => setTimeout(() => rej(new Error('3D 模块加载超时')), 15000))]).then(m => (map3dMod = m));
 }
 const app = $('#app');
@@ -398,22 +440,32 @@ const views = {
     } else {
       const R = REGIONS.find(r => r.id === ms.region) || REGIONS[0];
       const prog = regions().find(r => r.id === R.id);
-      const use3d = ms.mode === '3d' && can3D && !map3dFailed;
+      const J = isJ();
+      const use3d = (J ? ms.jmode : ms.mode) === '3d' && can3D && !map3dFailed;
+      const usePx = J && !use3d && window.PixelMap && !pxFailed;
       const {svg, meIn} = SketchMap.render(R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M});
       const ids = Object.keys(R.cafes);
-      const toggle = `<span class="dim-toggle" id="dimT"><button data-m="2d" class="${use3d ? '' : 'on'}">2D</button><button data-m="3d" class="${use3d ? 'on' : ''}" ${can3D ? '' : 'disabled title="此设备不支持 3D"'}>3D</button></span>`;
-      app.innerHTML = head + `<div class="region-head"><div><b>${esc(R.name)}</b> <span class="hint">${esc(R.zh)}</span></div><div class="rg-count">${prog.done}/${prog.total}${prog.done === prog.total ? ' 👑' : ''}</div></div>
-        <div class="progress" style="margin:0 14px 6px"><i style="width:${Math.round(prog.done / prog.total * 100)}%"></i></div>
-        ${use3d ? `<div class="m3d-wrap" id="m3d" data-region="${R.id}"><div class="m3d-loading">✏️ 正在搭建 3D 小镇…</div><div class="m3d-hint">单指旋转 · 双指缩放/平移</div></div>`
+      const flat = J ? 'px' : '2d';
+      const toggle = `<span class="dim-toggle" id="dimT"><button data-m="${flat}" class="${use3d ? '' : 'on'}">${J ? '像素' : '2D'}</button><button data-m="3d" class="${use3d ? 'on' : ''}" ${can3D ? '' : 'disabled title="此设备不支持 3D"'}>3D</button></span>`;
+      const crown = prog.done === prog.total ? ' 👑' : '';
+      const bar = J ? `<div class="jwin region-banner"><div class="rb-name">～ ${esc(R.name)} ～</div><div class="rb-sub">${esc(R.zh)} · 已解锁 <b class="rg-count">${prog.done}/${prog.total}</b>${crown}</div></div>`
+        : `<div class="region-head"><div><b>${esc(R.name)}</b> <span class="hint">${esc(R.zh)}</span></div><div class="rg-count">${prog.done}/${prog.total}${crown}</div></div>
+        <div class="progress" style="margin:0 14px 6px"><i style="width:${Math.round(prog.done / prog.total * 100)}%"></i></div>`;
+      app.innerHTML = head + bar + `
+        ${use3d ? `<div class="m3d-wrap" id="m3d" data-region="${R.id}"><div class="m3d-loading">${J ? '⚔️ 正在生成 3D 大地图…' : '✏️ 正在搭建 3D 小镇…'}</div><div class="m3d-hint">单指旋转 · 双指缩放/平移</div></div>`
+          : usePx ? `<div class="px-wrap" id="pxWrap" data-region="${R.id}"></div>`
           : `<div class="sk-wrap" id="skWrap"><div class="sk-inner" style="width:${ms.zoom * 100}%">${svg}</div></div>`}
-        <div class="sk-tools">${toggle}<button id="zOut">－</button><button id="zIn">＋</button>${use3d ? '<button id="m3dReset" aria-label="重置视角">⟲</button>' : ''}<button id="skLoc">🎯 ${lastPos ? (meIn ? '我在这里' : '不在此区') : '定位我'}</button></div>
+        <div class="sk-tools">${toggle}<button id="zOut">－</button><button id="zIn">＋</button>${use3d || usePx ? '<button id="m3dReset" aria-label="重置视角">⟲</button>' : ''}<button id="skLoc">🎯 ${lastPos ? (meIn ? '我在这里' : '不在此区') : '定位我'}</button></div>
         <div class="sk-list">${ids.map(id => cafeById(id)).filter(Boolean).map(cafeCard).join('')}</div>`;
-      $('#dimT').onclick = e => { const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; ms.mode = b.dataset.m; save('mcc.mapMode', ms.mode); if (ms.mode === '3d') map3dFailed = false; render(); };
+      $('#dimT').onclick = e => { const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; SFXplay('blip');
+        if (J) { ms.jmode = b.dataset.m; save('mcc.mapMode.jrpg', ms.jmode); } else { ms.mode = b.dataset.m; save('mcc.mapMode', ms.mode); }
+        if (b.dataset.m === '3d') map3dFailed = false; if (b.dataset.m === 'px') pxFailed = false; render(); };
+      const focusId = ms.focusId; ms.focusId = null;
       if (use3d) {
         const token = ++mapToken, wrap = $('#m3d');
-        const fail = e => { console.warn('3D map failed, falling back to 2D', e); if (token !== mapToken) return; map3dFailed = true; if (mapRef && mapRef.kind === '3d') { try { mapRef.remove(); } catch (x) {} mapRef = null; } toast('3D 地图暂不可用，已切换为 2D 手绘地图'); render(); };
+        const fail = e => { console.warn('3D map failed, falling back', e); if (token !== mapToken) return; map3dFailed = true; if (mapRef && mapRef.kind === '3d') { try { mapRef.remove(); } catch (x) {} mapRef = null; } toast(J ? '3D 地图暂不可用，已切换为像素地图' : '3D 地图暂不可用，已切换为 2D 手绘地图'); render(); };
         const seen = new Set(load('mcc.seen3d', [])), pop = new Set([...v].filter(id => R.cafes[id] && !seen.has(id)));
-        loadMap3d().then(mod => mod.create(wrap, R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
+        loadMap3d().then(mod => mod.create(wrap, R, {theme: J ? 'jrpg' : 'sketch', visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
           .then(m => {
             if (token !== mapToken) return m.remove();
             mapRef = m; const ld = wrap.querySelector('.m3d-loading'); if (ld) ld.remove();
@@ -421,6 +473,13 @@ const views = {
           }).catch(fail);
         $('#zIn').onclick = () => mapRef && mapRef.zoom && mapRef.zoom(0.75); $('#zOut').onclick = () => mapRef && mapRef.zoom && mapRef.zoom(1.33);
         $('#m3dReset').onclick = () => mapRef && mapRef.reset && mapRef.reset();
+      } else if (usePx) {
+        try {
+          mapRef = PixelMap.create($('#pxWrap'), R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M, fitAffine: SketchMap.fitAffine, focusId, heroAt: heroAt[R.id],
+            onHeroMove: t => { heroAt[R.id] = t; }, onOpen: id => { location.hash = '#/cafe/' + id; }});
+        } catch (e) { console.warn('pixel map failed, falling back to sketch', e); pxFailed = true; mapRef = null; return render(); }
+        $('#zIn').onclick = () => mapRef && mapRef.zoom(1.5); $('#zOut').onclick = () => mapRef && mapRef.zoom(1 / 1.5);
+        $('#m3dReset').onclick = () => mapRef && mapRef.reset();
       } else {
         $('#skWrap').onclick = e => { const g = e.target.closest('[data-id]'); if (g) location.hash = '#/cafe/' + g.dataset.id; };
         const zoom = z => { ms.zoom = Math.min(2.4, Math.max(1, z)); $('.sk-inner').style.width = ms.zoom * 100 + '%'; };
@@ -458,6 +517,7 @@ const views = {
   },
 
   footprint() {
+    if (isJ()) return footprintJ();
     setTop('我的足迹');
     const s = stats(), v = visitedIds(), pct = s.total ? Math.round(s.cafes / s.total * 100) : 0;
     const photos = [...checkins].filter(c => c.photo).slice(0, 9);
@@ -470,7 +530,8 @@ const views = {
       <div class="section-title">成就</div><div class="badges">${BADGES.map(b => `<div class="bdg ${b.test(s) ? '' : 'off'}"><span class="e">${b.e}</span>${b.name}</div>`).join('')}</div>
       <div class="section-title">照片墙 <a href="#/records" style="font-size:13px;color:var(--brown);font-weight:600;text-decoration:none">全部记录 ›</a></div>
       ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : '<div class="hint">还没有照片，去拍一张吧 📷</div>'}
-      <div class="section-title">去过的咖啡馆</div>${[...v].map(cafeById).filter(Boolean).map(cafeCard).join('') || '<div class="hint">还没有去过的咖啡馆</div>'}`;
+      <div class="section-title">去过的咖啡馆</div>${[...v].map(cafeById).filter(Boolean).map(cafeCard).join('') || '<div class="hint">还没有去过的咖啡馆</div>'}${settingsHtml()}`;
+    bindSettings();
     const top = regions().filter(r => r.id !== 'more').sort((x, y) => y.done - x.done)[0];
     const TR = REGIONS.find(r => r.id === (top && top.done ? top.id : 'city'));
     $('#fpMap').innerHTML = SketchMap.render(TR, {visited: v, cafeById}).svg;
@@ -496,7 +557,7 @@ const views = {
       ${cis.map(ci => `<div class="rec">${ci.photo ? `<img src="${ci.photo}" alt="">` : ''}<div class="body"><div class="top"><span class="stars">${stars(ci.rating) || '<span class="hint">未评分</span>'}</span><span class="date">${esc(ci.date)}</span></div>${ci.drink ? `<div class="note">🥤 ${esc(ci.drink)}</div>` : ''}${ci.note ? `<div class="note">${esc(ci.note)}</div>` : ''}<div style="text-align:right"><button class="edit" data-edit="${ci.id}">编辑</button></div></div></div>`).join('') || '<div class="hint">还没在这里打过卡</div>'}
       ${c.custom ? '<button class="btn danger" id="delCafe">删除这家咖啡馆</button>' : ''}`;
     $('#ciBtn').onclick = () => openCheckinForm({id: uid(), cafeId: id, photo: '', rating: 0, drink: '', note: '', date: today(), createdAt: Date.now()}, true);
-    $('#mapBtn').onclick = () => { const ro = regionOf(c.id); if (ro.no) mapState.region = ro.r.id; else { mapState.region = 'real'; pendingFocus = c; } location.hash = '#/map'; };
+    $('#mapBtn').onclick = () => { const ro = regionOf(c.id); if (ro.no) { mapState.region = ro.r.id; mapState.focusId = c.id; } else { mapState.region = 'real'; pendingFocus = c; } location.hash = '#/map'; };
     app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(x => x.id === ed.dataset.edit), false); };
     const dc = $('#delCafe');
     if (dc) dc.onclick = () => { if (!confirm('删除这家咖啡馆？相关打卡会变成「未选择咖啡馆」')) return;
@@ -537,6 +598,37 @@ const views = {
   },
 };
 
+function settingsHtml() {
+  const on = window.JRPG && JRPG.SFX.on;
+  return `<div class="section-title">⚙️ 设置</div><div class="settings">
+    <div class="set-row"><span>界面主题</span><span class="dim-toggle" id="themeSel"><button data-theme="jrpg" class="${THEME === 'jrpg' ? 'on' : ''}" ${window.JRPG ? '' : 'disabled'}>JRPG 像素</button><button data-theme="sketch" class="${THEME === 'sketch' ? 'on' : ''}">✏️ 手绘</button></span></div>
+    <div class="set-row"><span>8-bit 音效</span><button class="snd-btn" data-snd id="sndT" aria-pressed="${!!on}">${on ? '🔊' : '🔇'}</button></div></div>`;
+}
+function bindSettings() { const t = $('#themeSel'); if (t) t.onclick = e => { const b = e.target.closest('[data-theme]'); if (b && !b.disabled && b.dataset.theme !== THEME) setTheme(b.dataset.theme); }; }
+function footprintJ() {
+  setTop('冒险日志');
+  const s = stats(), v = visitedIds(), L = levelInfo(), cf = caffeine(), owned = new Set(BADGES.filter(b => b.test(s)).map(b => b.id));
+  const photos = [...checkins].filter(c => c.photo).slice(0, 9);
+  const quests = [...regions().map(r => ({main: true, name: `${r.name} 咖啡巡礼`, zh: r.id === 'more' ? '自由探索' : r.zh, done: r.done, total: r.total})),
+    ...BADGES.filter(b => b.id !== 'first').map(b => ({main: false, name: b.name, zh: b.e, done: owned.has(b.id) ? 1 : 0, total: 1}))];
+  app.innerHTML = `<div class="jwin status"><div class="st-hero" id="stHero"></div><div class="st-main"><div class="st-name">勇者 Lv.${L.lv}</div><div class="st-title">${L.title}</div>
+      <div class="hud-bar"><span>咖啡因</span><div class="xpbar cfbar"><i style="width:${cf}%"></i></div><em>${cf}/100</em></div>
+      <div class="hud-bar"><span>XP</span><div class="xpbar"><i style="width:${L.pct}%"></i></div><em>${L.into}/${L.need}</em></div></div></div>
+    <div class="jwin st-stats"><div>打卡<b>${s.count}</b></div><div>据点<b>${s.cafes}/${s.total}</b></div><div>区域<b>${s.suburbs}</b></div><div>总XP<b>${L.xp}</b></div></div>
+    <div class="section-title">📜 任务</div>
+    <div class="jwin quests">${quests.map(q => `<div class="quest ${q.done >= q.total ? 'clear' : ''}"><div class="q-top"><span class="q-kind">${q.main ? '主线' : '支线'}</span><b>${esc(q.name)}</b><span class="q-st">${q.done >= q.total ? '完成！' : q.main ? `${q.done}/${q.total}` : '未达成'}</span></div>${q.main ? `<div class="xpbar"><i style="width:${Math.round(q.done / q.total * 100)}%"></i></div><small>${esc(q.zh)}</small>` : ''}</div>`).join('')}</div>
+    <div class="section-title">📖 咖啡图鉴 <small>${s.cafes}/${s.total}</small></div>
+    <div class="dex">${allCafes().map((c, i) => `<a class="dex-item ${v.has(c.id) ? 'seen' : 'unk'}" href="#/cafe/${c.id}"><span class="dex-no">No.${String(i + 1).padStart(3, '0')}</span><canvas data-spr="${c.id}" width="24" height="24"></canvas><span class="dex-name">${v.has(c.id) ? esc(c.short || c.name) : '？？？'}</span></a>`).join('')}</div>
+    <div class="section-title">🎒 道具栏</div>
+    <div class="jwin inv">${BADGES.map(b => `<div class="inv-item ${owned.has(b.id) ? 'own' : 'off'}"><span class="ii">${owned.has(b.id) ? b.e : '？'}</span><span class="in">${owned.has(b.id) ? esc(b.name) : '？？？'}</span>${owned.has(b.id) ? '<em>E</em>' : ''}</div>`).join('')}</div>
+    <div class="section-title">🖼️ 冒险相册 <a href="#/records" style="text-decoration:none">全部记录 ›</a></div>
+    ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : '<div class="hint">还没有照片，去拍一张吧 📷</div>'}
+    ${settingsHtml()}`;
+  app.querySelectorAll('canvas[data-spr]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(JRPG.cafeSprite(cv.dataset.spr, v.has(cv.dataset.spr)), 0, 0); });
+  const hc = document.createElement('canvas'); hc.width = hc.height = 16; JRPG.drawHero(hc, 'down', 0); $('#stHero').appendChild(JRPG.scaled(hc, 4));
+  bindSettings();
+  app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(c => c.id === ed.dataset.edit), false); };
+}
 function setTop(title, right = '', back = false) {
   $('#title').textContent = title; $('#topRight').innerHTML = right;
   $('#backBtn').classList.toggle('hidden', !back);

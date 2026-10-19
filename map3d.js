@@ -3,7 +3,13 @@ import * as THREE from './vendor/three/three.module.min.js';
 import {OrbitControls} from './vendor/three/OrbitControls.js';
 import {CSS2DRenderer, CSS2DObject} from './vendor/three/CSS2DRenderer.js';
 
-const PENCIL = '#4a4a4a', SLATE = '#9fb3c4', SLATE_D = '#6f879c', PINK = '#ef6f8f', PINK_D = '#c94a6b', PAPER = '#f7f4ec';
+let PENCIL = '#4a4a4a', SLATE = '#9fb3c4', SLATE_D = '#6f879c', PINK = '#ef6f8f', PINK_D = '#c94a6b', PAPER = '#f7f4ec', LABEL_FONT = '"Josefin Sans", "Avenir Next", Helvetica, sans-serif';
+const THEMES = {
+  sketch: {PENCIL: '#4a4a4a', SLATE: '#9fb3c4', SLATE_D: '#6f879c', PINK: '#ef6f8f', PINK_D: '#c94a6b', PAPER: '#f7f4ec', LABEL_FONT: '"Josefin Sans", "Avenir Next", Helvetica, sans-serif'},
+  jrpg: {PENCIL: '#1a1c2c', SLATE: '#ffffff', SLATE_D: '#1a1c2c', PINK: '#ffcd75', PINK_D: '#b07a1e', PAPER: '#5fb547', LABEL_FONT: '"FusionPixel", monospace'},
+};
+const ROOF3 = ['#b13e53', '#3b5dc9', '#38b764', '#a05b2c', '#5d275d', '#ef7d57'];
+function pixelTex(canvas, rep) { const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestMipmapNearestFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rep) t.repeat.set(rep[0], rep[1]); return t; }
 const S = 1 / 100; // svg units -> world units
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -32,11 +38,13 @@ function toonRamp() { const d = new Uint8Array([150, 150, 150, 255, 205, 205, 20
 
 // tiny geometry merger (keeps draw calls low: all blocks = 1 mesh + 2 line sets)
 class Batch {
-  constructor(uvK) { this.pos = []; this.nor = []; this.col = []; this.uv = []; this.edges = []; this.edges2 = []; this.k = uvK; }
+  constructor(uvK, planar) { this.pos = []; this.nor = []; this.col = []; this.uv = []; this.edges = []; this.edges2 = []; this.k = uvK; this.planar = planar; }
+  geo(g0, x, y, z, ry, color, sx = 1, sy = 1, sz = 1) { const g = g0.index ? g0.toNonIndexed() : g0.clone(); g.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ry), new THREE.Vector3(sx, sy, sz))); g.computeVertexNormals(); const p = g.attributes.position, n = g.attributes.normal, c = new THREE.Color(color);
+    for (let i = 0; i < p.count; i++) { const X = p.getX(i), Y = p.getY(i), Z = p.getZ(i); this.pos.push(X, Y, Z); this.nor.push(n.getX(i), n.getY(i), n.getZ(i)); this.col.push(c.r, c.g, c.b); this.uv.push(X * this.k, Z * this.k); } g.dispose(); }
   box(w, h, d, x, y, z, ry, color, {edges = true, jitter = 0.018, seed = 1} = {}) {
     const g = new THREE.BoxGeometry(w, h, d).toNonIndexed(), m = new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ry), new THREE.Vector3(1, 1, 1));
     g.applyMatrix4(m); const p = g.attributes.position, n = g.attributes.normal, c = new THREE.Color(color);
-    for (let i = 0; i < p.count; i++) { const X = p.getX(i), Y = p.getY(i), Z = p.getZ(i); this.pos.push(X, Y, Z); this.nor.push(n.getX(i), n.getY(i), n.getZ(i)); this.col.push(c.r, c.g, c.b); this.uv.push((X + Z) * this.k, Y * this.k); }
+    for (let i = 0; i < p.count; i++) { const X = p.getX(i), Y = p.getY(i), Z = p.getZ(i); this.pos.push(X, Y, Z); this.nor.push(n.getX(i), n.getY(i), n.getZ(i)); this.col.push(c.r, c.g, c.b); this.uv.push(...(this.planar && Math.abs(n.getY(i)) > .5 ? [X * this.k, Z * this.k] : [(X + Z) * this.k, Y * this.k])); }
     if (edges) {
       const e = new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)); e.applyMatrix4(m); const R = rng(seed), q = e.attributes.position;
       for (let i = 0; i < q.count; i++) this.edges.push(q.getX(i), q.getY(i), q.getZ(i));
@@ -65,10 +73,10 @@ function segDist(px, py, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1], L = d
 
 async function fontsReady() {
   if (!document.fonts || !document.fonts.load) return;
-  await Promise.race([Promise.all(['700 40px "Josefin Sans"', '700 40px "Caveat"'].map(f => document.fonts.load(f).catch(() => {}))), new Promise(r => setTimeout(r, 1200))]);
+  await Promise.race([Promise.all(['700 40px "Josefin Sans"', '700 40px "Caveat"', '12px "FusionPixel"'].map(f => document.fonts.load(f).catch(() => {}))), new Promise(r => setTimeout(r, 1200))]);
 }
 function streetLabelTex(text, fsPx) {
-  const font = `700 ${fsPx}px "Josefin Sans", "Avenir Next", Helvetica, sans-serif`, sp = fsPx * 0.3;
+  const font = `700 ${fsPx}px ${LABEL_FONT}`, sp = fsPx * 0.3;
   const m = document.createElement('canvas').getContext('2d'); m.font = font;
   const chars = [...text], w = Math.ceil(chars.reduce((s, ch) => s + m.measureText(ch).width + sp, 0) + fsPx), h = Math.ceil(fsPx * 1.5);
   const tex = canvasTex(w, h, (g) => {
@@ -80,6 +88,8 @@ function streetLabelTex(text, fsPx) {
 
 export async function create(el, region, opt) {
   const {visited, cafeById, me, rangeM = 250, onOpen = () => {}, pop = new Set(), fitAffine} = opt;
+  const J = opt.theme === 'jrpg' && window.JRPG, TT = J ? window.JRPG.tiles() : null;
+  ({PENCIL, SLATE, SLATE_D, PINK, PINK_D, PAPER, LABEL_FONT} = THEMES[J ? 'jrpg' : 'sketch']);
   await fontsReady();
   const [vx, vy, vw, vh] = region.vb, cx = vx + vw / 2, cy = vy + vh / 2;
   const W = (x, y) => [(x - cx) * S, (y - cy) * S];
@@ -99,24 +109,24 @@ export async function create(el, region, opt) {
   const ramp = track(toonRamp());
 
   // paper ground + inked border
-  const GW = vw * S + 1.2, GD = vh * S + 1.2, pt = track(paperTex()); pt.repeat.set(GW / 4, GD / 4);
+  const GW = vw * S + 1.2, GD = vh * S + 1.2, pt = track(J ? pixelTex(TT.grass[0], [GW / 0.32, GD / 0.32]) : paperTex()); if (!J) pt.repeat.set(GW / 4, GD / 4);
   const ground = new THREE.Mesh(track(new THREE.PlaneGeometry(GW, GD)), track(new THREE.MeshBasicMaterial({map: pt})));
   ground.rotation.x = -Math.PI / 2; scene.add(ground);
   const bpts = [[-GW / 2, -GD / 2], [GW / 2, -GD / 2], [GW / 2, GD / 2], [-GW / 2, GD / 2], [-GW / 2, -GD / 2]];
   [0, 0.03].forEach((j, i) => { const g = track(new THREE.BufferGeometry().setFromPoints(bpts.map(([x, z]) => new THREE.Vector3(x + j, 0.004, z - j)))); scene.add(new THREE.Line(g, track(new THREE.LineBasicMaterial({color: PENCIL, transparent: true, opacity: i ? .4 : .9})))); });
   // soft "slab" under the paper so the diorama has thickness
-  const base = new THREE.Mesh(track(new THREE.BoxGeometry(GW, 0.25, GD)), track(new THREE.MeshToonMaterial({color: '#e9e2d0', gradientMap: ramp})));
+  const base = new THREE.Mesh(track(new THREE.BoxGeometry(GW, 0.25, GD)), track(new THREE.MeshToonMaterial({color: J ? '#8a5a32' : '#e9e2d0', gradientMap: ramp})));
   base.position.y = -0.126; scene.add(base);
   const be = new THREE.LineSegments(track(new THREE.EdgesGeometry(base.geometry)), track(new THREE.LineBasicMaterial({color: PENCIL}))); be.position.copy(base.position); scene.add(be);
 
   // streets: raised slate slabs on a pencil casing
-  const sb = new Batch(1.6);
+  const sb = new Batch(J ? 1 / 0.32 : 1.6, !!J);
   region.streets.forEach((st, si) => {
     const ws = st.w * S, h = 0.08 + st.w * 0.0022 + si * 0.0015;
     for (let i = 1; i < st.pts.length; i++) {
       const [x0, z0] = W(...st.pts[i - 1]), [x1, z1] = W(...st.pts[i]), L = Math.hypot(x1 - x0, z1 - z0), ry = -Math.atan2(z1 - z0, x1 - x0);
-      sb.box(L + ws + 0.07, h - 0.02, ws + 0.07, (x0 + x1) / 2, (h - 0.02) / 2, (z0 + z1) / 2, ry, PENCIL, {edges: false});
-      sb.box(L + ws, h, ws, (x0 + x1) / 2, h / 2 + 0.002, (z0 + z1) / 2, ry, SLATE, {seed: si * 7 + i});
+      sb.box(L + ws + 0.07, h - 0.02, ws + 0.07, (x0 + x1) / 2, (h - 0.02) / 2, (z0 + z1) / 2, ry, J ? '#5e584c' : PENCIL, {edges: false});
+      sb.box(L + ws, h, ws, (x0 + x1) / 2, h / 2 + 0.002, (z0 + z1) / 2, ry, J ? (st.w >= 28 ? '#ffffff' : '#f2c98a') : SLATE, {seed: si * 7 + i});
     }
     if (st.label) {
       const fs = st.w * 0.6 * S, {tex, aspect} = streetLabelTex(st.label, 64); track(tex);
@@ -125,10 +135,11 @@ export async function create(el, region, opt) {
       const g = new THREE.Group(); const [lx, lz] = W(...st.at); g.position.set(lx, h + 0.012, lz); g.rotation.y = st.v ? Math.PI / 2 : 0; g.add(plane); scene.add(g);
     }
   });
-  scene.add(sb.build(track(new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, map: track(stripeTex(.33, 9))})), PENCIL));
+  scene.add(sb.build(track(new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, map: track(J ? pixelTex(TT.stone) : stripeTex(.33, 9))})), PENCIL));
 
   // low-poly blocks between streets (seeded per region, avoid streets / markers / pill)
-  const R = rng(hash(region.id)), bb = new Batch(1.9), pts = Object.values(region.cafes), pl = region.pill;
+  const R = rng(hash(region.id)), bb = new Batch(1.9), tb = new Batch(1), pts = Object.values(region.cafes), pl = region.pill;
+  const roofGeo = new THREE.ConeGeometry(0.7071, 1, 4, 1), trunkGeo = new THREE.CylinderGeometry(0.05, 0.06, 0.22, 5), crownGeo = new THREE.ConeGeometry(0.2, 0.42, 6), ballGeo = new THREE.IcosahedronGeometry(0.19, 0);
   const tones = ['#fffdf8', '#fffdf8', '#fffdf8', '#f3efe4', '#e6edf2', '#fbe3ea'];
   for (let y = vy + 30; y < vy + vh - 20; y += 56) for (let x = vx + 30; x < vx + vw - 20; x += 56) {
     const jx = x + (R() - .5) * 12, jy = y + (R() - .5) * 12, sz = 30 + R() * 16, sz2 = 30 + R() * 16;
@@ -137,10 +148,19 @@ export async function create(el, region, opt) {
     if (pts.some(([px, py]) => Math.hypot(px - jx, py - jy) < 52)) continue;
     if (pl && Math.abs(jx - pl.x) < pl.w / 2 + 24 && Math.abs(jy - pl.y) < pl.h / 2 + 24) continue;
     const hgt = 0.18 + Math.pow(R(), 2.2) * 1.1, [wx, wz] = W(jx, jy);
+    if (J) { // toy JRPG overworld: cottages with pyramid roofs, or little trees
+      if (R() < 0.42) { for (let t = 0; t < 2; t++) { const ox = (R() - .5) * sz * S * .6, oz = (R() - .5) * sz2 * S * .6; tb.geo(trunkGeo, wx + ox, 0.11, wz + oz, 0, '#6b4423'); if (R() < .5) tb.geo(crownGeo, wx + ox, 0.42, wz + oz, R(), '#2f8a3a'); else tb.geo(ballGeo, wx + ox, 0.36, wz + oz, R(), '#49b04f'); } continue; }
+      const hh = 0.16 + R() * 0.28, ry = (R() - .5) * 0.1, w1 = sz * S * .85, d1 = sz2 * S * .85;
+      bb.box(w1, hh, d1, wx, hh / 2, wz, ry, '#f4e4c1', {seed: (x * 31 + y) | 0});
+      tb.geo(roofGeo, wx, hh + 0.13, wz, ry + Math.PI / 4, ROOF3[(R() * ROOF3.length) | 0], w1 * 1.12, 0.26, d1 * 1.12);
+      continue;
+    }
     bb.box(sz * S, hgt, sz2 * S, wx, hgt / 2, wz, (R() - .5) * 0.12, tones[(R() * tones.length) | 0], {seed: (x * 31 + y) | 0});
     if (R() < 0.18) bb.box(sz * S * 0.45, 0.12, sz2 * S * 0.45, wx, hgt + 0.06, wz, 0, '#f3efe4', {seed: (x + y * 17) | 0}); // little roof box
   }
-  scene.add(bb.build(track(new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, map: track(stripeTex(.16, 8))})), PENCIL));
+  scene.add(bb.build(track(new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, map: track(stripeTex(J ? .06 : .16, 8))})), PENCIL));
+  if (tb.pos.length) { const tm = tb.build(track(new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, flatShading: true})), PENCIL); scene.add(tm); }
+  [roofGeo, trunkGeo, crownGeo, ballGeo].forEach(g => g.dispose());
 
   // floating region pill
   if (pl) {
@@ -153,13 +173,13 @@ export async function create(el, region, opt) {
   const handleGeo = track(new THREE.TorusGeometry(0.11, 0.035, 6, 12, Math.PI)), pillarGeo = track(new THREE.CylinderGeometry(0.04, 0.04, 0.8, 6));
   const discGeo = track(new THREE.CircleGeometry(0.265, 16)), ringGeo = track(new THREE.RingGeometry(0.22, 0.32, 24));
   const M = {
-    cupOn: track(new THREE.MeshToonMaterial({color: PINK, gradientMap: ramp})), cupOff: track(new THREE.MeshToonMaterial({color: '#fffaf6', gradientMap: ramp, transparent: true, opacity: .9})),
+    cupOn: track(new THREE.MeshToonMaterial({color: PINK, gradientMap: ramp})), cupOff: track(new THREE.MeshToonMaterial({color: J ? '#c8c8d4' : '#fffaf6', gradientMap: ramp, transparent: true, opacity: .9})),
     coffee: track(new THREE.MeshBasicMaterial({color: '#7a4a32'})), foam: track(new THREE.MeshBasicMaterial({color: '#fbd6df'})),
     pillar: track(new THREE.MeshBasicMaterial({color: PENCIL})), edgeOn: track(new THREE.LineBasicMaterial({color: PINK_D})),
     edgeOff: track(new THREE.LineDashedMaterial({color: PINK_D, dashSize: 0.04, gapSize: 0.03})),
     ringOn: track(new THREE.MeshBasicMaterial({color: PINK, transparent: true, opacity: .55, side: THREE.DoubleSide})), ringOff: track(new THREE.MeshBasicMaterial({color: PINK_D, transparent: true, opacity: .25, side: THREE.DoubleSide})),
   };
-  const glowTex = track(canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,170,195,.95)'); gr.addColorStop(1, 'rgba(255,170,195,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
+  const glowTex = track(canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); const gc = J ? '255,220,120' : '255,170,195'; gr.addColorStop(0, `rgba(${gc},.95)`); gr.addColorStop(1, `rgba(${gc},0)`); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
   const pickables = [], markers = {};
   let n = 0;
   Object.entries(region.cafes).forEach(([id, [sx, sy, side]]) => {

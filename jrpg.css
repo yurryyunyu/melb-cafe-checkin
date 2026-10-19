@@ -1,0 +1,238 @@
+/* ================= ⚔️ JRPG theme (default) — everything scoped to html[data-theme=jrpg] ================= */
+@font-face{font-family:"FusionPixel";src:url("vendor/fonts/fusion-pixel-12-zh_hans.subset.woff2") format("woff2");font-display:swap}
+html[data-theme=jrpg]{
+  --win:linear-gradient(180deg,#3a52d6 0%,#2234a8 45%,#121c6e 100%);
+  --winb:inset 0 0 0 2px #10185c,inset 0 0 0 4px #e9ecff,0 0 0 2px #05082a,3px 4px 0 2px rgba(0,0,0,.45);
+  --px:"FusionPixel","PingFang SC","Noto Sans CJK SC",monospace;
+  --gold:#ffcd75;--hp:#4ade80;--mp:#60a5fa;--jt:#fff;--jdim:#aab4ff;
+}
+html[data-theme=jrpg],html[data-theme=jrpg] body{font-family:var(--px);color:var(--jt);-webkit-font-smoothing:none;font-smooth:never;
+  background-color:#0b0f2a;background-image:radial-gradient(#ffffff22 1px,transparent 1.5px),radial-gradient(#ffffff14 1px,transparent 1.5px);background-size:46px 46px,23px 23px;background-position:0 0,11px 13px}
+html[data-theme=jrpg] *{letter-spacing:0}
+html[data-theme=jrpg] .pxs,html[data-theme=jrpg] canvas{image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;image-rendering:pixelated}
+/* generic window */
+html[data-theme=jrpg] .jwin,html[data-theme=jrpg] .card,html[data-theme=jrpg] .stat,html[data-theme=jrpg] .bdg,html[data-theme=jrpg] .region,html[data-theme=jrpg] .player,html[data-theme=jrpg] .rec,html[data-theme=jrpg] .hero,
+html[data-theme=jrpg] .cel-card,html[data-theme=jrpg] #sheet,html[data-theme=jrpg] .map-legend,html[data-theme=jrpg] .settings,html[data-theme=jrpg] .picker-item.near{
+  background:var(--win);border:2px solid #fff;border-radius:7px;box-shadow:var(--winb);color:var(--jt);text-shadow:1px 1px 0 #000}
+html[data-theme=jrpg] .hint,html[data-theme=jrpg] .card .sub,html[data-theme=jrpg] .rec .date,html[data-theme=jrpg] .hero .addr{color:var(--jdim);text-shadow:1px 1px 0 #000}
+html[data-theme=jrpg] .card .name,html[data-theme=jrpg] .rec .cname,html[data-theme=jrpg] .hero h2,html[data-theme=jrpg] #sheet h3,html[data-theme=jrpg] .section-title,html[data-theme=jrpg] .picker-item b,html[data-theme=jrpg] .rate-head b,
+html[data-theme=jrpg] .field label,html[data-theme=jrpg] .subrates label,html[data-theme=jrpg] .empty,html[data-theme=jrpg] .player-name,html[data-theme=jrpg] .rg-top,html[data-theme=jrpg] .bdg{font-family:var(--px);font-weight:400}
+html[data-theme=jrpg] .card .name{font-size:16px}
+html[data-theme=jrpg] .section-title{font-size:16px;color:var(--gold);text-shadow:2px 2px 0 #000;margin:20px 2px 8px}
+html[data-theme=jrpg] .section-title a{color:var(--jdim)!important;font-size:12px!important}
+html[data-theme=jrpg] .empty{color:var(--jdim);font-size:16px}
+/* top bar + HUD */
+html[data-theme=jrpg] #topbar{background:var(--win);border:0;border-bottom:2px solid #fff;box-shadow:inset 0 -4px 0 #10185c,0 2px 0 #05082a;color:#fff}
+html[data-theme=jrpg] #topbar:after{display:none}
+html[data-theme=jrpg] #topbar h1{font-family:var(--px);font-weight:400;font-size:20px;text-shadow:2px 2px 0 #000}
+html[data-theme=jrpg] .icon-btn{color:#fff;font-family:var(--px)}
+html[data-theme=jrpg] .top-right button{font-family:var(--px);font-weight:400;font-size:14px;background:#10185c;color:#fff;border:2px solid #fff;border-radius:5px}
+html[data-theme=jrpg] #hud{gap:8px;align-items:center}
+html[data-theme=jrpg] .hud-lv{font-family:var(--px);font-weight:400;font-size:14px;background:#10185c;border:2px solid #fff;border-radius:4px;color:var(--gold);padding:4px 6px}
+html[data-theme=jrpg] .hud-title{font-family:var(--px);font-size:12px;color:#fff;margin-bottom:2px}
+html[data-theme=jrpg] .hud-bar{display:flex;align-items:center;gap:6px;font-size:12px;line-height:1.2;margin-top:2px}
+html[data-theme=jrpg] .hud-bar span{width:3.4em;flex:none;color:var(--gold)}
+html[data-theme=jrpg] .hud-bar em{font-style:normal;width:5.4em;text-align:right;flex:none;color:#fff}
+html[data-theme=jrpg] .hud-bar .xpbar{flex:1}
+html[data-theme=jrpg] .xpbar,html[data-theme=jrpg] .progress{height:8px;border:2px solid #fff;border-radius:2px;background:#05082a;box-shadow:0 0 0 1px #05082a}
+html[data-theme=jrpg] .xpbar i,html[data-theme=jrpg] .progress i{background:linear-gradient(#a5d0ff 0 30%,var(--mp) 30% 70%,#2563eb 70%);border:0}
+html[data-theme=jrpg] .xpbar.cfbar i{background:linear-gradient(#bbf7d0 0 30%,var(--hp) 30% 70%,#16a34a 70%)}
+html[data-theme=jrpg] .xpbar.big{height:10px}
+.snd-btn{flex:none;background:#10185c;border:2px solid #fff;border-radius:4px;font-size:16px;line-height:1;padding:4px 6px;cursor:pointer}
+html:not([data-theme=jrpg]) #hud .snd-btn{display:none}
+/* tab bar = command menu */
+html[data-theme=jrpg] #tabbar{background:var(--win);border-top:2px solid #fff;box-shadow:inset 0 4px 0 #10185c}
+html[data-theme=jrpg] #tabbar:before{display:none}
+html[data-theme=jrpg] #tabbar a{font-family:var(--px);font-weight:400;font-size:13px;color:var(--jdim);position:relative}
+html[data-theme=jrpg] #tabbar a .ti{filter:none;opacity:.8}
+html[data-theme=jrpg] #tabbar a.active{color:#fff}
+html[data-theme=jrpg] #tabbar a.active span:last-child{background:none}
+html[data-theme=jrpg] #tabbar a.active:before{content:"▶";position:absolute;left:6px;bottom:8px;font-size:11px;color:#fff;animation:jcur .8s steps(2) infinite}
+html[data-theme=jrpg] .cam-circle{border:3px solid #fff;border-radius:10px;background:linear-gradient(180deg,#ffe08a,#e8a33a 60%,#b06f12);box-shadow:0 0 0 2px #05082a,0 0 14px #ffcd7588,inset 0 -4px 0 #9a5c0c;transform:rotate(45deg);width:50px;height:50px;margin-top:-22px}
+html[data-theme=jrpg] .cam-circle{font-size:0}
+html[data-theme=jrpg] .cam-circle:after{content:"📷";font-size:26px;transform:rotate(-45deg)}
+html[data-theme=jrpg] .cam-label{font-family:var(--px);font-weight:400;font-size:13px;color:var(--gold);text-shadow:1px 1px 0 #000;margin-top:12px}
+@keyframes jcur{50%{opacity:.25}}
+/* menu cursor ▶ */
+html[data-theme=jrpg] .jmenu{display:flex;flex-direction:column;gap:2px}
+html[data-theme=jrpg] .jmenu-item{display:block;width:100%;text-align:left;background:none;border:0;color:#fff;font-family:var(--px);font-size:15px;padding:6px 6px 6px 24px;position:relative;cursor:pointer;text-shadow:1px 1px 0 #000;border-radius:3px}
+html[data-theme=jrpg] .jmenu-item.on,html[data-theme=jrpg] .jmenu-item:hover,html[data-theme=jrpg] .jmenu-item:focus-visible{background:#ffffff1a;outline:0}
+html[data-theme=jrpg] .jmenu-item.on:before,html[data-theme=jrpg] .jmenu-item:hover:before{content:"▶";position:absolute;left:6px;top:50%;transform:translateY(-50%);animation:jcur .8s steps(2) infinite}
+html[data-theme=jrpg] .jmenu-item .st{color:var(--gold);letter-spacing:1px}
+/* inputs, chips, buttons */
+html[data-theme=jrpg] .search select{-webkit-appearance:none;appearance:none;background-image:none}
+html[data-theme=jrpg] .search input,html[data-theme=jrpg] .search select,html[data-theme=jrpg] .field input,html[data-theme=jrpg] .field select,html[data-theme=jrpg] .field textarea{background:#05082a;color:#fff;border:2px solid #fff;border-radius:5px;font-family:var(--px);box-shadow:inset 0 0 0 2px #10185c}
+html[data-theme=jrpg] .chip{background:#10185c;color:#fff;border:2px solid #aab4ff;border-radius:5px;font-family:var(--px);font-size:13px;position:relative;text-shadow:1px 1px 0 #000}
+html[data-theme=jrpg] .chip.on{background:#2a3fbf;border-color:#fff;padding-left:22px}
+html[data-theme=jrpg] .chip.on:before{content:"▶";position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:10px;animation:jcur .8s steps(2) infinite}
+html[data-theme=jrpg] .region-tabs .chip{font-family:var(--px);letter-spacing:.06em;font-size:12px}
+html[data-theme=jrpg] .region-tabs .chip.on{background:#2a3fbf;border-color:#fff}
+html[data-theme=jrpg] .btn{font-family:var(--px);font-weight:400;font-size:17px;background:var(--win);color:#fff;border:2px solid #fff;border-radius:7px;box-shadow:var(--winb);text-shadow:1px 1px 0 #000;position:relative}
+html[data-theme=jrpg] .btn:active{transform:translateY(2px)}
+html[data-theme=jrpg] .btn:hover:before,html[data-theme=jrpg] .btn:active:before{content:"▶";position:absolute;left:14px}
+html[data-theme=jrpg] .game-btn{background:linear-gradient(180deg,#ffe08a,#e8a33a 60%,#b06f12);color:#2a1600;text-shadow:0 1px 0 #ffe9b0;box-shadow:inset 0 0 0 2px #7a4a0a,0 0 0 2px #05082a,3px 4px 0 2px rgba(0,0,0,.45)}
+html[data-theme=jrpg] .btn.ghost{background:#10185c}
+html[data-theme=jrpg] .btn.danger{background:#5a1020;border-color:#ffb4b4}
+html[data-theme=jrpg] .fab-add{font-family:var(--px);font-weight:400;font-size:15px;background:#10185c;color:#fff;border:2px solid #fff;border-radius:6px}
+/* cards */
+html[data-theme=jrpg] .card{padding:10px 12px}
+html[data-theme=jrpg] .num{border:2px solid #1a1c2c;border-radius:3px;background:linear-gradient(#c27141,#8a4b2a);color:#fff;font-family:var(--px);font-weight:400;font-size:14px;box-shadow:0 2px 0 #1a1c2c;text-shadow:1px 1px 0 #000}
+html[data-theme=jrpg] .num.done{background:linear-gradient(#ffe08a,#e8a33a);color:#2a1600;text-shadow:none}
+html[data-theme=jrpg] .thumb{border:2px solid #fff;border-radius:4px;filter:none}
+html[data-theme=jrpg] .badge-done,html[data-theme=jrpg] .badge-new{font-family:var(--px);font-weight:400;font-size:12px;border-radius:3px}
+html[data-theme=jrpg] .badge-done{color:#2a1600;background:var(--gold);border-color:#fff}
+html[data-theme=jrpg] .badge-new{color:var(--jdim);border:2px solid #4a55a8}
+html[data-theme=jrpg] .tag{border:2px solid #4a55a8;border-radius:3px;color:#fff;font-size:12px}
+html[data-theme=jrpg] .stars{color:var(--gold)}
+html[data-theme=jrpg] .star-input span{-webkit-text-stroke:1.5px #aab4ff}
+html[data-theme=jrpg] .star-input span.on{color:var(--gold);-webkit-text-stroke:1.5px #b07a1e}
+html[data-theme=jrpg] .rec img,html[data-theme=jrpg] .hero-photo,html[data-theme=jrpg] .grid3 img,html[data-theme=jrpg] .rate-head img{border:2px solid #fff;border-radius:4px;filter:none}
+html[data-theme=jrpg] .rec .edit,html[data-theme=jrpg] .warn{font-family:var(--px);font-weight:400;font-size:14px;color:var(--gold)}
+html[data-theme=jrpg] .warn{background:#5a1020;color:#fff;border-radius:4px}
+html[data-theme=jrpg] .photo-drop{background:#05082a;color:var(--jdim);border:2px dashed #aab4ff;border-radius:6px}
+html[data-theme=jrpg] .picker-item{border-bottom:2px dotted #4a55a8}
+/* sheet */
+html[data-theme=jrpg] #sheetBg{background:rgba(5,8,42,.6)}
+html[data-theme=jrpg] #sheet{left:6px;right:6px;bottom:6px;border-radius:8px}
+html[data-theme=jrpg] #sheet:before{border-color:#fff}
+html[data-theme=jrpg] #sheet h3{font-size:17px;color:var(--gold)}
+html[data-theme=jrpg] .rate-menu{background:#05082a;border:2px solid #fff;border-radius:5px;padding:4px}
+/* toast -> dialogue box */
+html[data-theme=jrpg] #toast{opacity:0!important;pointer-events:none}
+#dlg{display:none}
+html[data-theme=jrpg] #dlg{display:flex;position:fixed;left:8px;right:8px;bottom:calc(76px + var(--safe-b));z-index:1500;gap:10px;align-items:flex-start;padding:10px 12px 14px;min-height:76px;
+  transform:translateY(16px);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+html[data-theme=jrpg] #dlg.show{opacity:1;transform:none;pointer-events:auto}
+.dlg-face{width:56px;height:56px;flex:none;background:#10185c;border:2px solid #fff;border-radius:4px}
+.dlg-body{flex:1;min-width:0}.dlg-name{color:var(--gold);font-size:12px;margin-bottom:2px}.dlg-text{font-size:15px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.dlg-next{position:absolute;right:10px;bottom:4px;font-size:10px;opacity:0}#dlg.done .dlg-next{opacity:1;animation:jcur .8s steps(2) infinite}
+/* ---------- pixel overworld map ---------- */
+html[data-theme=jrpg] .region-banner{margin:4px 10px 8px;text-align:center;padding:8px 10px}
+.rb-name{font-size:20px;color:#fff;letter-spacing:.12em;text-shadow:2px 2px 0 #000}
+.rb-sub{font-size:13px;color:var(--jdim)}.rb-sub b{color:var(--gold);font-weight:400}
+.px-wrap{position:relative;height:min(58vh,500px);min-height:320px;margin:0 6px;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;background:#3f8a30;
+  border:2px solid #fff;border-radius:7px;box-shadow:var(--winb);overscroll-behavior:contain}
+.px-world{position:relative}
+.px-ground{position:absolute;left:0;top:0;display:block;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;image-rendering:pixelated}
+.px-mk{position:absolute;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.px-cafe{display:block;width:100%;height:100%;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;image-rendering:pixelated}
+.px-mk.locked .px-cafe{filter:grayscale(.9) brightness(.72) contrast(.9)}
+.px-fog{position:absolute;left:-30%;top:-15%;width:160%;height:120%;pointer-events:none;background:radial-gradient(closest-side,#e6ecffcc,#e6ecff55 60%,transparent);opacity:.55;animation:fog 4s ease-in-out infinite alternate}
+@keyframes fog{to{transform:translateX(8%);opacity:.35}}
+.px-spark{position:absolute;width:6px;height:6px;pointer-events:none;background:conic-gradient(from 45deg,#fff 0 25%,transparent 0 50%,#fff 0 75%,transparent 0);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:spark 1.6s steps(4) infinite}
+.px-spark.s1{left:-2px;top:2px}.px-spark.s2{right:-3px;top:30%;animation-delay:.5s}.px-spark.s3{left:45%;top:-6px;animation-delay:1s}
+@keyframes spark{0%,100%{transform:scale(.3);opacity:0}50%{transform:scale(1.2);opacity:1}}
+.px-no{position:absolute;left:50%;top:-14px;transform:translateX(-50%);min-width:16px;height:14px;padding:0 3px;font:12px/12px var(--px,monospace);font-family:"FusionPixel",monospace;color:#fff;text-align:center;
+  background:linear-gradient(#c27141,#8a4b2a);border:1px solid #1a1c2c;box-shadow:0 1px 0 #1a1c2c;text-shadow:1px 1px 0 #000;z-index:2}
+.px-no:after{content:"";position:absolute;left:50%;top:13px;width:2px;height:4px;margin-left:-1px;background:#5d3a1a}
+.px-mk.done .px-no{background:linear-gradient(#ffe08a,#e8a33a);color:#2a1600;text-shadow:none}
+.px-name{position:absolute;top:100%;margin-top:-2px;white-space:nowrap;font-family:"FusionPixel",monospace;font-size:12px;line-height:12px;color:#fff;text-shadow:1px 0 0 #000,-1px 0 0 #000,0 1px 0 #000,0 -1px 0 #000;pointer-events:none}
+.px-name.side-r{left:30%}.px-name.side-l{right:30%}
+.px-mk.locked .px-name{color:#c8d0ff}
+.px-mk.sel .px-no{outline:2px solid #fff;animation:jcur .5s steps(2) infinite}
+.px-street{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-family:"FusionPixel",monospace;font-size:12px;letter-spacing:.32em;color:#fffbe6;opacity:.85;text-shadow:1px 1px 0 #3a2a14;pointer-events:none}
+.px-street.v{transform:translate(-50%,-50%) rotate(-90deg)}
+.px-hero{position:absolute;width:16px;height:16px;pointer-events:none;transition:none}
+.px-hero canvas{width:100%;height:100%;display:block;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;image-rendering:pixelated}
+.px-hero:not(.walking) canvas{animation:herobob 1s steps(2) infinite}
+@keyframes herobob{50%{transform:translateY(-1px)}}
+.px-hero.bang:after{content:"!";position:absolute;left:50%;top:-14px;transform:translateX(-50%);font:12px "FusionPixel",monospace;color:#fff;background:#b13e53;border:1px solid #fff;padding:0 3px}
+.px-range{position:absolute;border:2px dashed #fffbe6;border-radius:50%;background:#60a5fa22;pointer-events:none;animation:ringfade 2.4s ease-in-out infinite}
+/* 3D map in JRPG theme */
+html[data-theme=jrpg] .m3d-wrap{border:2px solid #fff;border-radius:7px;box-shadow:var(--winb);background:linear-gradient(#7ec8ff,#c9ecff 60%,#e8f6ff)}
+html[data-theme=jrpg] .m3d-loading{font-family:var(--px);color:#10185c;font-size:16px}
+html[data-theme=jrpg] .m3d-hint{font-family:var(--px);font-size:12px;color:#10185c}
+html[data-theme=jrpg] .m3d-pill{font-family:var(--px);font-weight:400;letter-spacing:.1em;-webkit-text-stroke:0;background:var(--win);border:2px solid #fff;border-radius:6px;text-shadow:1px 1px 0 #000;box-shadow:0 0 0 2px #05082a}
+html[data-theme=jrpg] .m3d-no{font-family:var(--px);font-weight:400;font-size:13px;border-radius:3px;border:2px solid #1a1c2c;background:linear-gradient(#c27141,#8a4b2a);color:#fff;-webkit-text-stroke:0;text-shadow:1px 1px 0 #000}
+html[data-theme=jrpg] .m3d-mk.done .m3d-no{background:linear-gradient(#ffe08a,#e8a33a);color:#2a1600;text-shadow:none}
+html[data-theme=jrpg] .m3d-mk.done::after{content:"✦";color:#fff;text-shadow:0 0 4px #ffcd75}
+html[data-theme=jrpg] .m3d-name{font-family:var(--px);font-weight:400;font-size:12px;color:#fff;text-shadow:1px 0 0 #000,-1px 0 0 #000,0 1px 0 #000,0 -1px 0 #000}
+html[data-theme=jrpg] .m3d-mk.done .m3d-name{color:#fff}
+html[data-theme=jrpg] .m3d-me{font-family:var(--px);font-weight:400;border-radius:3px}
+/* map tools */
+html[data-theme=jrpg] .sk-tools button,html[data-theme=jrpg] .sk-tools .dim-toggle{font-family:var(--px);font-weight:400;font-size:14px;background:#10185c;color:#fff;border:2px solid #fff;border-radius:5px;box-shadow:0 0 0 2px #05082a}
+html[data-theme=jrpg] .sk-tools .dim-toggle button{border:0;box-shadow:none;font-family:var(--px);font-size:13px;border-radius:0}
+html[data-theme=jrpg] .sk-tools .dim-toggle button.on,html[data-theme=jrpg] .settings .dim-toggle button.on{background:var(--gold);color:#2a1600}
+html[data-theme=jrpg] .region-head b,html[data-theme=jrpg] .rg-count{font-family:var(--px);color:#fff}
+/* ---------- encounter / chest / level up ---------- */
+#jfx{position:fixed;inset:0;z-index:2100;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:"FusionPixel",monospace;color:#fff}
+#jfx.hidden{display:none}
+#jfx.enc{background:#0b0f2a}
+.enc-flash{position:absolute;inset:0;background:repeating-linear-gradient(0deg,#fff 0 12px,transparent 12px 24px);animation:encflash .45s steps(3) both;pointer-events:none}
+@keyframes encflash{0%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(.1)}}
+.enc-stage{position:relative;width:100%;height:46vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(#7ec8ff 0 55%,#5fb547 55% 100%)}
+.enc-ground{position:absolute;left:50%;top:58%;width:220px;height:46px;margin-left:-110px;border-radius:50%;background:#3f8a30;box-shadow:inset 0 -6px 0 #2f7a28}
+.enc-stage canvas{position:relative;width:144px;height:144px;animation:encin .6s steps(6) .15s both}
+@keyframes encin{from{transform:translateX(120vw)}to{transform:none}}
+.enc-box,.chest-box,.lv-box{width:min(360px,92vw);padding:14px 16px;margin-top:-18px;position:relative}
+html:not([data-theme=jrpg]) .enc-box,html:not([data-theme=jrpg]) .chest-box,html:not([data-theme=jrpg]) .lv-box{background:linear-gradient(180deg,#3a52d6,#121c6e);border:2px solid #fff;border-radius:7px}
+.enc-text{min-height:3em;font-size:17px;line-height:1.5;text-shadow:1px 1px 0 #000}
+.enc-menu{flex-direction:row!important;margin-top:6px}
+#celebrate.jrpg-cel{background:rgba(5,8,42,.88);flex-direction:column}
+.chest-rays{position:absolute;width:900px;height:900px;background:repeating-conic-gradient(#ffcd7533 0 6deg,transparent 6deg 18deg);border-radius:50%;animation:spin 14s linear infinite;opacity:0;transition:opacity .4s}
+#celebrate.jrpg-cel .chest-stage.open~*{opacity:1}
+.chest-box{text-align:center}
+.chest-box .cel-title{font-family:"FusionPixel",monospace;font-weight:400;font-size:22px;color:var(--gold,#ffcd75);text-shadow:2px 2px 0 #000}
+.chest-box .cel-cafe{font-family:"FusionPixel",monospace;font-weight:400;font-size:15px;color:#fff;margin:2px 0}
+.chest-stage{height:96px;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.chest-stage canvas{width:80px;height:80px}
+.chest-stage.shake canvas{animation:chshake .12s steps(2) infinite}
+@keyframes chshake{50%{transform:translateX(3px) rotate(3deg)}}
+.chest-stage.open:before{content:"";position:absolute;left:50%;bottom:30px;width:120px;height:120px;margin-left:-60px;background:radial-gradient(#fff6c0,#ffcd7500 70%);animation:glow .6s ease-out both}
+@keyframes glow{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+.chest-text{min-height:1.6em;font-size:16px;color:#fff;text-shadow:1px 1px 0 #000;margin:6px 0}
+.chest-box .cel-xp{display:none}
+.chest-lines{opacity:0;transition:opacity .3s;font-size:13px;text-align:left}.chest-lines.show{opacity:1}
+.chest-lines .cel-reg,.chest-lines .cel-badge{border:2px solid #4a55a8;border-radius:4px;padding:4px 8px;margin-top:6px;font-size:13px}
+.chest-box .jmenu{margin-top:8px}
+#celebrate.jrpg-cel .chest-rays{opacity:1}
+#celebrate.lvup{background:#05082a}
+.lv-burst{position:absolute;inset:0;background:radial-gradient(circle,#ffcd7555 0 18%,transparent 19%) 0 0/40px 40px;animation:lvb 1.2s steps(6) infinite}
+@keyframes lvb{to{background-position:40px 40px}}
+.lv-box{text-align:center}
+.lv-title{font-size:34px;color:var(--gold,#ffcd75);text-shadow:3px 3px 0 #b13e53,6px 6px 0 #000;animation:lvpop .8s steps(4) both;letter-spacing:.06em}
+@keyframes lvpop{0%{transform:scale(3);opacity:0}100%{transform:none;opacity:1}}
+.lv-hero canvas{width:80px;height:80px;margin:8px auto;display:block;animation:herojump .6s steps(3) infinite alternate}
+@keyframes herojump{to{transform:translateY(-8px)}}
+.lv-row{font-size:16px;margin:4px 0;text-shadow:1px 1px 0 #000}.lv-row b{color:var(--gold,#ffcd75);font-weight:400}.lv-row.small{font-size:12px;color:#aab4ff}
+/* ---------- quest log / compendium / inventory ---------- */
+html[data-theme=jrpg] .status{display:flex;gap:12px;align-items:center;padding:12px}
+.st-hero canvas{width:64px;height:64px;background:#10185c;border:2px solid #fff;border-radius:4px;display:block}
+.st-main{flex:1;min-width:0}.st-name{font-size:18px;color:#fff}.st-title{font-size:12px;color:var(--gold,#ffcd75);margin-bottom:4px}
+html[data-theme=jrpg] .st-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px;margin-top:10px;text-align:center;font-size:12px;color:var(--jdim)}
+.st-stats b{display:block;font-size:16px;color:#fff;font-weight:400}
+html[data-theme=jrpg] .quests{padding:8px 12px}
+.quest{padding:8px 0;border-bottom:2px dotted #4a55a8}.quest:last-child{border:0}
+.q-top{display:flex;gap:8px;align-items:center;font-size:14px}.q-top b{flex:1;font-weight:400;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.q-kind{font-size:11px;padding:0 4px;border:1px solid #aab4ff;border-radius:2px;color:#aab4ff;flex:none}
+.quest.clear .q-kind{border-color:var(--gold,#ffcd75);color:var(--gold,#ffcd75)}
+.q-st{flex:none;color:var(--gold,#ffcd75);font-size:13px}
+.quest:not(.clear) .q-st{color:#fff}
+.quest small{color:#aab4ff;font-size:11px}
+.quest .xpbar{margin:4px 0 2px}
+.dex{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dex-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;text-decoration:none;color:#fff;background:#10185c;border:2px solid #4a55a8;border-radius:5px;text-shadow:1px 1px 0 #000;min-width:0}
+.dex-item.seen{border-color:#fff;background:linear-gradient(#2a3fbf,#10185c)}
+.dex-no{font-size:10px;color:#aab4ff}
+.dex-item canvas{width:48px;height:48px}
+.dex-item.unk canvas{filter:brightness(0);opacity:.45}
+.dex-name{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-theme=jrpg] .inv{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;padding:10px 12px}
+.inv-item{display:flex;align-items:center;gap:6px;font-size:13px;padding:4px 0;position:relative}
+.inv-item .ii{width:24px;height:24px;flex:none;display:flex;align-items:center;justify-content:center;background:#05082a;border:1px solid #aab4ff;border-radius:3px;font-size:14px}
+.inv-item.off{color:#6d78c8}
+.inv-item em{font-style:normal;font-size:10px;color:#2a1600;background:var(--gold,#ffcd75);padding:0 3px;border-radius:2px;margin-left:auto}
+/* settings (both themes) */
+.settings{padding:8px 12px;margin-bottom:12px}
+html:not([data-theme=jrpg]) .settings{background:#fffdf8;border:2px solid var(--pencil);border-radius:var(--r1)}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0}
+.settings .dim-toggle button{border:0;background:none;padding:4px 10px;font:inherit;color:inherit;cursor:pointer}
+html:not([data-theme=jrpg]) .settings .dim-toggle{box-shadow:none}
+html:not([data-theme=jrpg]) .settings .dim-toggle button.on{background:var(--pink);color:#fff}
+html[data-theme=jrpg] .settings .dim-toggle{border:2px solid #fff;border-radius:5px;overflow:hidden;display:inline-flex}
+html[data-theme=jrpg] .settings .dim-toggle button{color:#fff;font-family:var(--px)}
+html:not([data-theme=jrpg]) .snd-btn{background:#fffdf8;border:2px solid var(--pencil);border-radius:var(--r2)}
+/* list region filter header etc */
+html[data-theme=jrpg] .stats .stat b{font-family:var(--px);font-weight:400;color:var(--gold)}
+/* dialogue moves to the top while a sheet is open so it never covers the menu */
+html[data-theme=jrpg].sheet-open #dlg{bottom:auto;top:calc(8px + env(safe-area-inset-top,0px))}

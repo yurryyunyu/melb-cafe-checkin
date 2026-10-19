@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="咖啡打卡">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>墨尔本咖啡打卡</title>
+<script>try{var __t=JSON.parse(localStorage.getItem("mcc.theme"))}catch(e){}document.documentElement.setAttribute("data-theme",__t==="sketch"?"sketch":"jrpg");</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -24,10 +25,13 @@
   #boot .err{display:none;max-width:320px;font-size:14px;color:#c94a6b}
   #boot.failed .err{display:block}
   #boot button{margin-top:6px;border:2px solid #4a4a4a;border-radius:14px;background:#fbd6df;padding:8px 18px;font-size:15px}
+  html[data-theme=jrpg],html[data-theme=jrpg] body,html[data-theme=jrpg] #boot{background:#0b0f2a;color:#fff}
+  html[data-theme=jrpg] #boot button{background:#29366f;color:#fff;border-color:#fff;border-radius:4px}
   html.booted #boot{display:none}
   @keyframes bootb{to{transform:translateY(-6px)}}
 </style>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="jrpg.css">
 </head>
 <body>
 <div id="boot"><div class="cup">☕</div><div>墨尔本咖啡打卡 加载中…</div><div class="err" id="bootErr">加载有点慢或出错了，请检查网络后重试。</div><button id="bootRetry" style="display:none" onclick="location.reload()">重新加载</button></div>
@@ -58,6 +62,8 @@
 <script src="maps.js"></script>
 <script src="sketchmap.js"></script>
 <script src="integrations.js"></script>
+<script src="jrpg.js"></script>
+<script src="pixelmap.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
