@@ -277,7 +277,7 @@ function openBeanSheet({photo = '', bean = null, isNew = !bean, auto = false}) {
         if (myTok !== beanToken || !$('#bRaw', el)) return;
         $('#bRaw', el).value = res.text; fill(res.fields || Beans.parse(res.text), false);
         setSt(res.source === 'vision' ? '✅ AI 识别完成，请检查字段' : `✅ 识别完成（置信度 ${res.confidence}%），请检查并修改字段`, 100); el.dataset.ocr = 'done'; SFXplay('confirm');
-      } catch (e) { console.warn('bean OCR failed', e); if (myTok !== beanToken) return; setSt('⚠️ 识别失败：' + (e && e.message || e) + ' —— 可以直接手动填写/粘贴文字', 0); el.dataset.ocr = 'failed'; }
+      } catch (e) { console.warn('bean OCR failed', e); if (myTok !== beanToken) return; const msg = e && typeof e === 'object' ? (e.message || '') : (e ? String(e) : ''); setSt('⚠️ 识别失败：' + (msg && msg !== 'undefined' ? msg : '识别引擎加载失败（网络或浏览器不支持）') + ' —— 可以直接手动填写/粘贴文字', 0); el.dataset.ocr = 'failed'; }
       finally { el.classList.remove('ocr-busy'); }
     };
     const re = $('#ocrRe', el); if (re) re.onclick = run;
