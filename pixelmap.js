@@ -106,9 +106,9 @@ function nearestWalk(M, c, r) {
 
 function create(wrap, region, opt) {
   const J = window.JRPG; if (!J) throw new Error('JRPG kit missing');
-  const {visited, cafeById, me, fitAffine, focusId, onOpen = () => {}, heroAt, onHeroMove = () => {}, rangeM = 250, kit = null} = opt;
+  const {visited, cafeById, me, fitAffine, focusId, onOpen = () => {}, heroAt, onHeroMove = () => {}, rangeM = 250, kit = null, tired = false} = opt;
   const M = build(region, !!kit), W = M.cols * TS, H = M.rows * TS;
-  const CS = kit ? kit.cafeSize : 24, cafeSprite = kit ? kit.cafeSprite : J.cafeSprite, drawHero = kit ? kit.drawHero : J.drawHero;
+  const CS = kit ? kit.cafeSize : 24, cafeSprite = kit ? kit.cafeSprite : J.cafeSprite, drawHero0 = kit ? kit.drawHero : J.drawHero;
   const world = document.createElement('div'); world.className = 'px-world';
   const ground = paintMap(M, kit ? kit.tiles : undefined); world.appendChild(ground);
   const sprites = [];
@@ -125,7 +125,8 @@ function create(wrap, region, opt) {
   // street signs (spaced uppercase, like the sketch map)
   region.streets.forEach(st => { if (!st.label) return; const l = document.createElement('div'); l.className = 'px-street' + (st.v ? ' v' : ''); l.textContent = st.label; world.appendChild(l); sprites.push({el: l, x: (st.at[0] - M.vx) / U * TS, y: (st.at[1] - M.vy) / U * TS, label: true}); });
   // hero
-  const heroEl = document.createElement('div'); heroEl.className = 'px-hero';
+  const heroEl = document.createElement('div'); heroEl.className = 'px-hero' + (tired ? ' tired' : '');
+  const drawHero = (c, d, f) => { drawHero0(c, d, f); if (tired && !f && !heroEl.classList.contains('walking')) J.tire(c); }; // exhausted: slumps whenever standing still
   const hc = document.createElement('canvas'); hc.width = 16; hc.height = 16; heroEl.appendChild(hc); drawHero(hc, 'down', 0);
   let ring = null, meIn = false, start = null;
   if (me && fitAffine) { const f = fitAffine(region, cafeById); if (f) { const [mx, my] = f(me[1], me[0]), [nx, ny] = f(me[1], me[0] + rangeM / 111320); const [vx, vy, vw, vh] = region.vb;

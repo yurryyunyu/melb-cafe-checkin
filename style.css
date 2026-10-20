@@ -294,3 +294,35 @@ a{color:inherit}
 .vl-packet small{font-size:10px;opacity:.8;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vl-packet.add{--ph:100;opacity:.85;border-style:dashed}.vl-packet .pk-plus{font-size:28px;line-height:36px}
 .vl-packet.big{width:150px;margin:8px auto;padding-bottom:10px}.vl-packet.big b{font-size:16px;white-space:normal;text-align:center}.vl-packet.big .pk-top{font-size:13px}.vl-packet .pk-spr{display:block;margin:6px 0}
+/* ---------- ❤️ stamina bar (体力 / HP) — all themes ---------- */
+html[data-theme=sketch] .hud-main .st-row{display:flex;align-items:center;gap:6px;font-size:13px;line-height:1.1;margin-top:4px}
+html[data-theme=sketch] .st-row span{flex:none;font-weight:700}
+html[data-theme=sketch] .st-row .xpbar{flex:1;margin:0;height:9px}
+html[data-theme=sketch] .st-row em{font-style:normal;flex:none;min-width:3.6em;text-align:right;font-size:12px}
+.st-row{position:relative}
+.xpbar.stbar{position:relative;overflow:hidden}
+html:root .hud-bar .xpbar.stbar i,html:root .xpbar.stbar i{transition:width .75s cubic-bezier(.25,1.3,.5,1),background .4s}
+html:root .hud-bar .xpbar.stbar.st-hi i,html:root .xpbar.stbar.st-hi i{background:linear-gradient(#bbf7d0 0 30%,#4ade80 30% 70%,#16a34a 70%)}
+html:root .hud-bar .xpbar.stbar.st-mid i,html:root .xpbar.stbar.st-mid i{background:linear-gradient(#fef08a 0 30%,#facc15 30% 70%,#ca8a04 70%)}
+html:root .hud-bar .xpbar.stbar.st-lo i,html:root .xpbar.stbar.st-lo i{background:linear-gradient(#fecaca 0 30%,#ef4444 30% 70%,#b91c1c 70%)}
+.xpbar.stbar:after{content:"";position:absolute;inset:0;background:#ff2a2a;opacity:0;pointer-events:none}
+.st-hit{animation:stshake .5s cubic-bezier(.36,.07,.19,.97)}
+.st-hit .xpbar.stbar:after{animation:stflash .6s ease-out}
+.st-hit span{color:#ff4d4d!important}
+@keyframes stshake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+@keyframes stflash{0%{opacity:.85}100%{opacity:0}}
+.st-dmg{position:absolute;right:2.6em;top:-6px;z-index:5;font-size:16px;font-weight:900;color:#ff3b3b;pointer-events:none;white-space:nowrap;
+  text-shadow:1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,0 2px 3px rgba(0,0,0,.35);animation:stfloat 1.5s ease-out forwards}
+.st-dmg.jdmg{font-family:var(--px,monospace);font-size:17px;color:#fff;text-shadow:2px 0 0 #c81e1e,-2px 0 0 #c81e1e,0 2px 0 #c81e1e,0 -2px 0 #c81e1e,2px 2px 0 #4a0000;animation:stbounce 1.5s ease-out forwards}
+@keyframes stfloat{0%{transform:translateY(6px) scale(.6);opacity:0}15%{transform:translateY(0) scale(1.25);opacity:1}70%{opacity:1}100%{transform:translateY(-22px) scale(1);opacity:0}}
+@keyframes stbounce{0%{transform:translateY(0);opacity:0}10%{transform:translateY(-14px);opacity:1}25%{transform:translateY(0)}35%{transform:translateY(-5px)}45%{transform:translateY(0)}80%{opacity:1}100%{transform:translateY(-6px);opacity:0}}
+.st-num.st-tick{color:#ff4d4d!important}
+.st-empty span{animation:stblink 1.2s steps(2) infinite;color:#ff4d4d!important}
+.st-empty .xpbar.stbar{outline:2px solid rgba(239,68,68,.6);outline-offset:1px}
+@keyframes stblink{50%{opacity:.35}}
+.st-line{color:#d23b3b}
+.px-hero.tired:after{content:"z z";position:absolute;left:62%;top:-10px;font:bold 9px/1 var(--px,monospace);color:#fff;text-shadow:1px 1px 0 #223;animation:stzz 1.8s ease-in-out infinite;pointer-events:none}
+@keyframes stzz{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-4px);opacity:1}}
+.player.tired .player-ava{filter:saturate(.6)}
+#hud.st-peek{animation:stpeek .25s ease-out}
+@keyframes stpeek{from{transform:translateY(-8px);opacity:0}}

@@ -30,7 +30,11 @@ const saveBeans = () => save(K.beans, beans);
 const visitedIds = () => new Set(checkins.filter(c => c.cafeId).map(c => c.cafeId));
 const checkinsOf = id => checkins.filter(c => c.cafeId === id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+// Melbourne local date (the app's home timezone); window.__valleyNow pins the clock for tests
+const nowMs = () => window.__valleyNow != null ? +new Date(window.__valleyNow) : Date.now();
+const MEL_FMT = new Intl.DateTimeFormat('en-CA', {timeZone: 'Australia/Melbourne', year: 'numeric', month: '2-digit', day: '2-digit'});
+const melDate = ms => { try { return MEL_FMT.format(new Date(ms)); } catch (e) { const d = new Date(ms); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); } };
+const today = () => melDate(nowMs());
 const stars = n => n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '';
 
 // ---------- 🎨 theme: cozy valley (default) · JRPG · sketch ----------
@@ -48,16 +52,49 @@ function applyTheme() {
 applyTheme();
 function setTheme(t) { THEME = t; save('mcc.theme', t); applyTheme(); const d = $('#dlg'); if (d) d.classList.remove('show'); render(); }
 document.addEventListener('click', e => { const b = e.target.closest('[data-snd]'); if (b && window.JRPG) { JRPG.SFX.set(!JRPG.SFX.on); } });
-function caffeine() { // 咖啡因: each check-in in the last 12h adds up to 40, fading out
-  const now = Date.now(); let v = 0; checkins.forEach(c => { const age = (now - (c.createdAt || 0)) / 3.6e6; if (age >= 0 && age < 12) v += 40 * (1 - age / 12); });
-  return Math.min(100, Math.round(v));
+// ---------- ❤️ stamina (体力 / HP): 100 per Melbourne day, each check-in today costs 20, floors at 0 ----------
+// Purely derived from today's check-ins → editing a date / deleting a check-in updates it; refills at local midnight by date (sleeping never refills).
+const ST_MAX = 100, ST_COST = 20, ST_LOW = 40, ST_WARN = '今天咖啡喝得有点多哦～喝点水吧', ST_OUT = '体力耗尽！明天再来吧';
+const ciDay = c => c.date || melDate(c.createdAt || 0);
+const todayCheckins = () => { const t = today(); return checkins.filter(c => ciDay(c) === t); };
+const stamina = () => Math.max(0, ST_MAX - ST_COST * todayCheckins().length);
+const stCls = v => v > 60 ? 'st-hi' : v > 20 ? 'st-mid' : 'st-lo';
+const isJonly = () => isJ() && !isV();
+function stBar(v = stamina()) {
+  const lab = isJonly() ? 'HP' : '体力';
+  return `<div class="hud-bar st-row${v <= 0 ? ' st-empty' : ''}" data-st="${v}"><span>${lab}</span><div class="xpbar stbar ${stCls(v)}" role="meter" aria-label="${lab}" aria-valuemin="0" aria-valuemax="${ST_MAX}" aria-valuenow="${v}"><i style="width:${v}%"></i></div><em class="st-num">${v}${isV() ? '' : '/' + ST_MAX}</em></div>`;
+}
+const stOutTold = {};
+let stDrop = null; // {from, to, cafeId} → played on the HUD once no popup covers it
+function staminaTalk(cafeId) {
+  const v = stamina(); if (v > ST_LOW) return;
+  const msg = v <= 0 ? ST_OUT : ST_WARN, known = cafeId && cafeById(cafeId);
+  if (isV()) { try { Valley.say(msg, 3800, known ? villagerOf(cafeId) : null); } catch (e) {} }
+  else if (isJ()) { try { JRPG.say(msg, 3800, known ? '店员' : '旁白'); } catch (e) {} }
+  else { const t = $('#toast'); t.textContent = (v <= 0 ? '😵 ' : '💧 ') + msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 3800); }
+}
+function playStDrop() {
+  if (!stDrop) return; const cel = $('#celebrate'); if (cel && !cel.classList.contains('hidden')) return;
+  const H = $('#hud'), bar = $('#hud .stbar'); if (!bar) return;
+  if (H.classList.contains('hidden')) { H.classList.remove('hidden'); H.classList.add('st-peek'); clearTimeout(playStDrop._p); playStDrop._p = setTimeout(() => { if (H.classList.contains('st-peek')) { H.classList.remove('st-peek'); H.classList.add('hidden'); } }, 2600); } // pages without a HUD (cafe page): peek it in for the hit
+  const {from, to, cafeId} = stDrop; stDrop = null;
+  const i = bar.querySelector('i'), row = bar.closest('.hud-bar'), num = row.querySelector('.st-num');
+  if (from > to) { i.style.transition = 'none'; i.style.width = from + '%'; bar.classList.remove('st-hi', 'st-mid', 'st-lo'); bar.classList.add(stCls(from)); void i.offsetWidth;
+    setTimeout(() => { i.style.transition = ''; i.style.width = to + '%'; bar.classList.remove('st-hi', 'st-mid', 'st-lo'); bar.classList.add(stCls(to)); }, 40); }
+  row.classList.remove('st-hit'); void row.offsetWidth; row.classList.add('st-hit');
+  const n = document.createElement('b'); n.className = 'st-dmg' + (isJonly() ? ' jdmg' : '');
+  n.textContent = from > to ? (isJonly() ? 'HP ' : '') + '-' + (from - to) : (isJonly() ? 'HP 0' : '体力耗尽');
+  row.appendChild(n); if (num) num.classList.add('st-tick');
+  SFXplay('hit'); if (navigator.vibrate) try { navigator.vibrate(50); } catch (e) {}
+  clearTimeout(playStDrop._t); playStDrop._t = setTimeout(() => { row.classList.remove('st-hit'); n.remove(); if (num) num.classList.remove('st-tick'); }, 1600);
+  setTimeout(() => staminaTalk(cafeId), 700);
 }
 
 // ---------- 🌾 valley economy: coins, friendship, collections (all derived from check-ins) ----------
 const byTime = () => [...checkins].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 function coinLedger() { const seen = new Set(), out = new Map();
   byTime().forEach(c => { let n = 15 + (c.rating || 0) * 5 + (c.photo ? 5 : 0) + (c.drink ? 5 : 0); if (c.cafeId && !seen.has(c.cafeId)) { n += 50; seen.add(c.cafeId); } out.set(c.id, n); }); return out; }
-const BEAN_COINS = 20;
+const BEAN_COINS = 20; // beans never touch stamina
 const totalCoins = () => { let t = beans.length * BEAN_COINS; coinLedger().forEach(v => { t += v; }); return t; };
 const heartsOf = id => Math.min(10, checkinsOf(id).length);
 const villagerOf = id => Valley.villager(id, Math.max(0, allCafes().findIndex(c => c.id === id)));
@@ -326,7 +363,7 @@ function totalXP() {
   const s = stats(); let xp = 0;
   checkins.forEach(c => { xp += 20; if (c.photo) xp += 20; if (c.rating) xp += 10; if (c.drink || c.note) xp += 10; });
   xp += s.cafes * 100;
-  xp += BADGES.filter(b => b.test(s)).length * 50;
+  xp += BADGES.filter(b => !b.noXp && b.test(s)).length * 50;
   xp += regions().filter(r => r.done === r.total).length * 150;
   return xp;
 }
@@ -348,23 +385,24 @@ function regions() { // progress per sketch region (+ 更多 for everything else
 }
 function drawHud() {
   const L = levelInfo();
-  if (isV()) { const cf = caffeine(), k = Valley.clock();
+  if (isV()) { const k = Valley.clock();
     $('#hud').innerHTML = `<div class="hud-lv">Lv.${L.lv}</div><div class="hud-main"><div class="hud-title">${L.title}</div>
-      <div class="hud-bar"><span>咖啡因</span><div class="xpbar cfbar vl-energy"><i style="width:${cf}%"></i></div><em>${cf}</em></div>
+      ${stBar()}
       <div class="hud-bar"><span>XP</span><div class="xpbar"><i style="width:${L.pct}%"></i></div><em>${L.into}/${L.need}</em></div></div>
       <div class="vl-clock" id="vlClock" data-season="${k.season}" data-phase="${k.phase}"><div class="vc-date">${k.wk} ${k.day}日</div>
         <div class="vc-mid"><span class="vc-sky">${k.sky}</span><span class="vc-season">${k.icon}${k.zh}·${k.dayOf}</span></div><div class="vc-time">${k.hhmm}</div>
         <div class="vc-gold">${Valley.coinImg()}<b id="vlGold">${fmtN(totalCoins())}</b></div></div>`;
-    return; }
-  if (isJ()) { const cf = caffeine(), on = JRPG.SFX.on;
+    return playStDrop(); }
+  if (isJ()) { const on = JRPG.SFX.on;
     $('#hud').innerHTML = `<div class="hud-lv">Lv.${L.lv}</div><div class="hud-main"><div class="hud-title">${L.title}</div>
-      <div class="hud-bar"><span>咖啡因</span><div class="xpbar cfbar"><i style="width:${cf}%"></i></div><em>${cf}/100</em></div>
+      ${stBar()}
       <div class="hud-bar"><span>XP</span><div class="xpbar"><i style="width:${L.pct}%"></i></div><em>${L.into}/${L.need}</em></div></div>
       <button class="snd-btn" data-snd aria-label="音效开关" aria-pressed="${on}">${on ? '🔊' : '🔇'}</button>`;
-    return; }
-  $('#hud').innerHTML = `<div class="hud-lv">Lv.${L.lv}</div><div class="hud-main"><div class="hud-title">${L.title}</div><div class="xpbar"><i style="width:${L.pct}%"></i></div></div><div class="hud-xp">${L.into}/${L.need}</div>`;
+    return playStDrop(); }
+  $('#hud').innerHTML = `<div class="hud-lv">Lv.${L.lv}</div><div class="hud-main"><div class="hud-title">${L.title}</div><div class="xpbar"><i style="width:${L.pct}%"></i></div>${stBar()}</div><div class="hud-xp">${L.into}/${L.need}</div>`;
+  playStDrop();
 }
-function snapshot() { return {xp: totalXP(), lv: levelInfo().lv, badges: new Set(BADGES.filter(b => b.test(stats())).map(b => b.id)), visited: new Set(visitedIds()), coins: totalCoins(), tried: new Set(collection().keys())}; }
+function snapshot() { return {n: checkins.length, st: stamina(), xp: totalXP(), lv: levelInfo().lv, badges: new Set(BADGES.filter(b => b.test(stats())).map(b => b.id)), visited: new Set(visitedIds()), coins: totalCoins(), tried: new Set(collection().keys())}; }
 setInterval(() => { if (isV() && $('#vlClock')) { const k = Valley.clock(), el = $('#vlClock'); el.querySelector('.vc-time').textContent = k.hhmm; el.querySelector('.vc-sky').textContent = k.sky; } }, 20000);
 function celebrate(before, cafeId, extra = '') {
   const after = snapshot(), c = cafeById(cafeId);
@@ -372,6 +410,8 @@ function celebrate(before, cafeId, extra = '') {
   const gain = after.xp - before.xp, lvUp = after.lv > before.lv;
   const newBadges = BADGES.filter(b => after.badges.has(b.id) && !before.badges.has(b.id));
   save('mcc.badges', [...after.badges]);
+  const isCi = after.n > before.n; if (isCi) stDrop = {from: before.st, to: after.st, cafeId};
+  const stLine = !isCi ? '' : after.st < before.st ? `${isJonly() ? 'HP' : '体力'} -${before.st - after.st}（剩 ${after.st}）` : before.st === 0 ? (isJonly() ? 'HP 已经是 0 了…' : '体力已经耗尽…') : '';
   const reg = c && regions().find(r => r.id === regionOf(c.id).r.id);
   const el = $('#celebrate');
   if (isV()) {
@@ -379,7 +419,7 @@ function celebrate(before, cafeId, extra = '') {
     const coins = after.coins - before.coins, vg = c && villagerOf(cafeId), hTo = c ? heartsOf(cafeId) : 0, hFrom = c ? Math.min(10, Math.max(0, checkinsOf(cafeId).length - 1)) : 0;
     const newEntry = !!(last.drink && !before.tried.has(itemKey(last.drink)));
     const lines = [reg ? `<div class="vl-line">🗺️ ${esc(reg.name)} 探索 ${reg.done}/${reg.total}${reg.done === reg.total ? ' 👑 全区制霸！' : ''}</div>` : '',
-      ...newBadges.map(b => `<div class="vl-line">🎒 放入背包：${b.e} ${b.name}</div>`), extra];
+      ...newBadges.map(b => `<div class="vl-line">🎒 放入背包：${b.e} ${b.name}</div>`), stLine ? `<div class="vl-line st-line">❤️ ${stLine}</div>` : '', extra];
     let stage = 'harvest';
     const done = () => { clearTimeout(celebrate._t); el.className = 'hidden'; el.innerHTML = ''; render(); };
     const next = () => { clearTimeout(celebrate._t);
@@ -396,7 +436,7 @@ function celebrate(before, cafeId, extra = '') {
   if (isJ()) {
     const last = checkins.filter(x => x.cafeId === cafeId).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
     const lines = [reg ? `<div class="cel-reg">🗺️ ${esc(reg.name)} 巡礼 ${reg.done}/${reg.total}${reg.done === reg.total ? ' 👑 区域制霸！' : ''}</div>` : '',
-      ...newBadges.map(b => `<div class="cel-badge">🎒 获得装备：${b.e} ${b.name}</div>`), extra];
+      ...newBadges.map(b => `<div class="cel-badge">🎒 获得装备：${b.e} ${b.name}</div>`), stLine ? `<div class="cel-reg st-line">💥 ${stLine}</div>` : '', extra];
     let stage = 'chest';
     const done = () => { clearTimeout(celebrate._t); el.classList.add('hidden'); el.className = 'hidden'; el.innerHTML = ''; render(); };
     const next = () => { clearTimeout(celebrate._t); if (lvUp && stage === 'chest') { stage = 'lv'; JRPG.levelUp(el, {from: before.lv, to: after.lv, title: levelInfo().title}, done); celebrate._t = setTimeout(done, 9000); } else done(); };
@@ -415,6 +455,7 @@ function celebrate(before, cafeId, extra = '') {
       ${lvUp ? `<div class="cel-lv">⬆️ 升级到 Lv.${after.lv} · ${levelInfo().title}</div>` : ''}
       ${reg ? `<div class="cel-reg">🗺️ ${esc(reg.name)} 区域 ${reg.done}/${reg.total}${reg.done === reg.total ? ' 👑 全部收集！' : ''}</div>` : ''}
       ${newBadges.map(b => `<div class="cel-badge">🏆 新成就：${b.e} ${b.name}</div>`).join('')}
+      ${stLine ? `<div class="cel-reg st-line">❤️ ${stLine}</div>` : ''}
       ${extra}
       <button class="btn game-btn" id="celOk">太棒了！</button></div>`;
   el.classList.remove('hidden');
@@ -484,11 +525,12 @@ const BADGES = [
   {id: 'photo', e: '📸', name: '10 张照片', test: s => s.photos >= 10},
   {id: 'critic', e: '✍️', name: '写 5 条心得', test: s => s.notes >= 5},
   {id: 'all', e: '👑', name: '全部收集', test: s => s.cafes >= s.total},
+  {id: 'overcaf', e: '⚡', name: '咖啡因过载', noXp: true, test: s => s.overcaf}, // checked in with 0 体力 · fun only, no XP
 ];
 function stats() {
   const v = visitedIds(), cafes = [...v].map(cafeById).filter(Boolean);
-  const per = {}; checkins.forEach(c => c.cafeId && (per[c.cafeId] = (per[c.cafeId] || 0) + 1));
-  return {count: checkins.length, cafes: cafes.length, total: allCafes().length,
+  const per = {}, days = {}; checkins.forEach(c => { if (c.cafeId) per[c.cafeId] = (per[c.cafeId] || 0) + 1; const d = ciDay(c); days[d] = (days[d] || 0) + 1; });
+  return {overcaf: Object.values(days).some(n => n > ST_MAX / ST_COST), count: checkins.length, cafes: cafes.length, total: allCafes().length,
     suburbs: new Set(cafes.map(c => c.suburb)).size, cbd: cafes.filter(c => /CBD/.test(c.suburb)).length,
     maxSame: Math.max(0, ...Object.values(per)), photos: checkins.filter(c => c.photo).length,
     notes: checkins.filter(c => c.note).length};
@@ -623,9 +665,10 @@ const views = {
         $('#m3dReset').onclick = () => mapRef && mapRef.reset && mapRef.reset();
       } else if (usePx) {
         try {
-          mapRef = PixelMap.create($('#pxWrap'), R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M, fitAffine: SketchMap.fitAffine, focusId, heroAt: heroAt[R.id], kit: VK ? Valley.kit(VK) : null,
+          mapRef = PixelMap.create($('#pxWrap'), R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M, fitAffine: SketchMap.fitAffine, focusId, heroAt: heroAt[R.id], kit: VK ? Valley.kit(VK) : null, tired: stamina() <= 0,
             onHeroMove: t => { heroAt[R.id] = t; }, onOpen: id => { location.hash = '#/cafe/' + id; }});
         } catch (e) { console.warn('pixel map failed, falling back to sketch', e); pxFailed = true; mapRef = null; return render(); }
+        if (stamina() <= 0 && !stOutTold[today()]) { stOutTold[today()] = 1; setTimeout(() => staminaTalk(null), 600); } // exhausted hero: tell once per day per session
         $('#zIn').onclick = () => mapRef && mapRef.zoom(1.5); $('#zOut').onclick = () => mapRef && mapRef.zoom(1 / 1.5);
         $('#m3dReset').onclick = () => mapRef && mapRef.reset();
       } else {
@@ -671,7 +714,7 @@ const views = {
     const s = stats(), v = visitedIds(), pct = s.total ? Math.round(s.cafes / s.total * 100) : 0;
     const photos = [...checkins].filter(c => c.photo).slice(0, 9);
     const Lv = levelInfo();
-    app.innerHTML = `<div class="player"><div class="player-ava">🧑</div><div class="player-main"><div class="player-name">Lv.${Lv.lv} ${Lv.title}</div><div class="xpbar big"><i style="width:${Lv.pct}%"></i></div><div class="hint" style="margin:3px 0 0">${Lv.into} / ${Lv.need} XP 升到下一级 · 总 ${Lv.xp} XP</div></div></div>
+    app.innerHTML = `<div class="player${stamina() <= 0 ? ' tired' : ''}"><div class="player-ava">${stamina() <= 0 ? '🥱' : '🧑'}</div><div class="player-main"><div class="player-name">Lv.${Lv.lv} ${Lv.title}</div><div class="xpbar big"><i style="width:${Lv.pct}%"></i></div><div class="hint" style="margin:3px 0 0">${Lv.into} / ${Lv.need} XP 升到下一级 · 总 ${Lv.xp} XP</div></div></div>
       <div class="hero"><h2>已解锁 ${s.cafes} / ${s.total} 个据点</h2><div class="progress" style="background:rgba(255,255,255,.3)"><i style="width:${pct}%"></i></div><div class="addr">墨尔本咖啡世界探索度 ${pct}%</div></div>
       <div class="stats"><div class="stat"><b>${s.count}</b><small>打卡次数</small></div><div class="stat"><b>${s.cafes}</b><small>据点</small></div><div class="stat"><b>${s.suburbs}</b><small>个区域</small></div></div>
       <div class="section-title">足迹地图 <a href="#/map" style="text-decoration:none">全部地图 ›</a></div><div id="fpMap" class="sk-mini"></div>
@@ -738,7 +781,7 @@ const views = {
       ${cis.map(ci => `<div class="rec">${ci.photo ? `<img src="${ci.photo}" alt="">` : ''}<div class="body"><div class="top"><span class="stars">${stars(ci.rating) || '<span class="hint">未评分</span>'}</span><span class="date">${esc(ci.date)}</span></div>${ci.drink ? `<div class="note">🥤 ${esc(ci.drink)}</div>` : ''}${ci.note ? `<div class="note">${esc(ci.note)}</div>` : ''}<div style="text-align:right"><button class="edit" data-edit="${ci.id}">编辑</button></div></div></div>`).join('') || '<div class="hint">还没在这里打过卡</div>'}
       ${c.custom ? '<button class="btn danger" id="delCafe">删除这家咖啡馆</button>' : ''}`;
     if (isV()) { const vg = villagerOf(id), h = heartsOf(id); $('#vbFace').appendChild(Valley.portraitEl(vg, 2)); let talks = 0;
-      const talk = () => Valley.say(Valley.greeting(vg, Math.max(0, h + (talks++ % 3) - 1), id), 3200, vg); talk(); $('#talkBtn').onclick = () => { SFXplay('blip'); talk(); }; }
+      const talk = () => { const t = talks++, st = stamina(); Valley.say(t === 0 && st <= ST_LOW ? (st <= 0 ? ST_OUT : ST_WARN) : Valley.greeting(vg, Math.max(0, h + (t % 3) - 1), id), 3200, vg); }; talk(); $('#talkBtn').onclick = () => { SFXplay('blip'); talk(); }; }
     $('#ciBtn').onclick = () => openCheckinForm({id: uid(), cafeId: id, photo: '', rating: 0, drink: '', note: '', date: today(), createdAt: Date.now()}, true);
     $('#mapBtn').onclick = () => { const ro = regionOf(c.id); if (ro.no) { mapState.region = ro.r.id; mapState.focusId = c.id; } else { mapState.region = 'real'; pendingFocus = c; } location.hash = '#/map'; };
     app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(x => x.id === ed.dataset.edit), false); };
@@ -790,12 +833,12 @@ function settingsHtml() {
 function bindSettings() { const t = $('#themeSel'); if (t) t.onclick = e => { const b = e.target.closest('[data-theme]'); if (b && !b.disabled && b.dataset.theme !== THEME) setTheme(b.dataset.theme); }; }
 function footprintJ() {
   setTop('冒险日志');
-  const s = stats(), v = visitedIds(), L = levelInfo(), cf = caffeine(), owned = new Set(BADGES.filter(b => b.test(s)).map(b => b.id));
+  const s = stats(), v = visitedIds(), L = levelInfo(), owned = new Set(BADGES.filter(b => b.test(s)).map(b => b.id));
   const photos = [...checkins].filter(c => c.photo).slice(0, 9);
   const quests = [...regions().map(r => ({main: true, name: `${r.name} 咖啡巡礼`, zh: r.id === 'more' ? '自由探索' : r.zh, done: r.done, total: r.total})),
     ...BADGES.filter(b => b.id !== 'first').map(b => ({main: false, name: b.name, zh: b.e, done: owned.has(b.id) ? 1 : 0, total: 1}))];
   app.innerHTML = `<div class="jwin status"><div class="st-hero" id="stHero"></div><div class="st-main"><div class="st-name">勇者 Lv.${L.lv}</div><div class="st-title">${L.title}</div>
-      <div class="hud-bar"><span>咖啡因</span><div class="xpbar cfbar"><i style="width:${cf}%"></i></div><em>${cf}/100</em></div>
+      ${stBar()}
       <div class="hud-bar"><span>XP</span><div class="xpbar"><i style="width:${L.pct}%"></i></div><em>${L.into}/${L.need}</em></div></div></div>
     <div class="jwin st-stats"><div>打卡<b>${s.count}</b></div><div>据点<b>${s.cafes}/${s.total}</b></div><div>区域<b>${s.suburbs}</b></div><div>总XP<b>${L.xp}</b></div></div>
     <div class="section-title">📜 任务</div>
@@ -809,14 +852,14 @@ function footprintJ() {
     ${beansSection()}
     ${settingsHtml()}`;
   app.querySelectorAll('canvas[data-spr]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(JRPG.cafeSprite(cv.dataset.spr, v.has(cv.dataset.spr)), 0, 0); });
-  const hc = document.createElement('canvas'); hc.width = hc.height = 16; JRPG.drawHero(hc, 'down', 0); $('#stHero').appendChild(JRPG.scaled(hc, 4));
+  const hc = document.createElement('canvas'); hc.width = hc.height = 16; JRPG.drawHero(hc, 'down', 0); if (stamina() <= 0) JRPG.tire(hc); $('#stHero').appendChild(JRPG.scaled(hc, 4));
   bindSettings();
   app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(c => c.id === ed.dataset.edit), false); };
 }
 let fpTab = 'collect';
 function footprintV() {
   setTop('农场日记');
-  const s = stats(), v = visitedIds(), L = levelInfo(), cf = caffeine(), owned = new Set(BADGES.filter(b => b.test(s)).map(b => b.id)), k = Valley.clock();
+  const s = stats(), v = visitedIds(), L = levelInfo(), owned = new Set(BADGES.filter(b => b.test(s)).map(b => b.id)), k = Valley.clock();
   const col = collection(), cat = catalog(), extraItems = [...col.values()].filter(e => !cat.some(i => itemKey(i.name) === itemKey(e.name))).map(e => ({name: e.name, type: Valley.isFood(e.name) ? 'food' : 'drink', custom: true}));
   const all = [...cat, ...extraItems], drinks = all.filter(i => i.type !== 'food'), foods = all.filter(i => i.type === 'food');
   const slot = i => { const e = col.get(itemKey(i.name)), q = e && Valley.quality(e.best), zh = Valley.itemZh(i.name);
@@ -840,7 +883,7 @@ function footprintV() {
     bag: () => `<div class="vwin vl-slots bag">${BADGES.map(b => `<div class="vl-slotc ${owned.has(b.id) ? 'seen' : 'unk'}"><span class="bi">${owned.has(b.id) ? b.e : '？'}</span><span>${owned.has(b.id) ? esc(b.name) : '？？？'}</span></div>`).join('')}${Array.from({length: 3}, () => '<div class="vl-slotc empty"></div>').join('')}</div>`};
   const photos = [...checkins].filter(c => c.photo).slice(0, 9);
   app.innerHTML = `<div class="jwin status vl-status"><div class="st-hero" id="stHero"></div><div class="st-main"><div class="st-name">咖啡农夫 Lv.${L.lv}</div><div class="st-title">${L.title}</div>
-      <div class="hud-bar"><span>咖啡因</span><div class="xpbar cfbar vl-energy"><i style="width:${cf}%"></i></div><em>${cf}/100</em></div>
+      ${stBar()}
       <div class="hud-bar"><span>XP</span><div class="xpbar"><i style="width:${L.pct}%"></i></div><em>${L.into}/${L.need}</em></div></div></div>
     <div class="jwin st-stats"><div>打卡<b>${s.count}</b></div><div>店铺<b>${s.cafes}/${s.total}</b></div><div>收藏<b>${col.size}</b></div><div>金币<b>${fmtN(totalCoins())}</b></div></div>
     <div class="vl-tabs" id="fpTabs">${tabs.map(([t, n]) => `<button class="chip ${fpTab === t ? 'on' : ''}" data-vt="${t}">${n}</button>`).join('')}</div>
@@ -853,7 +896,7 @@ function footprintV() {
     app.querySelectorAll('canvas[data-shop]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(Valley.shop(cv.dataset.shop, v.has(cv.dataset.shop), k.season, false), 0, 0); });
     app.querySelectorAll('[data-vil]').forEach(el => el.appendChild(Valley.portraitEl(villagerOf(el.dataset.vil), 1))); paintBeanSprites(app); };
   paint();
-  const hc = document.createElement('canvas'); hc.width = hc.height = 16; Valley.drawHero(hc, 'down', 0); $('#stHero').appendChild(JRPG.scaled(hc, 4));
+  const hc = document.createElement('canvas'); hc.width = hc.height = 16; Valley.drawHero(hc, 'down', 0); if (stamina() <= 0) JRPG.tire(hc); $('#stHero').appendChild(JRPG.scaled(hc, 4));
   $('#fpTabs').onclick = e => { const b = e.target.closest('[data-vt]'); if (!b) return; fpTab = b.dataset.vt; SFXplay('blip');
     app.querySelectorAll('#fpTabs .chip').forEach(x => x.classList.toggle('on', x === b)); const fb = $('#fpBody'); fb.dataset.tab = fpTab; fb.innerHTML = body[fpTab](); paint(); };
   bindSettings();
@@ -862,7 +905,7 @@ function footprintV() {
 function setTop(title, right = '', back = false) {
   $('#title').textContent = title; $('#topRight').innerHTML = right;
   $('#backBtn').classList.toggle('hidden', !back);
-  $('#hud').classList.toggle('hidden', back); drawHud();
+  $('#hud').classList.remove('st-peek'); $('#hud').classList.toggle('hidden', back); drawHud();
 }
 $('#backBtn').onclick = () => history.length > 1 ? history.back() : (location.hash = '#/list');
 
@@ -882,6 +925,6 @@ render();
 // quietly fetch location if already permitted (for distances), never prompt on load
 if (navigator.permissions) navigator.permissions.query({name: 'geolocation'}).then(p => { if (p.state === 'granted') locate().then(() => render()); }).catch(() => {});
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-window.__mcc = {get checkins() { return checkins; }, get beans() { return beans; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf}; // for testing
+window.__mcc = {stamina, today, xp: () => totalXP(), badges: () => BADGES.filter(b => b.test(stats())).map(b => b.id), get checkins() { return checkins; }, get beans() { return beans; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf}; // for testing
 window.__appBooted = true; document.documentElement.classList.add('booted');
 })();

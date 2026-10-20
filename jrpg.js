@@ -98,7 +98,7 @@ const SFX = {
       encounter: [[262, .07], [330, .07], [392, .07], [523, .07], [392, .07], [523, .16]],
       chest: [[523, .07], [659, .07], [784, .07], [1047, .07], [1319, .22]],
       fanfare: [[392, .12], [392, .12], [392, .12], [523, .36], [440, .12], [494, .12], [523, .45]],
-      coin: [[988, .05], [1319, .14]], harvest: [[523, .08], [784, .08], [1047, .16]], heart: [[659, .1], [880, .18]],
+      coin: [[988, .05], [1319, .14]], hit: [[220, .05, 'square', .06], [147, .12, 'square', .05]], harvest: [[523, .08], [784, .08], [1047, .16]], heart: [[659, .1], [880, .18]],
       sleep: [[523, .25], [440, .25], [392, .25], [330, .5], [392, .6]]}[name] || [];
     const soft = document.documentElement.dataset.skin === 'valley'; // cozy theme: gentle triangle/sine chimes
     let at = t; seq.forEach(([f, d, ty, v]) => { if (soft) { this.tone(f, at, d * 1.4, ty === 'triangle' ? 'triangle' : 'sine', (v || 0.05) * 1.2); if (ty === undefined) this.tone(f * 2, at, d, 'triangle', 0.012); }
@@ -158,6 +158,7 @@ function chest(el, data, onClose) {
   stage.appendChild(closed); stage.classList.add('shake');
   el.classList.remove('hidden');
   setTimeout(() => {
+    if (!el.contains(stage)) return; // closed early
     stage.classList.remove('shake'); stage.classList.add('open'); stage.replaceChild(opened, closed); SFX.play('chest');
     el.querySelector('.cel-xp').classList.remove('hidden');
     typeInto(el.querySelector('.chest-text'), `XP +${data.gain}，获得 ${data.item}！`).then(() => el.querySelector('.chest-lines').classList.add('show'));
@@ -168,13 +169,22 @@ function levelUp(el, info, onClose) {
   el.className = 'jrpg-cel lvup';
   el.innerHTML = `<div class="lv-burst"></div><div class="jwin lv-box"><div class="lv-title">LEVEL UP!</div><div class="lv-hero"></div>
     <div class="lv-row">Lv.${info.from} ▶ <b>Lv.${info.to}</b></div><div class="lv-row">称号：${esc(info.title)}</div>
-    <div class="lv-row small">咖啡因上限 +10　好奇心 +1　品味 +2</div>
+    <div class="lv-row small">好奇心 +1　品味 +2　(HP 每晚 0 点回满)</div>
     <div class="jmenu"><button class="jmenu-item on" id="lvOk">继续冒险</button></div></div>`;
   const hc = document.createElement('canvas'); hc.width = 16; hc.height = 16; drawHero(hc, 'down', 0); el.querySelector('.lv-hero').appendChild(scaled(hc, 5));
   el.classList.remove('hidden'); SFX.play('fanfare');
   el.querySelector('#lvOk').onclick = () => { SFX.play('confirm'); onClose(); };
 }
 
-window.JRPG = {rng, hash, PAL, fromRows, heroSheet, drawHero, cafeSprite, tiles, SFX, say, typeInto, encounter, chest, levelUp, itemName, scaled, BARISTA};
+// exhausted pose: slump the hero down (sitting) + a sweat drop — works on any 16×16-based hero canvas (also the valley farmer)
+function tire(canvas) {
+  const w = canvas.width, h = canvas.height, k = w / 16, t = document.createElement('canvas'); t.width = w; t.height = h; t.getContext('2d').drawImage(canvas, 0, 0);
+  const g = canvas.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, w, h);
+  g.drawImage(t, 0, 0, w, 11 * k, 0, 4 * k, w, 11 * k); // head + torso drop 4px
+  g.drawImage(t, 0, 13 * k, w, 3 * k, -1 * k, 13 * k, w + 2 * k, 3 * k); // feet splay out → sitting
+  g.fillStyle = '#d8f1ff'; g.fillRect(13 * k, 2 * k, k, k); g.fillStyle = '#7cc4f2'; g.fillRect(13 * k, 3 * k, k, k); g.fillStyle = '#3d8fd1'; g.fillRect(12 * k, 4 * k, 2 * k, k);
+  canvas.dataset.tired = '1'; return canvas;
+}
+window.JRPG = {tire, rng, hash, PAL, fromRows, heroSheet, drawHero, cafeSprite, tiles, SFX, say, typeInto, encounter, chest, levelUp, itemName, scaled, BARISTA};
 window.__sfx = SFX;
 })();

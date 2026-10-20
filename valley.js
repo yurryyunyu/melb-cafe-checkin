@@ -345,7 +345,7 @@ function harvest(el, data, onClose) {
   setTimeout(() => J.SFX.play('coin'), 380);
   el.querySelector('#celOk').onclick = () => { J.SFX.play('confirm'); onClose(); };
 }
-// ---------- 🌱 seed packet obtained (bean saved) — costs no 咖啡因 ----------
+// ---------- 🌱 seed packet obtained (bean saved) — costs no stamina ----------
 function seedPacket(el, data, onClose) {
   const b = data.bean || {}, hue = Math.abs([...(b.origin || b.name || 'x')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % 360;
   el.className = 'vl-cel vl-seed';
@@ -353,7 +353,7 @@ function seedPacket(el, data, onClose) {
     <div class="vl-pop-title">🌱 获得种子包！</div>
     <div class="vl-packet big" style="--ph:${hue}"><span class="pk-top">${esc(b.origin || '咖啡种子')}</span><span class="pk-spr"></span><b>${esc(b.name || '未命名')}</b><small>${esc([b.process, b.roast].filter(Boolean).join(' · ') || b.roaster || '')}</small></div>
     <div class="vl-gains"><span class="g-coin">${coinImg()} +${data.coins}</span></div>
-    <div class="vl-lines"><div class="vl-line">📜 标签文字已记进种子袋，可随时复制/分享</div><div class="vl-line">⚡ 不消耗咖啡因</div></div>
+    <div class="vl-lines"><div class="vl-line">📜 标签文字已记进种子袋，可随时复制/分享</div><div class="vl-line">⚡ 不消耗体力</div></div>
     <button class="vbtn" id="celOk">收下！</button></div>`;
   const spr = window.Beans && Beans.beanSprite && Beans.beanSprite(); if (spr) el.querySelector('.pk-spr').appendChild(J.scaled(spr, 4)); else el.querySelector('.pk-spr').textContent = '🫘';
   el.classList.remove('hidden'); J.SFX.play('harvest'); setTimeout(() => J.SFX.play('coin'), 380);
@@ -369,7 +369,7 @@ function daySummary(el, info, onClose) {
     <div class="vd-rows">${info.rows.map(([k, v]) => `<div class="vd-row"><span>${k}</span><b>${v}</b></div>`).join('')}</div>
     ${(info.friends || []).map(f => `<div class="vd-row friend"><span>❤ ${esc(f.v.name)}</span>${heartsHtml(f.to)}</div>`).join('')}
     <div class="vd-lv"><div class="vd-lv-t">🌟 等级提升！</div><div class="vd-hero"></div><div class="vd-lv-n">Lv.${info.from} ▶ <b>Lv.${info.to}</b></div><div class="vd-title">称号：${esc(info.title)}</div>
-      <div class="vd-perk">☕ 咖啡因上限 +10　🍰 品味 +2　🧭 好奇心 +1</div></div>
+      <div class="vd-perk">🍰 品味 +2　🧭 好奇心 +1</div><div class="vd-perk st-note">❤️ 体力在墨尔本午夜 0 点回满（睡觉不会额外回复）</div></div>
     <button class="vbtn" id="lvOk">🛏️ 睡一觉，迎接新的一天</button></div>`;
   const hc = document.createElement('canvas'); hc.width = hc.height = 16; drawHero(hc, 'down', 0); el.querySelector('.vd-hero').appendChild(J.scaled(hc, 4));
   el.classList.remove('hidden'); J.SFX.play('sleep');
