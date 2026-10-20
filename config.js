@@ -3,7 +3,7 @@
 window.APP_CONFIG = {
   // ---- Google 地图 ----
   // 需要在 Google Cloud 启用：Maps JavaScript API + Places API (New)，并给 key 加 HTTP referrer 限制（只允许你的网站域名）。
-  // 留空 => 使用 OpenStreetMap/CARTO 地图 + 浏览器定位。
+  // 留空 => 使用 OpenStreetMap/CARTO 地图 + 浏览器定位。填了 key 后，咖啡馆详情页还会显示 Google 星级和最近 5 条评价（见 README「Google 评价」）。
   GOOGLE_MAPS_API_KEY: '',
   // 可选：Google Cloud 控制台里创建的 Map ID（云端地图样式）。留空则使用内置的游戏风格 JSON 样式。
   GOOGLE_MAP_ID: '',

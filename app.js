@@ -675,7 +675,7 @@ function cafeCard(c) {
   return `<a class="card${isClosed(c) ? ' closed' : ''}${PXI() ? ' vl-card' : ''}" href="#/cafe/${c.id}">
     ${PXI() ? `<span class="vl-shopic${cis.length ? ' lit' : ''}"><img src="${PixUI.shopUrl(c.id, cis.length > 0, isClosed(c))}" alt="">${ro.no ? num : ''}</span>` : num}
     ${last ? `<img class="thumb" src="${last.photo}" alt="">` : ''}
-    <div class="meta"><div class="name">${esc(c.name)}</div><div class="sub">${esc(ro.r.name)} · ${esc(c.suburb)}${d} · ${esc(c.address)}</div>${sigLine(c)}</div>
+    <div class="meta"><div class="name">${esc(c.name)}</div><div class="sub">${esc(ro.r.name)} · ${esc(c.suburb)}${d} · ${esc(c.address)}</div>${sigLine(c)}${window.GReviews ? `<div class="gr-line">${GReviews.chipHtml(c)}</div>` : ''}</div>
     ${isClosed(c) ? closedBadge : cis.length ? `<span class="badge-done">⭐ ${cis.length}次</span>` : '<span class="badge-new">🔒 未解锁</span>'}</a>`;
 }
 
@@ -884,6 +884,7 @@ const views = {
       <div>${(c.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${c.custom ? '<span class="tag">我添加的</span>' : ''}</div>
       ${isClosed(c) ? `<div class="closed-note">🚪 这家店已永久关闭，以前的打卡记录都还在。</div>` : ''}${sigBox(c)}
       ${isV() ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="jwin vl-barista"><div class="vb-face" id="vbFace"></div><div class="vb-main"><div class="vb-name">${esc(vg.title)} <b>${esc(vg.name)}</b></div>${Valley.heartsHtml(h)}<div class="vb-h">好感 ${h}/10${h >= 10 ? ' · 挚友' : h >= 5 ? ' · 好朋友' : h ? ' · 熟客' : ' · 初次见面'}</div><div class="vb-say">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="vb-talk" id="talkBtn">💬</button></div>`; })() : ''}
+      ${window.GReviews ? `<div class="gr-box">${GReviews.btnHtml(c, 'btn ghost')}<div id="grPanelBox"></div></div>` : ''}
       <button class="btn${isClosed(c) ? ' ghost' : ''}" id="ciBtn">${isClosed(c) ? ic('quill', '📝') + ' 补记一次以前的打卡' : ic('cup', '☕') + ' 在这里打卡'}</button>
       <div class="row"><a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图中打开</a>
       <button class="btn ghost" id="mapBtn">${ic('map', '🗺️')} 地图上看</button></div>
@@ -891,6 +892,7 @@ const views = {
       ${cis.map(ci => `<div class="rec">${ci.photo ? `<img src="${ci.photo}" alt="">` : ''}<div class="body"><div class="top"><span class="stars">${stars(ci.rating) || '<span class="hint">未评分</span>'}</span><span class="date">${esc(ci.date)}</span></div>${ci.drink ? `<div class="note">🥤 ${esc(ci.drink)}</div>` : ''}${ci.note ? `<div class="note">${esc(ci.note)}</div>` : ''}<div style="text-align:right"><button class="edit" data-edit="${ci.id}">编辑</button></div></div></div>`).join('') || '<div class="hint">还没在这里打过卡</div>'}
       ${c.custom ? '<button class="btn danger" id="delCafe">删除这家咖啡馆</button>' : ''}`;
     if (PXI() && !hero) PixUI.mountScene($('#vlScene'), c.id, {visited: cis.length > 0, closed: isClosed(c)});
+    if (window.GReviews && GReviews.hasKey) GReviews.mount($('#grPanelBox'), c); // lazy: Google is only contacted here, and only with a key
     if (isV()) { const vg = villagerOf(id), h = heartsOf(id); $('#vbFace').appendChild(Valley.portraitEl(vg, 2)); let talks = 0;
       const talk = () => { const t = talks++, st = stamina(); Valley.say(t === 0 && st <= ST_LOW ? (st <= 0 ? ST_OUT : ST_WARN) : Valley.greeting(vg, t === 0 ? h : Math.max(0, h + (t % 3) - 1), id), 3200, vg); }; talk(); $('#talkBtn').onclick = () => { SFXplay('blip'); talk(); }; }
     $('#ciBtn').onclick = () => openCheckinForm({id: uid(), cafeId: id, photo: '', rating: 0, drink: '', note: '', date: today(), createdAt: Date.now()}, true);
@@ -990,6 +992,7 @@ function settingsHtml() {
     <div class="set-row"><span>界面主题</span><span class="dim-toggle" id="themeSel"><button data-theme="valley" class="${THEME === 'valley' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🌾 田园</button><button data-theme="jrpg" class="${THEME === 'jrpg' ? 'on' : ''}" ${window.JRPG ? '' : 'disabled'}>⚔️ JRPG</button><button data-theme="sketch" class="${THEME === 'sketch' ? 'on' : ''}">✏️ 手绘</button></span></div>
     <div class="set-row"><span>${isV() ? '🎵 小音效' : '8-bit 音效'}</span><button class="snd-btn" data-snd id="sndT" aria-pressed="${!!on}">${on ? '🔊' : '🔇'}</button></div>
     <div class="set-row"><span>${isV() ? '🎶 背景音乐' : '🎶 像素背景音乐'} <small class="hint">原创 8-bit 小曲，白天轻快、夜晚安静</small></span><button class="snd-btn mus-set" data-music id="musT" aria-pressed="${musicOn()}">${musicOn() ? '开' : '关'}</button></div>
+    <div class="set-row gr-set"><span>⭐ Google 评分 <small class="hint">${window.GReviews && GReviews.hasKey ? '已配置 key：咖啡馆详情页会显示 Google 星级和最近评价' : '未配置：在 config.js 填入 GOOGLE_MAPS_API_KEY 后，详情页可显示 Google 星级和评价（见 README）。现在可以点「看 Google 评价」去 Google 地图看。'}</small></span><span class="gr-set-st">${window.GReviews && GReviews.hasKey ? '开' : '未配置'}</span></div>
     ${isV() ? '<div class="set-row"><span>🛒 金币商店</span><a class="btn ghost sm" href="#/shop">去逛逛 ›</a></div>' : ''}</div>`;
 }
 function bindSettings() { const t = $('#themeSel'); if (t) t.onclick = e => { const b = e.target.closest('[data-theme]'); if (b && !b.disabled && b.dataset.theme !== THEME) setTheme(b.dataset.theme); }; }

@@ -242,3 +242,8 @@ html[data-theme=jrpg] .cam-menu button{border-radius:4px;border:2px solid #e9ecf
 html[data-theme=jrpg] .cam-menu button:active,html[data-theme=jrpg] .cam-menu button:focus{background:#ffffff22}
 html[data-theme=jrpg] .bf input,html[data-theme=jrpg] .bf select,html[data-theme=jrpg] .bf textarea{background:#0b1240;color:#fff;border:2px solid #aab4ff;border-radius:3px;font-family:var(--px)}
 html[data-theme=jrpg] .bean-cap img,html[data-theme=jrpg] .bean-nophoto{border-radius:3px}
+/* ⭐ Google reviews in JRPG */
+html[data-theme=jrpg] .gr-btn{border-radius:3px;border:2px solid #fff;background:#1f2a6b;color:#fff;box-shadow:0 0 0 2px #10183f;font-family:inherit}
+html[data-theme=jrpg] .gr-btn .gr-star:before{color:#ffcd75}
+html[data-theme=jrpg] .gr-box .gr-btn.btn{border-radius:4px}
+html[data-theme=jrpg] .gr-panel{border-radius:4px}

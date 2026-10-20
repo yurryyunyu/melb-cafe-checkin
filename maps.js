@@ -10,7 +10,7 @@ function loadGoogle() {
   if (gPromise) return gPromise;
   gPromise = new Promise(res => {
     window.__gmReady = () => res(true);
-    window.gm_authFailure = () => { console.warn('Google Maps key rejected, falling back to OSM'); MapKit.provider = 'osm'; };
+    window.gm_authFailure = () => { console.warn('Google Maps key rejected, falling back to OSM'); window.__gmAuthFailed = true; MapKit.provider = 'osm'; };
     const s = document.createElement('script');
     s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(KEY)}&v=weekly&libraries=places&language=zh-CN&region=AU&loading=async&callback=__gmReady`;
     s.async = true; s.onerror = () => res(false);
@@ -140,8 +140,7 @@ window.MapKit = {
     return leafletMap(el, center, zoom);
   },
   nearbyCafes,
-  gmapsLink: c => c.placeId
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name)}&query_place_id=${encodeURIComponent(c.placeId)}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + ', ' + c.address)}`,
+  loadGoogle, // lazy: only called when a Google map or the Google review panel is actually needed
+  gmapsLink: c => window.GReviews ? GReviews.url(c) : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([c.name, c.address].filter(Boolean).join(', ')) + (c.placeId ? '&query_place_id=' + encodeURIComponent(c.placeId) : ''),
 };
 })();
