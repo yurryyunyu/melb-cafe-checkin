@@ -757,10 +757,12 @@ const views = {
   records() {
     setTop('打卡记录');
     if (!checkins.length) {
-      app.innerHTML = `<div class="empty"><div class="e">📷</div><p>还没有打卡记录</p><p class="hint">点下面中间的「拍照」→「打卡」，拍一张就算打卡！</p></div>`;
+      app.innerHTML = `<div class="empty"><div class="e">📷</div><p>${PXI() ? '日记本还是空白的' : '还没有打卡记录'}</p><p class="hint">点下面中间的「拍照」→「打卡」，拍一张就算打卡！</p>${PXI() ? `<button class="btn vl-empty-go" id="emptyGo">${ic('camera', '📷')} 去打第一张卡</button>` : ''}</div>`;
+      const eg = $('#emptyGo'); if (eg) eg.onclick = () => $('#camBtn').click();
       return;
     }
     const sorted = [...checkins].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
+    if (PXI()) return diaryV(sorted);
     app.innerHTML = `<div class="hint">共 ${checkins.length} 次打卡</div>` + sorted.map(ci => {
       const c = cafeById(ci.cafeId);
       return `<div class="rec">${ci.photo ? `<img src="${ci.photo}" alt="" loading="lazy">` : ''}
@@ -846,9 +848,9 @@ const views = {
       <div>${(c.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${c.custom ? '<span class="tag">我添加的</span>' : ''}</div>
       ${isClosed(c) ? `<div class="closed-note">🚪 这家店已永久关闭，以前的打卡记录都还在。</div>` : ''}${sigBox(c)}
       ${isV() ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="jwin vl-barista"><div class="vb-face" id="vbFace"></div><div class="vb-main"><div class="vb-name">${esc(vg.title)} <b>${esc(vg.name)}</b></div>${Valley.heartsHtml(h)}<div class="vb-h">好感 ${h}/10${h >= 10 ? ' · 挚友' : h >= 5 ? ' · 好朋友' : h ? ' · 熟客' : ' · 初次见面'}</div><div class="vb-say">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="vb-talk" id="talkBtn">💬</button></div>`; })() : ''}
-      <button class="btn${isClosed(c) ? ' ghost' : ''}" id="ciBtn">${isClosed(c) ? '📝 补记一次以前的打卡' : '☕ 在这里打卡'}</button>
-      <div class="row"><a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">🧭 在 Google 地图中打开</a>
-      <button class="btn ghost" id="mapBtn">🗺️ 地图上看</button></div>
+      <button class="btn${isClosed(c) ? ' ghost' : ''}" id="ciBtn">${isClosed(c) ? ic('quill', '📝') + ' 补记一次以前的打卡' : ic('cup', '☕') + ' 在这里打卡'}</button>
+      <div class="row"><a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图中打开</a>
+      <button class="btn ghost" id="mapBtn">${ic('map', '🗺️')} 地图上看</button></div>
       <div class="section-title">我的打卡（${cis.length}）</div>
       ${cis.map(ci => `<div class="rec">${ci.photo ? `<img src="${ci.photo}" alt="">` : ''}<div class="body"><div class="top"><span class="stars">${stars(ci.rating) || '<span class="hint">未评分</span>'}</span><span class="date">${esc(ci.date)}</span></div>${ci.drink ? `<div class="note">🥤 ${esc(ci.drink)}</div>` : ''}${ci.note ? `<div class="note">${esc(ci.note)}</div>` : ''}<div style="text-align:right"><button class="edit" data-edit="${ci.id}">编辑</button></div></div></div>`).join('') || '<div class="hint">还没在这里打过卡</div>'}
       ${c.custom ? '<button class="btn danger" id="delCafe">删除这家咖啡馆</button>' : ''}`;
@@ -904,6 +906,29 @@ function settingsHtml() {
     <div class="set-row"><span>${isV() ? '🎵 小音效' : '8-bit 音效'}</span><button class="snd-btn" data-snd id="sndT" aria-pressed="${!!on}">${on ? '🔊' : '🔇'}</button></div></div>`;
 }
 function bindSettings() { const t = $('#themeSel'); if (t) t.onclick = e => { const b = e.target.closest('[data-theme]'); if (b && !b.disabled && b.dataset.theme !== THEME) setTheme(b.dataset.theme); }; }
+// 📒 valley diary: entries grouped by day, each with its item sprite, quality star and pixel rating
+const WKZ = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+const sprUrl = {}; const itemUrl = n => { const k = Valley.kindOf(n); return sprUrl[k] || (sprUrl[k] = Valley.itemSprite(n).toDataURL()); };
+const pxStars = n => `<span class="px-stars" aria-label="${n} 星">${Array.from({length: 5}, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
+function diaryV(sorted) {
+  const days = []; sorted.forEach(ci => { const d = ci.date || ciDay(ci); let g = days[days.length - 1]; if (!g || g.d !== d) days.push(g = {d, L: []}); g.L.push(ci); });
+  const led = coinLedger();
+  app.innerHTML = `<div class="vl-diary-head vwin jwin">${ic('book', '📒')}<b>咖啡日记</b><small>共 ${checkins.length} 篇 · ${days.length} 天</small></div>` + days.map(({d, L}) => { const dt = new Date(d + 'T12:00:00'), ok = !isNaN(dt);
+    return `<div class="vl-dgroup"><div class="vl-day-tag">${ok ? `${dt.getMonth() + 1}月${dt.getDate()}日 <small>${WKZ[dt.getDay()]}</small>` : esc(d)}${d === today() ? ' <em>今天</em>' : ''}</div>` + L.map(ci => { const c = cafeById(ci.cafeId), q = Valley.quality(ci.rating), zh = Valley.itemZh(ci.drink);
+      return `<div class="rec vl-entry"><div class="ve-item"><img src="${itemUrl(ci.drink || 'Coffee')}" alt="">${q ? `<i class="vq ${q.k}"></i>` : ''}</div>
+        <div class="body"><div class="top"><span class="cname">${c ? `<a href="#/cafe/${c.id}" style="color:inherit;text-decoration:none">${esc(c.name)}</a>` : '未选择咖啡馆'}</span><span class="ve-coin">${Valley.coinImg()}+${led.get(ci.id) || 0}</span></div>
+        ${c ? '' : `<button class="warn" data-assign="${ci.id}" style="border:0">📍 点击选择咖啡馆</button>`}
+        <div class="ve-line">${ci.drink ? `<b>${esc(zh || ci.drink)}</b>${zh && zh !== ci.drink ? ` <small>${esc(ci.drink)}</small>` : ''}` : '<span class="hint">没记点了什么</span>'}</div>
+        <div class="ve-line">${ci.rating ? pxStars(ci.rating) : '<span class="hint">未评分</span>'}${ci.taste || ci.look || ci.value ? `<span class="hint ve-sub">口味 ${ci.taste || '-'} · 颜值 ${ci.look || '-'} · 性价比 ${ci.value || '-'}</span>` : ''}</div>
+        ${ci.note ? `<div class="note ve-note">“${esc(ci.note)}”</div>` : ''}
+        <div class="ve-foot">${ci.formStatus === 'sent' ? '<span class="hint">📨 已提交表单</span>' : '<span></span>'}<button class="edit" data-edit="${ci.id}">${ci.rating || ci.note || ci.drink ? '编辑' : '＋ 补充评分/心得'}</button></div></div>
+        ${ci.photo ? `<img class="ve-photo" src="${ci.photo}" alt="" loading="lazy">` : ''}</div>`; }).join('') + '</div>'; }).join('');
+  app.onclick = e => {
+    const ed = e.target.closest('[data-edit]'), as = e.target.closest('[data-assign]');
+    if (ed) openCheckinForm(checkins.find(c => c.id === ed.dataset.edit), false);
+    if (as) { const ci = checkins.find(c => c.id === as.dataset.assign); openPicker(id => { ci.cafeId = id; saveCheckins(); checkBadges(); closeSheet(); toast('✅ 已更新'); render(); }, {allowLater: false}); }
+  };
+}
 function footprintJ() {
   setTop('冒险日志');
   const s = stats(), v = visitedIds(), L = levelInfo(), owned = new Set(BADGES.filter(b => b.test(s)).map(b => b.id));
@@ -963,7 +988,7 @@ function footprintV() {
     <div class="vl-tabs" id="fpTabs">${tabs.map(([t, n]) => `<button class="chip ${fpTab === t ? 'on' : ''}" data-vt="${t}">${n}</button>`).join('')}</div>
     <div id="fpBody" data-tab="${fpTab}">${body[fpTab]()}</div>
     <div class="section-title">${ic('photo', '🖼️')} 相册 <a href="#/records" style="text-decoration:none">全部记录 ›</a></div>
-    ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : '<div class="hint">还没有照片，去拍一张吧 📷</div>'}
+    ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : `<div class="vl-album-empty">${Array.from({length: 3}, (_, i) => `<span class="vae-slot">${i ? '' : ic('camera', '📷')}</span>`).join('')}<small>相册还空着 · 打卡时拍张照，就会贴在这里</small></div>`}
     ${settingsHtml()}`;
   const paint = () => {
     app.querySelectorAll('canvas[data-item]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(Valley.itemSprite(cv.dataset.item), 0, 0); });
@@ -990,7 +1015,7 @@ function render() {
   const v = views[name] ? name : 'list';
   closeCamMenu();
   document.querySelectorAll('#tabbar a').forEach(a => a.classList.toggle('active', a.dataset.tab === (v === 'beans' || v === 'bean' ? 'footprint' : v)));
-  if (isV()) { app.classList.remove('vt-in'); void app.offsetWidth; app.classList.add('vt-in'); }
+  app.dataset.view = v; if (isV()) { app.classList.remove('vt-in'); void app.offsetWidth; app.classList.add('vt-in'); }
   try { views[v](arg && decodeURIComponent(arg)); }
   catch (e) { console.error('view render failed', e); app.innerHTML = `<div class="card"><b>页面出了点问题 😵</b><div class="hint">${String(e && e.message || e).replace(/[<>&]/g, '')}</div><a class="btn" href="#/list">回到发现页</a></div>`; }
   if (!['cafe', 'add'].includes(v)) window.scrollTo(0, 0);

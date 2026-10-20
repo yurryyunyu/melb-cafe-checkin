@@ -363,3 +363,58 @@ html[data-theme][data-skin=valley] .cam-circle:after{content:none}
 @keyframes mshine{0%,70%{filter:none}85%{filter:brightness(1.35)}}
 .vl-medal b{font-weight:400;font-size:9px;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vl-medal small{font-size:10px;color:var(--ink2,#7a5636)}
+/* ================= 📒 Round 3: diary, pixel empty states, game-styled real map ================= */
+html[data-skin=valley] .btn .pi{width:20px;height:20px;vertical-align:-4px;margin-right:2px}
+.vl-diary-head{display:flex;align-items:center;gap:8px;padding:9px 12px!important;margin-bottom:6px;font-size:16px}
+.vl-diary-head b{font-weight:400}.vl-diary-head small{margin-left:auto;font-size:12px;color:var(--ink2,#7a5636)}
+.vl-diary-head .pi{width:24px;height:24px}
+.vl-dgroup{position:relative;margin:14px 0 4px;padding-left:14px}
+.vl-dgroup:before{content:"";position:absolute;left:4px;top:26px;bottom:6px;width:4px;background:repeating-linear-gradient(#3a2414 0 6px,transparent 6px 10px);opacity:.45}
+.vl-day-tag{display:inline-flex;align-items:baseline;gap:6px;margin:0 0 8px -14px;padding:3px 12px 3px 10px;font-size:15px;color:#fffbe8;text-shadow:1px 1px 0 #3a2414;background:linear-gradient(#e0705a,#b0402e);border:3px solid #3a2414;border-radius:4px;box-shadow:0 3px 0 #3a2414;clip-path:polygon(0 0,100% 0,calc(100% - 10px) 50%,100% 100%,0 100%);padding-right:22px}
+.vl-day-tag small{font-size:12px;color:#ffe0d0}.vl-day-tag em{font-style:normal;font-size:11px;background:#ffe08a;color:#4a2c14;text-shadow:none;padding:0 5px;border-radius:3px}
+html[data-theme][data-skin=valley] .rec.vl-entry{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin-bottom:10px}
+.ve-item{position:relative;flex:none;width:52px;height:52px;display:flex;align-items:center;justify-content:center;background:#e8c999;border:2px solid #8a5528;border-radius:5px;box-shadow:inset 2px 2px 0 #c99a5e,inset -1px -1px 0 #f6dfb0}
+.ve-item img{width:40px;height:40px;image-rendering:pixelated}
+.ve-item>.vq{position:absolute;left:-5px;top:-5px;width:16px;height:16px}
+.vl-entry .body{flex:1;min-width:0}
+.vl-entry .top{display:flex;justify-content:space-between;gap:6px;align-items:center}
+html[data-theme][data-skin=valley] .vl-entry .cname{font-size:15px;line-height:1.25;font-family:inherit;font-weight:400}
+.ve-coin{flex:none;font-size:12px;color:#8a5528;display:inline-flex;align-items:center;gap:2px}
+.ve-line{font-size:13px;margin-top:3px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ve-line b{font-weight:400}.ve-line small{font-size:11px;color:var(--ink2,#7a5636)}
+.ve-sub{font-size:11px!important}
+.ve-note{font-size:13px;margin-top:4px;padding:4px 7px;background:#fbf3dc;border-left:3px solid #c98f55;border-radius:2px}
+.ve-foot{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.ve-photo{flex:none;width:64px;height:64px;object-fit:cover;border:3px solid var(--woodX,#3a2414);border-radius:4px;transform:rotate(3deg);box-shadow:2px 2px 0 rgba(58,36,20,.35)}
+.px-stars{display:inline-flex;gap:2px}
+.px-stars i{width:13px;height:13px;display:inline-block;background:var(--pi-star) center/13px 13px no-repeat;image-rendering:pixelated;filter:grayscale(1) brightness(1.35) opacity(.55)}
+.px-stars i.on{filter:none}
+/* pixel empty states */
+html[data-skin=valley] .empty .e{font-size:0;width:64px;height:64px;margin:0 auto 8px;background:var(--pi-chest) center/48px 48px no-repeat #e8c999;border:3px solid #8a5528;border-radius:6px;box-shadow:inset 3px 3px 0 #c99a5e,inset -2px -2px 0 #f6dfb0;image-rendering:pixelated;animation:vlbob 1.4s steps(3) infinite alternate}
+html[data-skin=valley] #app[data-view=records] .empty .e{background-image:var(--pi-book)}
+html[data-skin=valley] #app[data-view=beans] .empty .e{background-image:var(--pi-bean)}
+html[data-skin=valley] #app[data-view=list] .empty .e{background-image:var(--pi-search)}
+html[data-skin=valley] .empty p{margin:4px 0}
+.vl-empty-go{margin-top:12px!important}
+.vl-album-empty{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px;background:var(--cream,#f6e7c1);border:3px solid var(--woodX,#3a2414);border-radius:6px;box-shadow:var(--winb)}
+.vae-slot{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border:3px dashed #c98f55;border-radius:4px;background:#fbf3dc}
+.vae-slot .pi{width:32px;height:32px;opacity:.75}
+.vl-album-empty small{grid-column:1/-1;text-align:center;font-size:12px;color:var(--ink2,#7a5636)}
+/* real map: warm storybook tint inside a wooden frame, pixel markers */
+html[data-skin=valley] #map.real{border:4px solid var(--woodX);border-radius:6px;box-shadow:0 0 0 3px var(--woodL),0 0 0 6px var(--woodX),0 6px 10px rgba(58,36,20,.3);margin:4px 10px;width:auto}
+html[data-skin=valley] #map.real .leaflet-tile-pane{filter:sepia(.45) saturate(1.5) hue-rotate(-12deg) brightness(1.04) contrast(1.05)}
+html[data-skin=valley] #map.real:after{content:"";position:absolute;inset:0;z-index:450;pointer-events:none;box-shadow:inset 0 0 40px rgba(122,74,37,.45)}
+html[data-skin=valley] .rmk .num{border-radius:4px!important;image-rendering:pixelated}
+html[data-skin=valley] .rmk .cafe-label{font-family:"FusionPixel",monospace;color:#fffbe8;text-shadow:1px 0 0 #3a2414,-1px 0 0 #3a2414,0 1px 0 #3a2414,0 -1px 0 #3a2414;font-size:13px;white-space:nowrap}
+html[data-skin=valley] .leaflet-popup-content-wrapper{background:var(--cream);border:3px solid var(--woodX);border-radius:6px;box-shadow:var(--winb);color:var(--ink);font-family:"FusionPixel",monospace}
+html[data-skin=valley] .leaflet-popup-tip{background:var(--woodX)}
+html[data-skin=valley] .leaflet-bar a{background:var(--cream);color:var(--ink);border-color:var(--woodX);font-family:"FusionPixel",monospace}
+html[data-theme][data-skin=valley] .rec.vl-entry .ve-item img{width:40px;height:40px;object-fit:contain;border:0;border-radius:0;filter:none;display:block}
+html[data-theme][data-skin=valley] .rec.vl-entry .ve-coin img{width:12px;height:12px;border:0;border-radius:0;filter:none;display:inline-block}
+html[data-theme][data-skin=valley] .rec.vl-entry img.ve-photo{width:64px;height:64px;filter:none}
+html[data-theme][data-skin=valley] .rec.vl-entry .body{padding:0}
+html[data-theme][data-skin=valley] .section-title{justify-content:flex-start;gap:6px}
+html[data-theme][data-skin=valley] .section-title a{margin-left:auto}
+html[data-theme][data-skin=valley] .vl-entry .cname{text-align:left;flex:1;min-width:0}
+html[data-theme][data-skin=valley] .rec.vl-entry img.ve-photo{width:52px;height:52px}
+html[data-theme][data-skin=valley] .vl-entry .body{text-align:left}
