@@ -131,11 +131,11 @@ function encounter(cafe, lit) {
   return new Promise(resolve => {
     const o = overlay(); o.className = 'enc';
     o.innerHTML = `<div class="enc-flash"></div><div class="enc-stage"><div class="enc-ground"></div></div>
-      <div class="jwin enc-box"><div class="enc-text"></div><div class="jmenu enc-menu"><button class="jmenu-item on" id="encGo">品尝</button><button class="jmenu-item" id="encRun">稍后</button></div></div>`;
+      <div class="jwin enc-box"><div class="enc-text"></div><div class="jmenu enc-menu"><button class="jmenu-item on" id="encGo">${cafe.closed ? '回忆' : '品尝'}</button><button class="jmenu-item" id="encRun">稍后</button></div></div>`;
     o.querySelector('.enc-stage').appendChild(scaled(cafeSprite(cafe.id, lit), 6));
     SFX.play('encounter');
     const text = o.querySelector('.enc-text');
-    setTimeout(() => typeInto(text, `发现了 ${cafe.name}！`), 450);
+    setTimeout(() => typeInto(text, cafe.closed ? `${cafe.name} 的旧址……往日的回忆浮现了！` : `发现了 ${cafe.name}！`), 450);
     const done = () => { o.classList.add('hidden'); o.innerHTML = ''; resolve(); };
     o.querySelector('#encGo').onclick = () => { SFX.play('confirm'); done(); };
     o.querySelector('#encRun').onclick = () => { SFX.play('blip'); done(); };

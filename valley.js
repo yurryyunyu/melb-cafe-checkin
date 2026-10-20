@@ -193,9 +193,18 @@ const LINES = [
   ['又见面啦！今天也来一杯吗？', '{s}天就该来杯热乎的，对吧？', '上次那杯还喜欢吗？今天换个口味试试？'],
   ['老朋友来了！你的口味我已经记住啦。', '今天的奶泡打得特别绵，给你多拉一颗心～', '你来得正好，刚出炉的点心还热着呢。'],
   ['你是我们店最重要的客人！这杯算我请～', '有你常来，这条街都变温暖了。', '要是哪天你没来，我会想你的。']];
+// closed cafes (cafe.closed) — the former barista reminisces instead of serving
+const CLOSED_LINES = [
+  ['这家店已经关门啦……我是{n}，以前在这儿做咖啡。好怀念大家排队等 {sig} 的日子。', '你也是来找这家店的吗？可惜已经关啦。以前的 {sig} 真的很好喝呢。', '店门是关上了，不过我还常回来看看。你喝过这里的 {sig} 吗？'],
+  ['又在这儿遇见你啦。店虽然关了，我还记得你那时点的 {sig}。', '{s}天路过这儿，总会想起以前的 {sig}。', '你还会回来看看这里，真好。谢谢你记得我们～'],
+  ['老朋友，店关了，回忆还在。那杯 {sig} 我到现在都记得味道。', '以前你常坐窗边那个位置，对吧？现在想起来还暖暖的。', '要是还能再给你做一杯 {sig} 就好了……'],
+  ['你是这家店最后也最好的客人。谢谢你一直陪着我们！', '店没了，可我们的交情还在。下次在别家喝到好咖啡，也替我尝一口吧！', '每次看到你，就像这家店还开着一样。']];
+const sigName = cafeId => { const S = window.SIGNATURES && window.SIGNATURES[cafeId]; return (S && S.s && S.s[0] && S.s[0][0]) || (window.menuFor ? (window.menuFor(cafeId)[0] || {}).name : '') || 'Flat White'; };
+const isClosedCafe = cafeId => !!(window.cafeById && (window.cafeById(cafeId) || {}).closed);
 function greeting(v, hearts, cafeId, clk = clock()) {
-  const tier = hearts <= 0 ? 0 : hearts <= 3 ? 1 : hearts <= 7 ? 2 : 3, R = rng(hash(v.id) + clk.day * 31 + hearts), L = LINES[tier];
-  const sig = (window.menuFor ? (window.menuFor(cafeId)[0] || {}).name : '') || 'Flat White';
+  const tier = hearts <= 0 ? 0 : hearts <= 3 ? 1 : hearts <= 7 ? 2 : 3, R = rng(hash(v.id) + clk.day * 31 + hearts);
+  if (isClosedCafe(cafeId)) { const L = CLOSED_LINES[tier]; return L[(R() * L.length) | 0].replace('{n}', v.name).replace(/\{sig\}/g, sigName(cafeId)).replace('{s}', clk.zh + '季的'); }
+  const L = LINES[tier], sig = (window.menuFor ? (window.menuFor(cafeId)[0] || {}).name : '') || 'Flat White';
   const pre = clk.phase === 'night' ? '这么晚还来，夜猫子呀！' : clk.h < 11 ? '早上好！' : '';
   return pre + L[(R() * L.length) | 0].replace('{n}', v.name).replace('{sig}', sig).replace('{s}', clk.zh + '季的');
 }
@@ -330,7 +339,7 @@ function harvest(el, data, onClose) {
   const q = data.quality, zh = itemZh(data.item), en = data.item || 'Coffee';
   el.className = 'vl-cel';
   el.innerHTML = `<div class="vl-sparkles">${'<i></i>'.repeat(12)}</div><div class="vwin vl-pop">
-    <div class="vl-pop-title">${data.isNew ? '🌱 新店解锁！' : '🧺 收获！'}</div>${data.cafe ? `<div class="vl-pop-cafe">${esc(data.cafe)}</div>` : ''}
+    <div class="vl-pop-title">${data.closed ? '📜 回忆收录！' : data.isNew ? '🌱 新店解锁！' : '🧺 收获！'}</div>${data.cafe ? `<div class="vl-pop-cafe">${esc(data.cafe)}</div>` : ''}
     <div class="vl-item"><div class="vl-slot"></div>${q ? `<i class="vq ${q.k}" title="${q.zh}品质"></i>` : ''}</div>
     <div class="vl-item-name">${esc(zh || en)}${zh && zh !== en ? ` <small>${esc(en)}</small>` : ''}</div>
     <div class="vl-q ${q ? q.k : 'none'}">${q ? `<i class="vq ${q.k}"></i> ${q.zh}品质` : '普通品质'}</div>

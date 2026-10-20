@@ -30,6 +30,7 @@ const saveBeans = () => save(K.beans, beans);
 const visitedIds = () => new Set(checkins.filter(c => c.cafeId).map(c => c.cafeId));
 const checkinsOf = id => checkins.filter(c => c.cafeId === id);
 const isClosed = c => !!(c && c.closed); // permanently closed: stays listed (history kept) but never suggested
+window.cafeById = cafeById; // valley.js greeting() checks .closed
 const sigOf = id => (window.SIGNATURES || {})[id] || null;
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
 function sigLine(c) { const g = sigOf(c.id); return g && g.s.length ? `<div class="sig-line"><b>招牌</b> ${g.s.map(x => esc(x[0])).join(' · ')}</div>` : ''; }
@@ -105,7 +106,7 @@ function coinLedger() { const seen = new Set(), out = new Map();
 const BEAN_COINS = 20; // beans never touch stamina
 const totalCoins = () => { let t = beans.length * BEAN_COINS; coinLedger().forEach(v => { t += v; }); return t; };
 const heartsOf = id => Math.min(10, checkinsOf(id).length);
-const villagerOf = id => Valley.villager(id, Math.max(0, allCafes().findIndex(c => c.id === id)));
+const villagerOf = id => { const v = Valley.villager(id, Math.max(0, allCafes().findIndex(c => c.id === id))); return isClosed(cafeById(id)) ? {...v, title: '前' + v.title} : v; };
 const itemKey = n => String(n || '').trim().toLowerCase();
 function collection() { const m = new Map();
   byTime().forEach(c => { if (!c.drink) return; const k = itemKey(c.drink); const e = m.get(k) || {name: c.drink, first: c.date, best: 0, n: 0}; e.n++; e.best = Math.max(e.best, c.rating || 0); m.set(k, e); }); return m; }
@@ -436,7 +437,7 @@ function celebrate(before, cafeId, extra = '') {
           rows: [['☕ 今日打卡', todays.length + ' 次'], ['🪙 今日金币', '+' + todays.reduce((s, x) => s + (led.get(x.id) || 0), 0)], ['✨ 获得经验', '+' + gain + ' XP'], ['📖 收藏', collection().size + ' 种']],
           friends: vg ? [{v: vg, from: hFrom, to: hTo}] : []}, done); celebrate._t = setTimeout(done, 12000); }
       else done(); };
-    Valley.harvest(el, {isNew, cafe: c && c.name, item: last.drink || '', quality: Valley.quality(last.rating), coins, xp: gain, villager: vg, heartsFrom: hFrom, heartsTo: hTo, newEntry, lines}, next);
+    Valley.harvest(el, {isNew, closed: isClosed(c), cafe: c && c.name, item: last.drink || '', quality: Valley.quality(last.rating), coins, xp: gain, villager: vg, heartsFrom: hFrom, heartsTo: hTo, newEntry, lines}, next);
     clearTimeout(celebrate._t); celebrate._t = setTimeout(next, 10000);
     if (navigator.vibrate) navigator.vibrate([30, 50, 60]);
     drawHud(); return;

@@ -1,5 +1,5 @@
 // v6 (adds lazy 3D map): network-first for pages/scripts (with timeout), cache only as offline fallback.
-const C = 'melb-cafe-v11', OCR = 'melb-cafe-ocr-v1'; // OCR files (vendor/tesseract, ~7MB) are never precached: cached on first use
+const C = 'melb-cafe-v12', OCR = 'melb-cafe-ocr-v1'; // OCR files (vendor/tesseract, ~7MB) are never precached: cached on first use
 const A = ['./', './index.html', './style.css', './app.js', './data.js', './signatures.js', './config.js', './maps.js', './sketchmap.js', './integrations.js', './map3d.js', './icon.svg', './manifest.webmanifest', './vendor/leaflet/leaflet.js', './vendor/leaflet/leaflet.css', './jrpg.js', './jrpg.css', './valley.js', './valley.css', './beans.js', './pixelmap.js', './vendor/fonts/fusion-pixel-12-zh_hans.subset.woff2'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(A)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== C && x !== OCR).map(x => caches.delete(x)))).then(() => self.clients.claim())); });
