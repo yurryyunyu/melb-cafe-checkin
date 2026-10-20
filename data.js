@@ -1,4 +1,4 @@
-// Seed list: real Melbourne cafes. Order = map numbers (1-9 follow the CBD walk in the reference map). Coordinates verified via OpenStreetMap Nominatim (Oct 2026).
+// Seed list: real Melbourne cafes (100). Map numbers come from REGIONS[].cafes order (1-9 follow the CBD walk in the reference map; 10-15 are the 2026-10 additions). Coordinates verified via OpenStreetMap Nominatim (Oct 2026).
 window.SEED_CAFES = [
   {id:"codeblackspencer", short:"Code Black Spencer", name:"Code Black Coffee (Spencer St)", suburb:"Melbourne CBD", address:"630 Little Collins St, Melbourne VIC 3000", lat:-37.81787, lng:144.95386, tags:["Southern Cross 对面","烘焙商"]},
   {id:"patricia", short:"Patricia", name:"Patricia Coffee Brewers", suburb:"Melbourne CBD", address:"Cnr Little Bourke St & Little William St, Melbourne VIC 3000", lat:-37.81395, lng:144.95865, tags:["站着喝","手冲"]},
@@ -50,7 +50,57 @@ window.SEED_CAFES = [
   {id:"marketlanebrunswick", name:"Market Lane Coffee (Sydney Rd)", short:"Market Lane", suburb:"Brunswick", address:"383 Sydney Rd, Brunswick VIC 3056", lat:-37.76835, lng:144.96176, tags:["烘焙商"]},
   {id:"lunar", name:"Lunar by Hikari", short:"Lunar by Hikari", suburb:"Brunswick", address:"458 Sydney Rd, Brunswick VIC 3056", lat:-37.76727, lng:144.96230, tags:["日式手冲"]},
   {id:"ona", name:"ONA Coffee Brunswick", short:"ONA", suburb:"Brunswick", address:"22 Ovens St, Brunswick VIC 3056", lat:-37.76497, lng:144.96159, tags:["烘焙商","早午餐"]},
-  {id:"benchroastery", name:"Bench Coffee Co. Roastery", short:"Bench Coffee", suburb:"Brunswick", address:"38 Breese St, Brunswick VIC 3056", lat:-37.76189, lng:144.96182, tags:["烘焙商","生吐司"]}
+  {id:"benchroastery", name:"Bench Coffee Co. Roastery", short:"Bench Coffee", suburb:"Brunswick", address:"38 Breese St, Brunswick VIC 3056", lat:-37.76189, lng:144.96182, tags:["烘焙商","生吐司"]},
+  // ---- +49 cafes (2026-10-21, research/new-cafes-49.json). Appended at the end so existing cafes keep their index (barista names stay the same). ----
+  {id:"leaguehonest", short:"League of Honest", name:"The League of Honest Coffee", suburb:"Melbourne CBD", address:"8 Exploration Lane, Melbourne VIC 3000", lat:-37.80925, lng:144.96843, tags:["Padre 旗下", "单品豆"]},
+  {id:"timeaftertime", short:"Time After Time", name:"Time After Time", suburb:"Melbourne CBD", address:"7 Howey Place, Melbourne VIC 3000", lat:-37.81495, lng:144.96531, tags:["竹炭可颂", "韩式"]},
+  {id:"squareone", short:"Square One", name:"Square One Rialto", suburb:"Melbourne CBD", address:"Ground Floor, 525 Collins Street, Melbourne VIC 3000", lat:-37.81885, lng:144.95778, tags:["主厨联名菜单", "烘焙商"]},
+  {id:"operator25", short:"Operator25", name:"Operator25", suburb:"Melbourne CBD", address:"25 Wills Street, Melbourne VIC 3000", lat:-37.81071, lng:144.95712, tags:["老电话交换局", "早午餐"]},
+  {id:"saintdreux", short:"Saint Dreux", name:"Saint Dreux", suburb:"Melbourne CBD", address:"Shop LG-30, Emporium, 287 Lonsdale Street, Melbourne VIC 3000", lat:-37.81241, lng:144.96392, tags:["日式炸猪排三明治", "外带"]},
+  {id:"bakemono", short:"Bakemono Bakers", name:"Bakemono Bakers", suburb:"Melbourne CBD", address:"Shop B, 273 Little Lonsdale Street (Drewery Lane), Melbourne VIC 3000", lat:-37.81085, lng:144.96388, tags:["生吐司", "Little Rogue 姐妹店"]},
+  {id:"touchwood", short:"Touchwood", name:"Touchwood", suburb:"Richmond", address:"480 Bridge Road, Richmond VIC 3121", lat:-37.81956, lng:145.00755, tags:["大庭院", "早午餐"]},
+  {id:"reunion", short:"Reunion & Co", name:"Reunion and Co", suburb:"Richmond", address:"472 Bridge Road, Richmond VIC 3121", lat:-37.81968, lng:145.00735, tags:["老街角店", "像客厅"]},
+  {id:"fiftyacres", short:"Fifty Acres", name:"Fifty Acres", suburb:"Richmond", address:"65 Bridge Road, Richmond VIC 3121", lat:-37.81762, lng:144.99221, tags:["有机", "法式田园风"]},
+  {id:"bakerofthings", short:"Baker of Things", name:"Baker of Things", suburb:"Richmond", address:"117 Burnley Street, Richmond VIC 3121", lat:-37.81616, lng:145.00921, tags:["Maker 旗下", "烘焙"]},
+  {id:"suupaa", short:"Suupaa", name:"Suupaa", suburb:"Cremorne", address:"Shop 1, 65 Dover Street, Cremorne VIC 3121", lat:-37.82768, lng:144.99191, tags:["日式便利店风", "午餐"]},
+  {id:"longstreet", short:"Long Street Coffee", name:"Long Street Coffee", suburb:"Richmond", address:"45 Little Hoddle Street, Richmond VIC 3121", lat:-37.81164, lng:144.99192, tags:["社会企业", "雇用难民"]},
+  {id:"warkoprichmond", short:"Warkop", name:"Warkop (Richmond)", suburb:"Richmond", address:"12 Risley Street, Richmond VIC 3121", lat:-37.81331, lng:144.99947, tags:["印尼风", "三明治"]},
+  {id:"rosso", short:"Rosso Coffee", name:"Rosso Coffee Experience", suburb:"North Melbourne", address:"117 Dryburgh Street, North Melbourne VIC 3051", lat:-37.80381, lng:144.94303, tags:["自己做咖啡", "烘焙商"]},
+  {id:"roslynthai", short:"Roslyn Thai Cafe", name:"Roslyn Thai Cafe", suburb:"West Melbourne", address:"477 King Street, West Melbourne VIC 3003", lat:-37.80881, lng:144.95178, tags:["泰式早餐", "戚风蛋糕"]},
+  {id:"cham", short:"Cham", name:"Cham", suburb:"West Melbourne", address:"25/31 Peel Street, West Melbourne VIC 3003", lat:-37.80758, lng:144.95536, tags:["越南咖啡", "文化空间"]},
+  {id:"baguettestudios", short:"Baguette Studios", name:"Baguette Studios", suburb:"North Melbourne", address:"15-27 Wreckyn Street, North Melbourne VIC 3051", lat:-37.80039, lng:144.95368, tags:["法棍", "韩法融合"]},
+  {id:"bobbys", short:"Bobby's Bakery", name:"Bobby's Bakery", suburb:"North Melbourne", address:"207 Dryburgh Street, North Melbourne VIC 3051", lat:-37.80153, lng:144.94348, tags:["康沃尔馅饼", "车库面包店"]},
+  {id:"udomhouse", short:"Udom House", name:"Udom House", suburb:"West Melbourne", address:"343 Victoria Street, West Melbourne VIC 3003", lat:-37.80543, lng:144.95004, tags:["泰式咖啡馆", "咖喱派"]},
+  {id:"padre", short:"Padre", name:"Padre Coffee (Brunswick East)", suburb:"Brunswick East", address:"438-440 Lygon Street, Brunswick East VIC 3057", lat:-37.76411, lng:144.97316, tags:["烘焙商", "总店"]},
+  {id:"mokum", short:"Mokum", name:"Mokum", suburb:"Brunswick", address:"359 Sydney Road, Brunswick VIC 3056", lat:-37.76918, lng:144.96162, tags:["荷兰菜", "小松饼"]},
+  {id:"luxfoundry", short:"Lux Foundry", name:"Lux Foundry", suburb:"Brunswick", address:"21 Hope Street, Brunswick VIC 3056", lat:-37.76420, lng:144.95983, tags:["老铸造厂", "大空间"]},
+  {id:"wildlife", short:"Wild Life Bakery", name:"Wild Life Bakery", suburb:"Brunswick East", address:"90 Albert Street, Brunswick East VIC 3057", lat:-37.77029, lng:144.97403, tags:["酸种面包", "烘焙"]},
+  {id:"imaasayoru", short:"Ima Asa Yoru", name:"Ima Asa Yoru", suburb:"Brunswick", address:"1 Duckett Street, Brunswick VIC 3056", lat:-37.76334, lng:144.96085, tags:["日式定食", "原 Ima Project"]},
+  {id:"brunswickeats", short:"Brunswick Eats", name:"Brunswick Eats", suburb:"Brunswick East", address:"120 Nicholson Street, Brunswick East VIC 3057", lat:-37.76760, lng:144.98033, tags:["新店", "复古奶奶风"]},
+  {id:"calere", short:"Calere", name:"Calēre Coffee", suburb:"Fitzroy", address:"Shop 1, 166 Gertrude Street, Fitzroy VIC 3065", lat:-37.80616, lng:144.98014, tags:["小店", "单品豆"]},
+  {id:"sircharles", short:"Sir Charles", name:"Sir Charles", suburb:"Fitzroy", address:"121 Johnston Street, Fitzroy VIC 3065", lat:-37.79826, lng:144.97893, tags:["亚洲风早午餐", "店内烘焙"]},
+  {id:"lumenpeople", short:"Lumen People", name:"Lumen People", suburb:"Fitzroy", address:"262 Johnston Street, Fitzroy VIC 3065", lat:-37.79913, lng:144.98373, tags:["日间咖啡夜间酒吧", "时令菜"]},
+  {id:"cibi", short:"Cibi", name:"Cibi", suburb:"Collingwood", address:"31-39 Keele Street, Collingwood VIC 3066", lat:-37.79709, lng:144.98590, tags:["日式早餐", "生活杂货"]},
+  {id:"allpress", short:"Allpress", name:"Allpress Espresso Roastery & Cafe", suburb:"Collingwood", address:"80 Rupert Street, Collingwood VIC 3066", lat:-37.80652, lng:144.98913, tags:["烘焙商", "庭院"]},
+  {id:"goodmeasure", short:"Good Measure", name:"Good Measure", suburb:"Carlton", address:"193 Lygon Street, Carlton VIC 3053", lat:-37.80109, lng:144.96651, tags:["Mont Blanc", "晚上变酒吧"]},
+  {id:"atelierenso", short:"Atelier Enso", name:"Atelier Enso", suburb:"Carlton", address:"8 Raffa Place, Carlton VIC 3053", lat:-37.79768, lng:144.96839, tags:["新店", "全自动咖啡机"]},
+  {id:"florian", short:"Florian", name:"Florian", suburb:"Carlton North", address:"617 Rathdowne Street, Carlton North VIC 3054", lat:-37.79067, lng:144.97141, tags:["街坊名店", "每日黑板菜单"]},
+  {id:"sleepys", short:"Sleepy's", name:"Sleepy's Cafe and Wine Bar", suburb:"Carlton North", address:"787 Nicholson Street, Carlton North VIC 3054", lat:-37.78090, lng:144.97778, tags:["华裔澳洲菜", "粥"]},
+  {id:"standingroom", short:"Standing Room", name:"Standing Room (Fitzroy North)", suburb:"Fitzroy North", address:"187 St Georges Road, Fitzroy North VIC 3068", lat:-37.78477, lng:144.98227, tags:["自家拼配", "巴斯克芝士蛋糕"]},
+  {id:"taiyosun", short:"Taiyo Sun", name:"Taiyo Sun", suburb:"Fitzroy North", address:"394 St Georges Road, Fitzroy North VIC 3068", lat:-37.77837, lng:144.98883, tags:["日式喫茶店", "12 个座位"]},
+  {id:"uncledrew", short:"Uncle Drew", name:"Uncle Drew", suburb:"Clifton Hill", address:"23 Groom Street, Clifton Hill VIC 3068", lat:-37.79424, lng:144.99814, tags:["街坊小店", "早餐卷"]},
+  {id:"prior", short:"Prior", name:"Prior", suburb:"Thornbury", address:"637 High Street, Thornbury VIC 3071", lat:-37.76158, lng:144.99989, tags:["130 座", "中东风"]},
+  {id:"threebagsfull", short:"Three Bags Full", name:"Three Bags Full", suburb:"Abbotsford", address:"60 Nicholson Street, Abbotsford VIC 3067", lat:-37.80739, lng:144.99654, tags:["老帽厂", "早午餐"]},
+  {id:"daybaker", short:"Daybaker", name:"Daybaker", suburb:"Abbotsford", address:"66 Nicholson Street, Abbotsford VIC 3067", lat:-37.80693, lng:144.99648, tags:["新店", "可颂"]},
+  {id:"moonmart", short:"Moon Mart", name:"Moon Mart", suburb:"South Melbourne", address:"315 Clarendon Street, South Melbourne VIC 3205", lat:-37.83430, lng:144.96137, tags:["韩日融合", "排队名店"]},
+  {id:"juniper", short:"Juniper", name:"Juniper", suburb:"South Melbourne", address:"269 Coventry Street, South Melbourne VIC 3205", lat:-37.83245, lng:144.95875, tags:["Florian 姐妹店", "三明治"]},
+  {id:"journeyman", short:"Journeyman", name:"Journeyman", suburb:"Windsor", address:"169 Chapel Street, Windsor VIC 3181", lat:-37.85221, lng:144.99312, tags:["Dukes 旗下", "设计感"]},
+  {id:"hobba", short:"Hobba", name:"Hobba", suburb:"Prahran", address:"428 Malvern Road, Prahran VIC 3181", lat:-37.84792, lng:145.00071, tags:["车库改造", "早午餐"]},
+  {id:"monarch", short:"Monarch Cakes", name:"Monarch Cakes", suburb:"St Kilda", address:"103 Acland Street, St Kilda VIC 3182", lat:-37.86816, lng:144.97921, tags:["1934 年老店", "波兰蛋糕"]},
+  {id:"rudimentary", short:"Rudimentary", name:"Rudimentary", suburb:"Footscray", address:"16-20 Leeds Street, Footscray VIC 3011", lat:-37.79817, lng:144.90109, tags:["集装箱咖啡馆", "花园"]},
+  {id:"coracle", short:"Coracle", name:"Coracle", suburb:"Yarraville", address:"63-65 Anderson Street, Yarraville VIC 3013", lat:-37.81663, lng:144.88941, tags:["日越港风", "日式早餐"]},
+  {id:"bawa", short:"Bawa", name:"Bawa", suburb:"Hawthorn", address:"248 Burwood Road, Hawthorn VIC 3122", lat:-37.82258, lng:145.03197, tags:["热带现代风", "早午餐"]},
+  {id:"arlo", short:"Arlo Elwood", name:"Arlo Elwood", suburb:"Elwood", address:"133 Ormond Road, Elwood VIC 3184", lat:-37.88583, lng:144.98866, tags:["绿植墙", "早午餐"]}
 ];
 
 // ---- SAMPLE menus (NOT verified against the cafes' current real menus; for prototype recognition/quick-pick only) ----
@@ -72,7 +122,57 @@ window.SAMPLE_MENU_EXTRA = {
   sevenseeds: [{name:"Single Origin Filter", type:"drink"}],
   marketlane: [{name:"Espresso", type:"drink"}, {name:"Seasonal Filter", type:"drink"}],
   bench: [{name:"Dacquoise", type:"food"}],
-  monkbodhi: [{name:"Vegan Breakfast Bowl", type:"food"}]
+  monkbodhi: [{name:"Vegan Breakfast Bowl", type:"food"}],
+  // ---- 49 cafes added 2026-10-21 (research/new-cafes-49.json): SAMPLE menus built from signatures + common items, NOT verified ----
+  leaguehonest: [{name:"Bowl of Coffee", type:"drink"}, {name:"Single Origin Espresso", type:"drink"}, {name:"Almond Croissant", type:"food"}],
+  timeaftertime: [{name:"Charcoal Croissant (ricotta & fig)", type:"food"}, {name:"Matcha Charcoal Croissant", type:"food"}, {name:"Time Traveller", type:"drink"}, {name:"Matcha Latte", type:"drink"}],
+  squareone: [{name:"Chilli Whipped Ricotta", type:"food"}, {name:"Seasonal Omelette", type:"food"}, {name:"Ube Waffle", type:"food"}, {name:"Cold Brew", type:"drink"}],
+  operator25: [{name:"Breakfast Tortillas", type:"food"}, {name:"Vanilla Sago with Rhubarb", type:"food"}, {name:"Pressed Lamb Shoulder", type:"food"}],
+  saintdreux: [{name:"Wagyu Katsu Sando", type:"food"}, {name:"Egg Sando", type:"food"}, {name:"Kurobuta Pork Katsu Sando", type:"food"}, {name:"Hojicha Latte", type:"drink"}],
+  bakemono: [{name:"Shokupan Loaf", type:"food"}, {name:"Almond Yuzu Croissant", type:"food"}, {name:"Berry Danish", type:"food"}],
+  touchwood: [{name:"Wholemeal Waffles", type:"food"}, {name:"Beetroot Latte", type:"drink"}, {name:"Shakshuka", type:"food"}],
+  reunion: [{name:"House-cured Trout", type:"food"}, {name:"Filled Bagel", type:"food"}, {name:"Burger", type:"food"}],
+  fiftyacres: [{name:"House-cured Salmon on Rye", type:"food"}, {name:"Guest Roaster Filter", type:"drink"}],
+  bakerofthings: [{name:"Blueberry Heart Yoyo", type:"food"}, {name:"Blackcurrant Cream Bun", type:"food"}, {name:"Baguette Sandwich", type:"food"}],
+  suupaa: [{name:"Fried Egg Sando", type:"food"}, {name:"Mortadella Onigiri", type:"food"}, {name:"Banana Cold Brew", type:"drink"}, {name:"Iced Matcha with Milo Foam", type:"drink"}],
+  longstreet: [{name:"Organic Breakfast Bowl", type:"food"}, {name:"Filter (rotating)", type:"drink"}],
+  warkoprichmond: [{name:"Sambal Filet-o-Fish", type:"food"}, {name:"Gado Gado Sandwich", type:"food"}, {name:"Brisket Sandwich", type:"food"}, {name:"Kaya Toast", type:"food"}],
+  rosso: [{name:"Make-Your-Own Coffee Session", type:"drink"}, {name:"Single Origin Cupping", type:"drink"}, {name:"Brunch Plate", type:"food"}],
+  roslynthai: [{name:"Pork Congee", type:"food"}, {name:"Coconut Pandan Chiffon", type:"food"}, {name:"Kaya Toast Set", type:"food"}, {name:"Thai Milk Tea", type:"drink"}],
+  cham: [{name:"Egg Coffee", type:"drink"}, {name:"Banana Latte", type:"drink"}, {name:"Croissant Banh Mi", type:"food"}, {name:"Chicken Pho", type:"food"}],
+  baguettestudios: [{name:"Bulgogi Cheesesteak Baguette", type:"food"}, {name:"Jambon-Fromage", type:"food"}, {name:"Pretzel Croissant", type:"food"}, {name:"Kouign-amann", type:"food"}],
+  bobbys: [{name:"Traditional Cornish Pasty", type:"food"}, {name:"Rye Sourdough", type:"food"}, {name:"Danish", type:"food"}],
+  udomhouse: [{name:"Pandan Kaya Toast", type:"food"}, {name:"Thai Curry Pie", type:"food"}, {name:"A Pi Rom (iced)", type:"drink"}, {name:"Thai Iced Coffee", type:"drink"}],
+  padre: [{name:"Daddy's Girl Espresso", type:"drink"}, {name:"Hey Buddy Filter", type:"drink"}, {name:"Bacon & Egg Tart", type:"food"}],
+  mokum: [{name:"Poffertjes", type:"food"}, {name:"Spek Pannenkoek", type:"food"}, {name:"Bitterballen", type:"food"}, {name:"Dutch Apple Pie", type:"food"}],
+  luxfoundry: [{name:"Crispy Poached Eggs", type:"food"}, {name:"Eggs Benedict", type:"food"}],
+  wildlife: [{name:"Kimchi Toastie", type:"food"}, {name:"Sourdough Loaf", type:"food"}, {name:"Croissant", type:"food"}],
+  imaasayoru: [{name:"Teishoku Set", type:"food"}, {name:"Chirashi", type:"food"}, {name:"Mazesoba", type:"food"}, {name:"Hojicha Latte", type:"drink"}],
+  brunswickeats: [{name:"Bacon & Egg Bun", type:"food"}, {name:"Corn & Manchego Croquette", type:"food"}, {name:"Banana Milk Bomboloni", type:"food"}],
+  calere: [{name:"Single Origin Espresso", type:"drink"}, {name:"Pour Over", type:"drink"}],
+  sircharles: [{name:"Sriracha Hollandaise Benedict", type:"food"}, {name:"Kimchi Waffle", type:"food"}, {name:"Banh Mi", type:"food"}],
+  lumenpeople: [{name:"Seasonal Brunch Plate", type:"food"}, {name:"Natural Wine", type:"drink"}],
+  cibi: [{name:"Japanese Breakfast Set", type:"food"}, {name:"Yuzu Pound Cake", type:"food"}, {name:"Chicken Soboro Bowl", type:"food"}, {name:"Sencha", type:"drink"}],
+  allpress: [{name:"Allpress Espresso", type:"drink"}, {name:"Daily Sandwich", type:"food"}],
+  goodmeasure: [{name:"Mont Blanc", type:"food"}, {name:"Babka", type:"food"}, {name:"Pastrami Sandwich", type:"food"}],
+  atelierenso: [{name:"Swiss Roll", type:"food"}, {name:"Cookie", type:"food"}, {name:"Filter Coffee", type:"drink"}],
+  florian: [{name:"Farmer's Breakfast", type:"food"}, {name:"Eggs Florian", type:"food"}, {name:"Seasonal Sandwich", type:"food"}],
+  sleepys: [{name:"Congee with Braised Pork Belly", type:"food"}, {name:"Mi Goreng Kimchi Toastie", type:"food"}, {name:"Lion's Head Meatballs", type:"food"}],
+  standingroom: [{name:"Basque Cheesecake", type:"food"}, {name:"Breakfast Bun", type:"food"}, {name:"Breakfast Congee", type:"food"}],
+  taiyosun: [{name:"Pizza Toast", type:"food"}, {name:"Azuki Matcha Toast", type:"food"}, {name:"Omurice", type:"food"}, {name:"Japanese Curry", type:"food"}],
+  uncledrew: [{name:"Brekky Burrito", type:"food"}, {name:"Ponzu Soba Salad", type:"food"}],
+  prior: [{name:"Salted Chocolate Crumpets", type:"food"}, {name:"Sticky Black Rice", type:"food"}, {name:"Polenta with Mushrooms", type:"food"}],
+  threebagsfull: [{name:"Loaded Smashed Avo", type:"food"}, {name:"Confit Duck Leg", type:"food"}, {name:"Pork Shoulder Benny", type:"food"}],
+  daybaker: [{name:"Chocolate Wattleseed Croissant", type:"food"}, {name:"Plain Croissant", type:"food"}, {name:"Roman-style Pizza", type:"food"}],
+  moonmart: [{name:"Bulgogi Sausage Muffin", type:"food"}, {name:"Okonomiyaki Hashbrown", type:"food"}, {name:"Pork Katsu Sando", type:"food"}, {name:"Strawberry Iced Matcha", type:"drink"}],
+  juniper: [{name:"Chicken Sandwich", type:"food"}, {name:"Mushroom Congee", type:"food"}],
+  journeyman: [{name:"Avocado Hummus Toast", type:"food"}, {name:"Dukes Espresso", type:"drink"}],
+  hobba: [{name:"Hotcakes", type:"food"}, {name:"Bubble & Squeak with Fried Eggs", type:"food"}, {name:"Beef Burger", type:"food"}],
+  monarch: [{name:"Polish Cheesecake", type:"food"}, {name:"Chocolate Kooglhoupf", type:"food"}, {name:"Plum Cake", type:"food"}],
+  rudimentary: [{name:"Sweet Spread Shokupan", type:"food"}, {name:"Kimchi Scramble", type:"food"}, {name:"Vietnamese Coffee", type:"drink"}],
+  coracle: [{name:"Japanese Breakfast", type:"food"}, {name:"Vietnamese Phin Coffee", type:"drink"}, {name:"Brothless Ramen", type:"food"}, {name:"Kaisen Don", type:"food"}],
+  bawa: [{name:"Coffee Tonic with Lime", type:"drink"}, {name:"Superfood Salad", type:"food"}],
+  arlo: [{name:"Turkish Eggs", type:"food"}, {name:"Beef Short Rib", type:"food"}]
 };
 window.menuFor = cafeId => {
   const extra = (window.SAMPLE_MENU_EXTRA[cafeId] || []);
@@ -83,7 +183,7 @@ window.menuFor = cafeId => {
 // ---- Sketch regions (schematic maps drawn from the user's reference maps; viewBox units = reference image px) ----
 // marker: [x, y, labelSide]  ('l' | 'r')
 window.REGIONS = [
-  {id:"city", name:"MEL CITY", zh:"市中心", vb:[20,130,990,770],
+  {id:"city", name:"MEL CITY", zh:"市中心", vb:[20,130,1080,770],
    pill:{x:410, y:712, w:320, h:62},
    streets:[
      {pts:[[110,165],[110,860]], w:34, label:"SPENCER STREET", at:[110,470], v:true},
@@ -93,37 +193,51 @@ window.REGIONS = [
      {pts:[[45,825],[975,825]], w:36, label:"FLINDERS STREET", at:[525,825]},
      {pts:[[110,480],[662,480]], w:34, label:"LITTLE BOURKE ST", at:[400,480]},
      {pts:[[110,410],[968,410]], w:18}, {pts:[[110,615],[662,615]], w:18}, {pts:[[662,755],[975,755]], w:18},
-     {pts:[[597,335],[597,410]], w:16}, {pts:[[797,315],[797,410]], w:16}, {pts:[[620,480],[620,565]], w:16}, {pts:[[597,195],[662,195]], w:16}
+     {pts:[[597,335],[597,410]], w:16}, {pts:[[797,315],[797,410]], w:16}, {pts:[[620,480],[620,565]], w:16}, {pts:[[597,195],[662,195]], w:16},
+     {pts: [[933, 410], [1080, 410]], w: 18},
+     {pts: [[662, 345], [1080, 345]], w: 18},
+     {pts: [[400, 165], [400, 410]], w: 16}
    ],
-   cafes:{codeblackspencer:[142,595,"r"], patricia:[365,515,"r"], hardwaresoc:[573,360,"l"], maker:[578,520,"r"], bbb:[628,452,"r"], bench:[693,632,"r"], dukes:[752,792,"r"], codeblackflinders:[880,722,"l"], littlerogue:[776,368,"r"]}},
-  {id:"richmond", name:"RICHMOND", zh:"列治文", vb:[60,130,960,760],
+   cafes:{codeblackspencer:[142,595,"r"], patricia:[365,515,"r"], hardwaresoc:[573,360,"l"], maker:[578,520,"r"], bbb:[628,452,"r"], bench:[693,632,"r"], dukes:[752,792,"r"], codeblackflinders:[880,722,"l"], littlerogue:[776,368,"r"], leaguehonest:[1040,300,"l"], timeaftertime:[766,626,"r"], squareone:[309,773,"r"], operator25:[440,250,"r"], saintdreux:[860,480,"r"], bakemono:[740,250,"r"]}},
+  {id:"richmond", name:"RICHMOND", zh:"列治文", vb:[40,130,980,760],
    pill:{x:390, y:240, w:420, h:68},
    streets:[
      {pts:[[362,345],[362,840]], w:34, label:"CHURCH ST", at:[362,575], v:true},
      {pts:[[662,165],[662,840]], w:34, label:"BURNLEY ST", at:[662,550], v:true},
      {pts:[[165,430],[815,430]], w:34, label:"BRIDGE ROAD", at:[512,430]},
      {pts:[[165,727],[815,727]], w:34, label:"SWAN STREET", at:[512,727]},
-     {pts:[[662,287],[808,287],[808,340]], w:18}
+     {pts:[[662,287],[808,287],[808,340]], w:18},
+     {pts: [[95, 165], [95, 840]], w: 30, label: "HODDLE ST", at: [95, 600], v: true},
+     {pts: [[95, 430], [165, 430]], w: 34},
+     {pts: [[95, 727], [165, 727]], w: 34},
+     {pts: [[362, 200], [362, 345]], w: 18}
    ],
-   cafes:{au79:[330,398,"l"], makerrichmond:[742,263,"l"], zest:[778,263,"r"], veneziano:[785,326,"l"], heart:[628,677,"r"], dutton:[612,776,"r"], vacation:[318,780,"l"], midi:[187,685,"r"]}},
-  {id:"northmel", name:"NORTH MEL", zh:"北墨尔本", vb:[40,150,960,760],
+   cafes:{au79:[330,398,"l"], makerrichmond:[742,263,"l"], zest:[778,263,"r"], veneziano:[785,326,"l"], heart:[628,677,"r"], dutton:[612,776,"r"], vacation:[318,780,"l"], midi:[187,685,"r"], touchwood:[720,470,"r"], reunion:[600,470,"l"], fiftyacres:[150,470,"r"], bakerofthings:[621,304,"l"], suupaa:[200,790,"l"], longstreet:[150,200,"r"], warkoprichmond:[420,190,"r"]}},
+  {id:"northmel", name:"NORTH MEL", zh:"北墨尔本", vb:[-200,100,1200,920],
    pill:{x:300, y:800, w:420, h:68},
    streets:[
      {pts:[[222,185],[222,710]], w:32, label:"PRINCES HIGHWAY", at:[222,440], v:true},
      {pts:[[75,467],[905,467]], w:34, label:"QUEENSBERRY STREET", at:[545,467]},
      {pts:[[616,220],[616,840]], w:32, label:"CHETWYND STREET", at:[616,345], v:true},
      {pts:[[375,698],[905,698]], w:32, label:"VICTORIA STREET", at:[640,698]},
-     {pts:[[355,230],[355,467]], w:18}, {pts:[[745,467],[745,698]], w:18}, {pts:[[745,565],[880,565]], w:18}, {pts:[[616,600],[745,600]], w:18}
+     {pts:[[355,230],[355,467]], w:18}, {pts:[[745,467],[745,698]], w:18}, {pts:[[745,565],[880,565]], w:18}, {pts:[[616,600],[745,600]], w:18},
+     {pts: [[-140, 160], [-140, 980]], w: 28, label: "DRYBURGH ST", at: [-140, 560], v: true},
+     {pts: [[-200, 467], [75, 467]], w: 34},
+     {pts: [[616, 840], [616, 1010]], w: 32},
+     {pts: [[375, 698], [-140, 698]], w: 22},
+     {pts: [[616, 930], [960, 930]], w: 22, label: "PEEL ST", at: [820, 930]}
    ],
-   cafes:{c279:[580,737,"l"], path:[795,668,"r"], lebajo:[770,632,"r"], otherside:[703,620,"l"], codeblacknorth:[727,550,"l"], smallbatch:[800,543,"r"], auctionrooms:[334,410,"r"], mork:[377,297,"r"], palette:[128,437,"r"]}},
+   cafes:{c279:[580,737,"l"], path:[795,668,"r"], lebajo:[770,632,"r"], otherside:[703,620,"l"], codeblacknorth:[727,550,"l"], smallbatch:[800,543,"r"], auctionrooms:[334,410,"r"], mork:[377,297,"r"], palette:[128,437,"r"], rosso:[-90,640,"r"], roslynthai:[560,960,"r"], cham:[880,880,"l"], baguettestudios:[680,190,"r"], bobbys:[-90,380,"r"], udomhouse:[435,736,"l"]}},
   {id:"brunswick", name:"BRUNSWICK", zh:"布伦瑞克", vb:[-110,150,1220,760],
    pill:{x:745, y:598, w:460, h:68},
    streets:[
      {pts:[[335,165],[335,870]], w:36, label:"SYDNEY ROAD", at:[335,500], v:true},
      {pts:[[245,830],[960,830]], w:36, label:"BARKLY STREET", at:[600,830]},
      {pts:[[335,235],[275,235],[275,268]], w:18}, {pts:[[335,397],[270,397],[270,470],[335,470]], w:18},
-     {pts:[[335,723],[468,723]], w:18}, {pts:[[335,783],[428,783]], w:18}, {pts:[[282,760],[282,812]], w:16}
+     {pts:[[335,723],[468,723]], w:18}, {pts:[[335,783],[428,783]], w:18}, {pts:[[282,760],[282,812]], w:16},
+     {pts: [[640, 165], [640, 830]], w: 30, label: "LYGON ST", at: [640, 300], v: true},
+     {pts: [[930, 165], [930, 560]], w: 26, label: "NICHOLSON ST", at: [930, 260], v: true}
    ],
-   cafes:{core:[790,797,"r"], wideopenroad:[435,782,"r"], disciple:[260,793,"l"], kohinodeshi:[262,753,"l"], codeblack:[475,727,"r"], marketlanebrunswick:[300,546,"l"], lunar:[370,498,"r"], ona:[296,437,"l"], benchroastery:[281,282,"l"]}}
+   cafes:{core:[790,797,"r"], wideopenroad:[435,782,"r"], disciple:[260,793,"l"], kohinodeshi:[262,753,"l"], codeblack:[475,727,"r"], marketlanebrunswick:[300,546,"l"], lunar:[370,498,"r"], ona:[296,437,"l"], benchroastery:[281,282,"l"], padre:[690,360,"r"], mokum:[390,600,"r"], luxfoundry:[120,470,"l"], wildlife:[698,534,"r"], imaasayoru:[100,360,"l"], brunswickeats:[880,450,"r"]}}
 ];
 window.REGION_MORE = {id:"more", name:"更多", zh:"更多咖啡馆"};

@@ -15,7 +15,7 @@ function rememberPid(c, pid) { if (!c || !pid || c.placeId) return; const m = pi
 // official Maps URLs format; query = name + address, plus query_place_id when we know it
 function url(c) { const q = [c.name, c.address].filter(Boolean).join(', '), pid = placeIdOf(c);
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q) + (pid ? '&query_place_id=' + encodeURIComponent(pid) : ''); }
-const btnHtml = (c, cls = '') => `<a class="gr-btn ${cls}" href="${esc(url(c))}" target="_blank" rel="noopener" data-gr="${esc(c.id)}" aria-label="在 Google 地图看 ${esc(c.name)} 的评价"><i class="gr-star" aria-hidden="true"></i>看 Google 评价</a>`;
+const btnHtml = (c, cls = '', label = '看 Google 评价', id = '') => `<a class="gr-btn ${cls}"${id ? ` id="${id}"` : ''} href="${esc(url(c))}" target="_blank" rel="noopener" data-gr="${esc(c.id)}" aria-label="在 Google 地图看 ${esc(c.name)} 的评价"><i class="gr-star" aria-hidden="true"></i>${label}</a>`;
 // inside a list card (which is itself a link) we can't nest <a>: a span that opens the same URL
 const chipHtml = c => `<span class="gr-btn chip-sm" role="link" tabindex="0" data-gr-href="${esc(url(c))}" data-gr="${esc(c.id)}" aria-label="在 Google 地图看 ${esc(c.name)} 的评价"><i class="gr-star" aria-hidden="true"></i>看 Google 评价</span>`;
 const openChip = el => { const a = document.createElement('a'); a.href = el.dataset.grHref; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); }; // new tab, keeps the app open

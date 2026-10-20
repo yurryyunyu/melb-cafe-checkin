@@ -884,10 +884,9 @@ const views = {
       <div>${(c.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${c.custom ? '<span class="tag">我添加的</span>' : ''}</div>
       ${isClosed(c) ? `<div class="closed-note">🚪 这家店已永久关闭，以前的打卡记录都还在。</div>` : ''}${sigBox(c)}
       ${isV() ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="jwin vl-barista"><div class="vb-face" id="vbFace"></div><div class="vb-main"><div class="vb-name">${esc(vg.title)} <b>${esc(vg.name)}</b></div>${Valley.heartsHtml(h)}<div class="vb-h">好感 ${h}/10${h >= 10 ? ' · 挚友' : h >= 5 ? ' · 好朋友' : h ? ' · 熟客' : ' · 初次见面'}</div><div class="vb-say">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="vb-talk" id="talkBtn">💬</button></div>`; })() : ''}
-      ${window.GReviews ? `<div class="gr-box">${GReviews.btnHtml(c, 'btn ghost')}<div id="grPanelBox"></div></div>` : ''}
+      <div class="gr-box">${window.GReviews ? GReviews.btnHtml(c, 'btn ghost', '在 Google 地图看评价', 'gmLink') : `<a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图看评价</a>`}<div id="grPanelBox"></div></div>
       <button class="btn${isClosed(c) ? ' ghost' : ''}" id="ciBtn">${isClosed(c) ? ic('quill', '📝') + ' 补记一次以前的打卡' : ic('cup', '☕') + ' 在这里打卡'}</button>
-      <div class="row"><a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图中打开</a>
-      <button class="btn ghost" id="mapBtn">${ic('map', '🗺️')} 地图上看</button></div>
+      <button class="btn ghost" id="mapBtn">${ic('map', '🗺️')} 地图上看</button>
       <div class="section-title">我的打卡（${cis.length}）</div>
       ${cis.map(ci => `<div class="rec">${ci.photo ? `<img src="${ci.photo}" alt="">` : ''}<div class="body"><div class="top"><span class="stars">${stars(ci.rating) || '<span class="hint">未评分</span>'}</span><span class="date">${esc(ci.date)}</span></div>${ci.drink ? `<div class="note">🥤 ${esc(ci.drink)}</div>` : ''}${ci.note ? `<div class="note">${esc(ci.note)}</div>` : ''}<div style="text-align:right"><button class="edit" data-edit="${ci.id}">编辑</button></div></div></div>`).join('') || '<div class="hint">还没在这里打过卡</div>'}
       ${c.custom ? '<button class="btn danger" id="delCafe">删除这家咖啡馆</button>' : ''}`;

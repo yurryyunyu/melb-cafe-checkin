@@ -153,6 +153,8 @@ function shade(hex, d) { const n = parseInt(hex.slice(1), 16), c = v => Math.max
 // ---------- 🧑‍🍳 barista villagers (procedural portraits, original) ----------
 const NAMES = ['小麦', '阿栗', '芋圆', '桃桃', '年糕', '布丁', '麻薯', '可可', '青柠', '豆花', '杏仁', '阿柚', '小枫', '糯米', '奶盖', '焦糖', '蜜桃', '南瓜', '松饼', '芝麻', '雪梨', '柠檬', '奶糖', '小橘',
   '黑豆', '芒果', '麦芽', '花生', '汤圆', '糖霜', '肉桂', '椰子', '枫糖', '白桃', '阿梅', '小米', '酥酥', '团子', '栗子', '山楂', '话梅', '薄荷', '乌龙', '玄米', '豆浆', '桂花', '杏子', '葡萄', '米糕', '红豆', '奶茶', '可颂', '蛋挞'];
+// names for cafes added after the first 51 (2026-10): a separate list so the original baristas keep their names
+const NAMES2 = ['云朵', '小葵', '阿桂', '柚柚', '豆豆', '小杉', '春卷', '毛豆', '海苔', '冬瓜', '小荷', '阿樱', '蓝莓', '莓莓', '奶昔', '拿铁', '摩卡', '小榛', '核桃', '阿杏', '米酒', '小枣', '柿子', '石榴', '阿茶', '抹抹', '焙焙', '果冻', '小饼', '千层', '泡芙', '马卡', '曲奇', '软糖', '布朗', '小鹿', '阿竹', '小雪', '小晴', '阿岚', '小星', '月饼', '甜筒', '糖糕', '阿酥', '小葡', '荔枝', '龙眼', '椰椰', '菠萝', '柑柑', '小苹', '阿瓜', '小莲', '阿荞', '麦麦', '阿稻', '小禾', '阿豌', '小芹'];
 const SKINS = [['#f7d2b0', '#e0ad86'], ['#f0c39a', '#d49c72'], ['#d9a070', '#b87e52'], ['#b07850', '#8e5a38'], ['#8a5a3c', '#6c4128'], ['#fbe0c8', '#e6bc9c']];
 const HAIRS = [['#3a2418', '#24160e'], ['#7a4a25', '#5a3418'], ['#c98a3a', '#a06a24'], ['#e8c070', '#c09a48'], ['#a03a2c', '#7a2a1e'], ['#2a2a3a', '#16161f'], ['#d07090', '#a85070'], ['#5a7ad0', '#4058a8'], ['#e8e0d8', '#bcb4ac']];
 const SHIRTS = ['#4f86c6', '#7ab55c', '#e07a5f', '#8a6ac0', '#e8b84a', '#5ab0b0', '#c05a7a', '#f0ede0'];
@@ -160,7 +162,7 @@ const APRONS = ['#6b3f1d', '#2f4a6a', '#8a3a3a', '#3f6a3a', '#5a4a7a', '#c98f5a'
 const vilCache = {};
 function villager(id, idx) {
   if (vilCache[id]) return vilCache[id];
-  const R = rng(hash(id) ^ 0xba7a), name = NAMES[(idx != null ? idx * 7 + (hash(id) & 3) : hash(id) >>> 0) % NAMES.length];
+  const R = rng(hash(id) ^ 0xba7a), name = idx != null && idx >= 51 ? NAMES2[(idx - 51) % NAMES2.length] : NAMES[(idx != null ? idx * 7 + (hash(id) & 3) : hash(id) >>> 0) % NAMES.length];
   const [sk, skD] = pick(R, SKINS), [hr, hrD] = pick(R, HAIRS), shirt = pick(R, SHIRTS), apron = pick(R, APRONS);
   const style = (R() * 6) | 0, glasses = R() < .28, freckles = R() < .3, beard = (style === 0 || style === 1) && R() < .3, cap = pick(R, ['#e85a5a', '#4f86c6', '#f0a030', '#5f9e4a']);
   const P = Pix(32, 32);
@@ -211,7 +213,13 @@ function greeting(v, hearts, cafeId, clk = clock()) {
 function heartsHtml(n, max = 10) { return `<span class="vh-row" aria-label="好感 ${n}/${max}">${Array.from({length: max}, (_, i) => `<i class="vh ${i < n ? 'on' : ''}"></i>`).join('')}</span>`; }
 
 // ---------- 🥤 items + quality ----------
-const KINDS = [[/iced|冰|cold/i, 'iced'], [/matcha|抹茶/i, 'matcha'], [/chai|tea|茶/i, 'chai'], [/choc|可可|mocha|摩卡/i, 'choc'], [/filter|pour|batch|v60|手冲|single origin/i, 'filter'],
+const KINDS = [ // 2026-10: rules for the 49 new cafes' menus come first (drinks that look like food words, then savoury/sweet food → existing sprites)
+  [/egg\s*coffee|banana\s*latte|beetroot|time\s*traveller|bowl\s*of\s*coffee|coffee\s*session|cupping|wine/i, 'latte'], [/coffee\s*tonic|tonic/i, 'iced'], [/phin|vietnamese\s*coffee|thai\s*iced\s*coffee/i, 'black'],
+  [/croissant|pain\s*au/i, 'croissant'], [/(?<!french\s)toast|shokupan|whipped\s*ricotta/i, 'toast'], [/benny/i, 'egg'],
+  [/waffle|poffertjes|pannenkoek|crumpet/i, 'hotcake'], [/danish|babka|chiffon|cheesecake|bomboloni|swiss\s*roll|yoyo|kooglhoupf|mont\s*blanc|sago|plum\s*cake|pound\s*cake|cookie|apple\s*pie/i, 'cake'],
+  [/sando|sandwich|toastie|baguette|banh\s*mi|burger|\bbun\b|bagel|muffin|burrito|pasty|\bpie\b|tortilla|cheesesteak|jambon|sourdough|loaf|croquette|bitterballen|hashbrown|filet-o-fish/i, 'bread'],
+  [/congee|soba|ramen|curry|rice|\bdon\b|chirashi|teishoku|breakfast|omurice|soboro|plate|pho\b|meatball|duck|lamb|rib\b|trout|salmon|onigiri|okonomiyaki|polenta|shakshuka|gado|omelette|pizza|scramble/i, 'bowl'],
+  [/iced|冰|cold/i, 'iced'], [/matcha|抹茶/i, 'matcha'], [/chai|tea|茶/i, 'chai'], [/choc|可可|mocha|摩卡/i, 'choc'], [/filter|pour|batch|v60|手冲|single origin/i, 'filter'],
   [/long\s*black|espresso|americano|浓缩|美式|长黑/i, 'black'], [/croissant|pain|kouign|cruffin|可颂/i, 'croissant'], [/french\s*toast|hotcake|pancake|松饼|班戟/i, 'hotcake'], [/banana\s*bread|bread|面包/i, 'bread'],
   [/toast|avo|吐司|牛油果/i, 'toast'], [/egg|benedict|蛋/i, 'egg'], [/bowl|碗|沙拉|salad/i, 'bowl'], [/dacquoise|cake|蛋糕|甜点|cookie|饼/i, 'cake']];
 const FOOD = new Set(['croissant', 'hotcake', 'bread', 'toast', 'egg', 'bowl', 'cake']);
@@ -241,7 +249,15 @@ function itemSprite(name) {
 }
 const QUAL = [null, {k: 'bronze', zh: '铜星'}, {k: 'bronze', zh: '铜星'}, {k: 'silver', zh: '银星'}, {k: 'gold', zh: '金星'}, {k: 'iris', zh: '紫晶星'}];
 const quality = r => QUAL[r | 0] || null;
-const ZH = [[/flat\s*white/i, '馥芮白'], [/iced\s*latte/i, '冰拿铁'], [/chai/i, '印度拉茶'], [/latte/i, '拿铁'], [/cappuccino/i, '卡布奇诺'], [/long\s*black/i, '长黑'], [/espresso/i, '意式浓缩'], [/piccolo/i, '短笛拿铁'], [/magic/i, '魔法咖啡'],
+const ZH = [[/matcha\s*latte/i, '抹茶拿铁'], [/hojicha/i, '焙茶拿铁'], [/beetroot/i, '甜菜根拿铁'], [/banana\s*latte/i, '香蕉拿铁'], [/egg\s*coffee/i, '蛋咖啡'], [/cold\s*brew/i, '冷萃'], [/phin|vietnamese\s*coffee/i, '越南滴滤咖啡'],
+  [/thai\s*milk\s*tea/i, '泰式奶茶'], [/thai\s*iced\s*coffee/i, '泰式冰咖啡'], [/coffee\s*tonic/i, '咖啡汤力'], [/sencha/i, '煎茶'], [/bowl\s*of\s*coffee/i, '碗装咖啡'], [/katsu\s*sando/i, '炸猪排三明治'], [/sando/i, '日式三明治'],
+  [/congee/i, '粥'], [/kaya/i, '咖椰吐司'], [/waffle/i, '华夫饼'], [/bagel/i, '贝果'], [/shakshuka/i, '北非蛋'], [/cheesecake/i, '芝士蛋糕'], [/danish/i, '丹麦酥'], [/sourdough/i, '酸种面包'], [/pasty/i, '康沃尔馅饼'],
+  [/banh\s*mi/i, '越南法棍'], [/onigiri/i, '饭团'], [/omurice/i, '蛋包饭'], [/ramen/i, '拉面'], [/soba/i, '荞麦面'], [/burrito/i, '早餐卷饼'], [/burger/i, '汉堡'], [/toastie/i, '烤三明治'], [/sandwich|baguette/i, '三明治'],
+  [/pizza/i, '披萨'], [/bomboloni/i, '意式甜甜圈'], [/poffertjes/i, '荷兰小松饼'], [/pannenkoek/i, '荷兰大薄饼'], [/bitterballen/i, '荷兰炸肉丸'], [/croquette/i, '可乐饼'], [/babka/i, '巴布卡'], [/swiss\s*roll/i, '瑞士卷'],
+  [/crumpet/i, '英式松饼'], [/chiffon/i, '戚风蛋糕'], [/teishoku|japanese\s*breakfast/i, '日式定食'], [/chirashi|kaisen/i, '海鲜饭'], [/curry/i, '咖喱'], [/turkish\s*eggs/i, '土耳其蛋'], [/mont\s*blanc/i, '蒙布朗'],
+  [/cookie/i, '曲奇'], [/pho\b/i, '越南河粉'], [/salad/i, '沙拉'], [/(?<!hot)cake\b/i, '蛋糕'], [/pie\b/i, '派'], [/shokupan/i, '生吐司'], [/omelette/i, '煎蛋卷'], [/trout/i, '腌鳟鱼'], [/salmon/i, '腌三文鱼'],
+  [/poached\s*eggs/i, '水波蛋'], [/brunch\s*plate/i, '早午餐拼盘'], [/duck/i, '油封鸭腿'], [/cupping/i, '咖啡杯测'], [/egg\s*(tart|bun)/i, '培根蛋'], [/meatball/i, '狮子头'], [/short\s*rib/i, '牛小排'],
+  [/flat\s*white/i, '馥芮白'], [/iced\s*latte/i, '冰拿铁'], [/chai/i, '印度拉茶'], [/latte/i, '拿铁'], [/cappuccino/i, '卡布奇诺'], [/long\s*black/i, '长黑'], [/espresso/i, '意式浓缩'], [/piccolo/i, '短笛拿铁'], [/magic/i, '魔法咖啡'],
   [/batch/i, '批量手冲'], [/filter|pour/i, '手冲咖啡'], [/hot\s*choc/i, '热可可'], [/banana\s*bread/i, '香蕉面包'], [/avo/i, '牛油果吐司'], [/almond\s*croissant/i, '杏仁可颂'], [/pain\s*au/i, '巧克力可颂'], [/croissant/i, '可颂'],
   [/kouign/i, '焦糖酥'], [/cruffin/i, '可芬'], [/french\s*toast/i, '法式吐司'], [/hotcake/i, '松饼'], [/baked\s*eggs/i, '烤蛋'], [/benedict/i, '班尼迪克蛋'], [/bowl/i, '早餐碗'], [/dacquoise/i, '达克瓦兹']];
 const itemZh = name => { const n = String(name || ''); const z = ZH.find(([re]) => re.test(n)); return z ? z[1] : (/[\u4e00-\u9fff]/.test(n) ? n : ''); };
