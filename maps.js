@@ -46,7 +46,7 @@ function googleMap(el, center, zoom) {
   return {
     addMarker(lat, lng, done, html, o = {}) {
       const m = new google.maps.Marker({position: {lat, lng}, map, icon: {url: pinSvg(done, o.no), scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18), labelOrigin: new google.maps.Point(18, 44)},
-        label: o.label ? {text: o.label, fontFamily: 'Caveat, cursive', fontSize: '17px', fontWeight: '700', color: '#222'} : null, zIndex: done ? 1000 : 1});
+        label: o.label ? {text: o.label, fontFamily: 'Caveat, cursive', fontSize: '17px', fontWeight: '700', color: '#222'} : null, zIndex: o.closed ? 0 : done ? 1000 : 1, opacity: o.closed ? 0.4 : 1});
       m.addListener('click', () => { iw.setContent(html); iw.open({map, anchor: m}); });
       markers.push({m, lat, lng, html}); return m;
     },
@@ -67,11 +67,11 @@ function leafletMap(el, center, zoom) {
   L.control.zoom({position: 'topright'}).addTo(map);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, className: 'base-tiles', attribution: '© OpenStreetMap'}).addTo(map);
   let me = null, ring = null, removed = false; const markers = [];
-  const icon = (done, o = {}) => L.divIcon({className: '', html: `<div class="rmk"><span class="num ${done ? 'done' : ''}">${o.no || (done ? '✓' : '·')}</span>${o.label ? `<span class="cafe-label">${String(o.label).replace(/[<>&]/g, '')}</span>` : ''}</div>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14]});
+  const icon = (done, o = {}) => L.divIcon({className: '', html: `<div class="rmk${o.closed ? ' closed' : ''}"><span class="num ${done ? 'done' : ''}">${o.no || (done ? '✓' : '·')}</span>${o.label ? `<span class="cafe-label">${String(o.label).replace(/[<>&]/g, '')}</span>` : ''}</div>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14]});
   const zc = () => { el.classList.toggle('zoom-lo', map.getZoom() < 15); };
   map.on('zoomend', zc); zc();
   return {
-    addMarker(lat, lng, done, html, o) { const m = L.marker([lat, lng], {icon: icon(done, o), zIndexOffset: done ? 1000 : 0}).addTo(map).bindPopup(html); markers.push({m, lat, lng}); return m; },
+    addMarker(lat, lng, done, html, o) { const m = L.marker([lat, lng], {icon: icon(done, o), zIndexOffset: o && o.closed ? -500 : done ? 1000 : 0}).addTo(map).bindPopup(html); markers.push({m, lat, lng}); return m; },
     openAt(lat, lng) { const x = markers.find(k => k.lat === lat && k.lng === lng); if (x) x.m.openPopup(); },
     setView(p, z) { if (!removed) map.setView(p, z, {animate: false}); },
     fit(pts) { map.fitBounds(pts, {paddingTopLeft: [30, 60], paddingBottomRight: [30, 20], maxZoom: 15}); },

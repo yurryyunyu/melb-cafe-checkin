@@ -29,6 +29,14 @@ let beans = load(K.beans, []);
 const saveBeans = () => save(K.beans, beans);
 const visitedIds = () => new Set(checkins.filter(c => c.cafeId).map(c => c.cafeId));
 const checkinsOf = id => checkins.filter(c => c.cafeId === id);
+const isClosed = c => !!(c && c.closed); // permanently closed: stays listed (history kept) but never suggested
+const sigOf = id => (window.SIGNATURES || {})[id] || null;
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
+function sigLine(c) { const g = sigOf(c.id); return g && g.s.length ? `<div class="sig-line"><b>招牌</b> ${g.s.map(x => esc(x[0])).join(' · ')}</div>` : ''; }
+function sigBox(c) { const g = sigOf(c.id); if (!g || !g.s.length) return '';
+  return `<div class="card sig-box${isClosed(c) ? ' was' : ''}" id="sigBox"><div class="sig-head"><span class="sig-tag">招牌</span>${isClosed(c) ? '<span class="sig-low">关店前的招牌</span>' : g.c === 'low' ? '<span class="sig-low">信息较少</span>' : ''}${g.src ? `<a class="sig-src" href="${esc(g.src)}" target="_blank" rel="noopener">来源 · ${esc(hostOf(g.src))} ↗</a>` : ''}</div>
+    <ul class="sig-list">${g.s.map(([it, note]) => `<li><b>${esc(it)}</b>${note ? `<span>${esc(note)}</span>` : ''}</li>`).join('')}</ul></div>`; }
+const closedBadge = '<span class="badge-closed">已关店</span>';
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 // Melbourne local date (the app's home timezone); window.__valleyNow pins the clock for tests
 const nowMs = () => window.__valleyNow != null ? +new Date(window.__valleyNow) : Date.now();
@@ -171,8 +179,8 @@ function cafeFromPlace(p) {
 }
 function openPicker(onPick, {title = '在哪家咖啡馆？', pos = lastPos, allowLater = true, places = []} = {}) {
   let list = allCafes().map(c => ({c, d: pos ? distM(pos, [c.lat, c.lng]) : null}));
-  if (pos) list.sort((a, b) => a.d - b.d); else list.sort((a, b) => a.c.name.localeCompare(b.c.name));
-  const item = ({c, d}, i) => `<div class="picker-item ${pos && i === 0 && d < 1000 ? 'near' : ''}" data-id="${c.id}"><div><b>${esc(c.name)}</b><div class="hint" style="margin:2px 0 0">${esc(c.suburb)}</div></div><span class="d">${d != null ? fmtDist(d) : ''}</span></div>`;
+  if (pos) list.sort((a, b) => isClosed(a.c) - isClosed(b.c) || a.d - b.d); else list.sort((a, b) => isClosed(a.c) - isClosed(b.c) || a.c.name.localeCompare(b.c.name));
+  const item = ({c, d}, i) => `<div class="picker-item ${pos && i === 0 && d < 1000 && !isClosed(c) ? 'near' : ''}${isClosed(c) ? ' closed' : ''}" data-id="${c.id}"><div><b>${esc(c.name)}</b>${isClosed(c) ? ' ' + closedBadge : ''}<div class="hint" style="margin:2px 0 0">${esc(c.suburb)}</div></div><span class="d">${d != null ? fmtDist(d) : ''}</span></div>`;
   openSheet(`<h3>${title}</h3>
     <div class="search"><input id="pkQ" placeholder="搜索咖啡馆名称或区域" autocomplete="off"></div>
     ${pos ? '<div class="hint">按离你的距离排序</div>' : '<div class="hint">未获取到定位，请手动选择</div>'}
@@ -251,7 +259,7 @@ async function quickPhotoCheckin() {
   const pos = await posP;
   let near = null;
   if (pos) {
-    near = allCafes().map(c => ({c, d: distM(pos, [c.lat, c.lng])})).sort((a, b) => a.d - b.d)[0];
+    near = allCafes().filter(c => !isClosed(c)).map(c => ({c, d: distM(pos, [c.lat, c.lng])})).sort((a, b) => a.d - b.d)[0];
     if (near && near.d > NEAR_M) near = null;
   }
   const assign = async id => {
@@ -566,11 +574,11 @@ function cafeCard(c) {
   const cis = checkinsOf(c.id), last = cis.find(x => x.photo);
   const d = lastPos ? ' · ' + fmtDist(distM(lastPos, [c.lat, c.lng])) : '';
   const ro = regionOf(c.id);
-  return `<a class="card" href="#/cafe/${c.id}">
+  return `<a class="card${isClosed(c) ? ' closed' : ''}" href="#/cafe/${c.id}">
     <span class="num ${cis.length ? 'done' : ''}" title="${esc(ro.r.name)}">${ro.no || '☕'}</span>
     ${last ? `<img class="thumb" src="${last.photo}" alt="">` : ''}
-    <div class="meta"><div class="name">${esc(c.name)}</div><div class="sub">${esc(ro.r.name)} · ${esc(c.suburb)}${d} · ${esc(c.address)}</div></div>
-    ${cis.length ? `<span class="badge-done">⭐ ${cis.length}次</span>` : '<span class="badge-new">🔒 未解锁</span>'}</a>`;
+    <div class="meta"><div class="name">${esc(c.name)}</div><div class="sub">${esc(ro.r.name)} · ${esc(c.suburb)}${d} · ${esc(c.address)}</div>${sigLine(c)}</div>
+    ${isClosed(c) ? closedBadge : cis.length ? `<span class="badge-done">⭐ ${cis.length}次</span>` : '<span class="badge-new">🔒 未解锁</span>'}</a>`;
 }
 
 const views = {
@@ -588,7 +596,7 @@ const views = {
       let L = allCafes().filter(c => (!q || (c.name + ' ' + c.address + ' ' + c.suburb + ' ' + (c.tags || []).join(' ')).toLowerCase().includes(q))
         && (!listState.suburb || regionOf(c.id).r.id === listState.suburb)
         && (listState.filter !== 'todo' || !v.has(c.id)) && (listState.filter !== 'done' || v.has(c.id)));
-      if (listState.filter === 'near' && lastPos) L.sort((a, b) => distM(lastPos, [a.lat, a.lng]) - distM(lastPos, [b.lat, b.lng]));
+      if (listState.filter === 'near' && lastPos) L.sort((a, b) => isClosed(a) - isClosed(b) || distM(lastPos, [a.lat, a.lng]) - distM(lastPos, [b.lat, b.lng]));
       $('#cards').innerHTML = L.map(cafeCard).join('') || '<div class="empty"><div class="e">🫖</div>没有符合条件的咖啡馆</div>';
     };
     draw();
@@ -609,7 +617,7 @@ const views = {
     const head = `<div class="region-tabs">${tabs.map(([id, t]) => `<button class="chip ${ms.region === id ? 'on' : ''}" data-r="${id}">${esc(t)}</button>`).join('')}</div>`;
     if (ms.region === 'real') {
       app.innerHTML = head + `<div style="position:relative"><div id="map" class="real"></div>
-        <div class="map-legend"><span class="lg gold"></span> 已解锁 ${v.size}　<span class="lg grey"></span> 未解锁 ${allCafes().length - v.size}</div>
+        <div class="map-legend"><span class="lg gold"></span> 已解锁 ${v.size}　<span class="lg grey"></span> 未解锁 ${allCafes().length - v.size}${allCafes().some(isClosed) ? '　<span class="lg shut"></span> 已关店' : ''}</div>
         <button class="fab-add" id="locBtn">🎯 定位我</button></div>`;
       const token = ++mapToken;
       MapKit.create($('#map'), CBD, 13).then(map => {
@@ -617,8 +625,8 @@ const views = {
         mapRef = map;
         allCafes().forEach(c => {
           const done = v.has(c.id), n = checkinsOf(c.id).length, ro = regionOf(c.id);
-          const inRange = lastPos && distM(lastPos, [c.lat, c.lng]) <= NEAR_M;
-          map.addMarker(c.lat, c.lng, done, `<div class="pop-name">${esc(c.name)}</div><div class="pop-sub">${esc(ro.r.name)} · ${done ? '✓ 已解锁 · 打卡 ' + n + ' 次' : inRange ? '✨ 就在附近，可解锁！' : '🔒 未解锁'}</div><a class="pop-link" href="#/cafe/${c.id}">查看据点 ›</a>`, {no: ro.no, label: c.short || c.name});
+          const inRange = lastPos && distM(lastPos, [c.lat, c.lng]) <= NEAR_M, cl = isClosed(c);
+          map.addMarker(c.lat, c.lng, done, `<div class="pop-name">${esc(c.name)}${cl ? ' ' + closedBadge : ''}</div><div class="pop-sub">${esc(ro.r.name)} · ${cl ? '已永久关闭' + (n ? ' · 打卡 ' + n + ' 次' : '') : done ? '✓ 已解锁 · 打卡 ' + n + ' 次' : inRange ? '✨ 就在附近，可解锁！' : '🔒 未解锁'}</div>${sigLine(c).replace('sig-line', 'sig-line pop-sig')}<a class="pop-link" href="#/cafe/${c.id}">查看据点 ›</a>`, {no: ro.no, label: c.short || c.name, closed: cl});
         });
         if (lastPos) { map.showMe(lastPos, NEAR_M); map.setView(lastPos, 15); }
         map.resize();
@@ -771,10 +779,11 @@ const views = {
     const avg = cis.filter(x => x.rating).length ? (cis.reduce((s, x) => s + (x.rating || 0), 0) / cis.filter(x => x.rating).length).toFixed(1) : null;
     const d = lastPos ? fmtDist(distM(lastPos, [c.lat, c.lng])) : null;
     app.innerHTML = `${hero ? `<img class="hero-photo" src="${hero.photo}" alt="">` : ''}
-      <div class="hero"><div class="hero-reg">${regionOf(c.id).no ? `<span class="num">${regionOf(c.id).no}</span> ` : ''}${esc(regionOf(c.id).r.name)}</div><h2>${esc(c.name)}</h2><div class="addr">📍 ${esc(c.address)}</div><div class="addr" style="margin-top:4px">${esc(c.suburb)}${d ? ' · 距你 ' + d : ''}${avg ? ' · 我的评分 ' + avg + ' ★' : ''}</div></div>
+      <div class="hero${isClosed(c) ? ' closed' : ''}"><div class="hero-reg">${regionOf(c.id).no ? `<span class="num">${regionOf(c.id).no}</span> ` : ''}${esc(regionOf(c.id).r.name)}${isClosed(c) ? ' ' + closedBadge : ''}</div><h2>${esc(c.name)}</h2><div class="addr">📍 ${esc(c.address)}</div><div class="addr" style="margin-top:4px">${esc(c.suburb)}${d ? ' · 距你 ' + d : ''}${avg ? ' · 我的评分 ' + avg + ' ★' : ''}</div></div>
       <div>${(c.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${c.custom ? '<span class="tag">我添加的</span>' : ''}</div>
+      ${isClosed(c) ? `<div class="closed-note">🚪 这家店已永久关闭，以前的打卡记录都还在。</div>` : ''}${sigBox(c)}
       ${isV() ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="jwin vl-barista"><div class="vb-face" id="vbFace"></div><div class="vb-main"><div class="vb-name">${esc(vg.title)} <b>${esc(vg.name)}</b></div>${Valley.heartsHtml(h)}<div class="vb-h">好感 ${h}/10${h >= 10 ? ' · 挚友' : h >= 5 ? ' · 好朋友' : h ? ' · 熟客' : ' · 初次见面'}</div><div class="vb-say">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="vb-talk" id="talkBtn">💬</button></div>`; })() : ''}
-      <button class="btn" id="ciBtn">☕ 在这里打卡</button>
+      <button class="btn${isClosed(c) ? ' ghost' : ''}" id="ciBtn">${isClosed(c) ? '📝 补记一次以前的打卡' : '☕ 在这里打卡'}</button>
       <div class="row"><a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">🧭 在 Google 地图中打开</a>
       <button class="btn ghost" id="mapBtn">🗺️ 地图上看</button></div>
       <div class="section-title">我的打卡（${cis.length}）</div>
