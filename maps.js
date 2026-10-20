@@ -62,12 +62,43 @@ function googleMap(el, center, zoom) {
     resize() {}, remove() { clearInterval(this._pulse); markers.forEach(k => k.m.setMap(null)); if (me) me.setMap(null); if (ring) ring.setMap(null); el.innerHTML = ''; }
   };
 }
+// 🎨 valley skin: the same OSM tiles, pixelated + palette-quantized on a canvas in the browser (no API key, no extra requests).
+// Each tile is fetched exactly once by the normal Leaflet grid (no prefetch); if CORS ever blocks pixel access we show the plain tinted tile.
+const OSM_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', OSM_ATTR = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
+const isValley = () => document.documentElement.dataset.skin === 'valley' && document.documentElement.dataset.theme === 'jrpg';
+// OSM carto key colours → valley palette [main, alt] (alt = 1-px texture variant)
+const PXPAL = [
+  [[242, 239, 233], [[150, 200, 96], [140, 190, 88]]], [[224, 223, 223], [[160, 204, 104], [150, 196, 96]]], // land / residential → grass
+  [[217, 208, 201], [[214, 160, 106], [198, 146, 94]]], [[196, 182, 171], [[150, 98, 58], [150, 98, 58]]], // buildings → tan roofs, outline → brown
+  [[255, 255, 255], [[246, 228, 178], [240, 220, 168]]], [[247, 250, 191], [[246, 228, 178], [240, 220, 168]]], // minor roads → cream path
+  [[252, 214, 164], [[214, 196, 160], [206, 188, 150]]], [[249, 178, 156], [[196, 180, 150], [188, 172, 142]]], [[232, 146, 162], [[176, 162, 140], [168, 154, 132]]], // primary/trunk/motorway → stone
+  [[200, 250, 204], [[104, 170, 70], [96, 160, 64]]], [[205, 235, 176], [[118, 182, 76], [108, 172, 70]]], [[173, 209, 158], [[72, 138, 56], [64, 128, 50]]], [[170, 224, 203], [[96, 168, 92], [88, 160, 86]]], // parks / grass / forest / pitch
+  [[170, 211, 223], [[79, 162, 216], [70, 150, 206]]], // water
+  [[242, 218, 217], [[226, 176, 120], [218, 168, 112]]], [[255, 214, 209], [[232, 170, 128], [224, 162, 120]]], [[235, 219, 232], [[196, 168, 150], [188, 160, 142]]], [[255, 255, 229], [[236, 220, 160], [230, 212, 150]]], // commercial/retail/industrial/school
+  [[250, 128, 114], [[214, 110, 80], [214, 110, 80]]], [[112, 112, 112], [[110, 96, 86], [110, 96, 86]]], [[187, 187, 187], [[176, 162, 140], [168, 154, 132]]], // footway / rail / grey
+  [[0, 0, 0], [[58, 36, 20], [58, 36, 20]]], [[80, 80, 80], [[74, 50, 30], [74, 50, 30]]]]; // label text → dark brown
+const pxCache = new Map();
+function quantize(d) { for (let i = 0; i < d.length; i += 4) { const r = d[i], g = d[i + 1], b = d[i + 2], k = (r << 16) | (g << 8) | b; let out = pxCache.get(k);
+  if (!out) { let best = 0, bd = 1e9; for (let j = 0; j < PXPAL.length; j++) { const c = PXPAL[j][0], dd = (r - c[0]) ** 2 + (g - c[1]) ** 2 + (b - c[2]) ** 2; if (dd < bd) { bd = dd; best = j; } } out = PXPAL[best][1]; if (pxCache.size < 60000) pxCache.set(k, out); }
+  const p = (i >> 2), x = p & 127, y = p >> 7, c = out[((x * 7 + y * 13) ^ (x >> 1)) % 5 === 0 ? 1 : 0]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; } }
+const pxStats = window.__pxTiles = {ok: 0, fallback: 0};
+const PixelTiles = window.L && L.GridLayer.extend({
+  createTile(coords, done) {
+    const tile = document.createElement('div'); tile.className = 'px-tile'; const img = new Image(); img.crossOrigin = 'anonymous'; img.decoding = 'async';
+    const fallback = () => { const f = new Image(); f.className = 'px-fallback'; f.alt = ''; f.onload = () => done(null, tile); f.onerror = () => done(new Error('tile'), tile); f.src = img.src; tile.appendChild(f); pxStats.fallback++; tile.classList.add('fallback'); const m = this._map && this._map.getContainer(); if (m) m.classList.remove('px-tiles'); }; // back to the tinted look
+    img.onload = () => { try { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d', {willReadFrequently: true}); g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, 128, 128);
+        const id = g.getImageData(0, 0, 128, 128); quantize(id.data); g.putImageData(id, 0, 0); tile.appendChild(c); pxStats.ok++; done(null, tile); } catch (e) { fallback(); } };
+    img.onerror = () => { if (!img._retry) { img._retry = 1; img.removeAttribute('crossorigin'); img.crossOrigin = null; fallback(); } };
+    img.src = L.Util.template(OSM_URL, {...coords, z: this._getZoomForUrl ? this._getZoomForUrl() : coords.z}); return tile; }});
 function leafletMap(el, center, zoom) {
   const map = L.map(el, {zoomControl: false}).setView(center, zoom);
   L.control.zoom({position: 'topright'}).addTo(map);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, className: 'base-tiles', attribution: '© OpenStreetMap'}).addTo(map);
+  const px = isValley() && PixelTiles; el.classList.toggle('px-tiles', !!px);
+  (px ? new PixelTiles({maxZoom: 19, className: 'base-tiles px-layer', attribution: OSM_ATTR}) : L.tileLayer(OSM_URL, {maxZoom: 19, className: 'base-tiles', attribution: OSM_ATTR})).addTo(map);
   let me = null, ring = null, removed = false; const markers = [];
-  const icon = (done, o = {}) => L.divIcon({className: '', html: `<div class="rmk${o.closed ? ' closed' : ''}"><span class="num ${done ? 'done' : ''}">${o.no || (done ? '✓' : '·')}</span>${o.label ? `<span class="cafe-label">${String(o.label).replace(/[<>&]/g, '')}</span>` : ''}</div>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14]});
+  const shopImg = (done, o) => px && o.id && window.PixUI ? `<img class="rmk-shop" src="${PixUI.shopUrl(o.id, done, !!o.closed)}" alt="">` : '';
+  const icon = (done, o = {}) => L.divIcon({className: '', html: `<div class="rmk${o.closed ? ' closed' : ''}${shopImg(done, o) ? ' px' : ''}">${shopImg(done, o)}<span class="num ${done ? 'done' : ''}">${o.no || (done ? '✓' : '·')}</span>${o.label ? `<span class="cafe-label">${String(o.label).replace(/[<>&]/g, '')}</span>` : ''}</div>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14]});
+  const heroImg = () => { if (!px || !window.Valley) return '🧑'; try { const c = document.createElement('canvas'); c.width = c.height = 16; Valley.drawHero(c, 'down', 0); return `<img class="px-me" src="${c.toDataURL()}" alt="">`; } catch (e) { return '🧑'; } };
   const zc = () => { el.classList.toggle('zoom-lo', map.getZoom() < 15); };
   map.on('zoomend', zc); zc();
   return {
@@ -78,7 +109,7 @@ function leafletMap(el, center, zoom) {
     showMe(p, radius) {
       if (me) me.remove(); if (ring) ring.remove();
       ring = L.circle(p, {radius, className: 'range-ring', color: '#3aa0ff', weight: 2, fillColor: '#3aa0ff', fillOpacity: .15, interactive: false}).addTo(map);
-      me = L.marker(p, {zIndexOffset: 3000, interactive: false, icon: L.divIcon({className: '', html: '<div class="avatar"><div class="avatar-pulse"></div><div class="avatar-body">🧑</div><div class="avatar-shadow"></div></div>', iconSize: [48, 56], iconAnchor: [24, 50]})}).addTo(map);
+      me = L.marker(p, {zIndexOffset: 3000, interactive: false, icon: L.divIcon({className: '', html: `<div class="avatar"><div class="avatar-pulse"></div><div class="avatar-body">${heroImg()}</div><div class="avatar-shadow"></div></div>`, iconSize: [48, 56], iconAnchor: [24, 50]})}).addTo(map);
     },
     resize() { setTimeout(() => { if (!removed) map.invalidateSize(); }, 50); }, remove() { removed = true; try { map.stop(); map.off(); map.remove(); } catch (e) {} }
   };

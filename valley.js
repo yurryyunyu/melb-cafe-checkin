@@ -252,8 +252,12 @@ function coinIcon() { if (_coin) return _coin; const P = Pix(9, 9); P.ell(4.5, 4
 const coinImg = () => `<img class="vl-coin" src="${coinIcon()}" alt="金币">`;
 
 // ---------- 🧑‍🌾 farmer hero (recoloured pixel hero + straw hat) ----------
-let _sheet = null;
-function heroSheet() {
+let _sheet = null; const _outfit = {};
+function heroSheet(outfit) {
+  const cols = outfit && window.PixShop ? window.PixShop.outfitCols(outfit) : null;
+  if (cols) { if (_outfit[outfit]) return _outfit[outfit]; const base = heroSheet(), c = document.createElement('canvas'); c.width = base.width; c.height = base.height; const g = c.getContext('2d'); g.drawImage(base, 0, 0);
+    const img = g.getImageData(0, 0, c.width, c.height), d = img.data; for (let i = 0; i < d.length; i += 4) { if (d[i] === 79 && d[i + 1] === 134 && d[i + 2] === 198) [d[i], d[i + 1], d[i + 2]] = cols[0]; else if (d[i] === 47 && d[i + 1] === 90 && d[i + 2] === 140) [d[i], d[i + 1], d[i + 2]] = cols[1]; }
+    g.putImageData(img, 0, 0); return (_outfit[outfit] = c); }
   if (_sheet) return _sheet;
   const src = J.heroSheet(), c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const g = c.getContext('2d'); g.drawImage(src, 0, 0);
   const img = g.getImageData(0, 0, c.width, c.height), d = img.data, map = {'3b5dc9': [79, 134, 198], '29366f': [47, 90, 140], 'b13e53': [224, 122, 95], '5d3a1a': [107, 74, 43], 'ffcd75': [245, 197, 66]};
@@ -264,7 +268,9 @@ function heroSheet() {
   return (_sheet = c);
 }
 const DIRS = {down: 0, left: 1, right: 2, up: 3};
-function drawHero(canvas, dir = 'down', frame = 0) { const g = canvas.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 16, 16); g.drawImage(heroSheet(), frame * 16, DIRS[dir] * 16, 16, 16, 0, 0, 16, 16); }
+function drawHero(canvas, dir = 'down', frame = 0) { const g = canvas.getContext('2d'), look = window.__heroLook || {}; g.imageSmoothingEnabled = false; g.clearRect(0, 0, 16, 16);
+  g.drawImage(heroSheet(look.outfit), frame * 16, DIRS[dir] * 16, 16, 16, 0, 0, 16, 16);
+  if (look.hat && look.hat !== 'straw' && window.PixShop) try { window.PixShop.drawHat(g, look.hat, dir); } catch (e) {} } // 🛒 equipped cosmetics
 
 // ---------- 🐔 critters ----------
 function critter(type, frame) {
@@ -318,14 +324,28 @@ function decorate({world, M, W, H, sprites, getS, visited, TS, walk}, T, clk) {
     const s = pool[(R() * pool.length) | 0], el = document.createElement('div'); el.className = 'vl-critter ' + type; el.dataset.type = type;
     const f0 = critter(type, 0), f1 = critter(type, 1), cv = document.createElement('canvas'); cv.width = 14; cv.height = 12; cv.getContext('2d').drawImage(f0, 0, 0); el.appendChild(cv);
     const o = add(el, s.c * TS + 8, s.r * TS + 10, 14, 12); o.ay = 11; o.tile = s; o.frames = [f0, f1]; o.cv = cv; crit.push(o); });
+  // 🛒 decorations bought in the coin shop: placed on grass near the middle of the map, deterministic per region
+  const deco = window.PixShop ? window.PixShop.mapDecor(season, night) : [], used = new Set(), cx = cols / 2, cy = rows / 2;
+  const free = (c, r) => grassy(c, r) && !used.has(c + ',' + r) && !sprites.some(o => o.id && Math.abs(o.x - (c * TS + 8)) < TS * 1.5 && Math.abs(o.y - (r * TS + 8)) < TS * 1.5);
+  const near = spots.slice().sort((a, b) => Math.hypot(a.c - cx, a.r - cy) - Math.hypot(b.c - cx, b.r - cy));
+  deco.forEach(d => {
+    if (d.pet) { const s0 = near[(R() * Math.min(12, near.length)) | 0]; if (!s0) return; const el = document.createElement('div'); el.className = 'vl-critter ' + d.id; el.dataset.type = d.id;
+      const cv = document.createElement('canvas'); cv.width = d.w; cv.height = d.h; cv.getContext('2d').drawImage(d.frames[0], 0, 0); el.appendChild(cv);
+      const o = add(el, s0.c * TS + 8, s0.r * TS + 10, d.w, d.h); o.ay = d.h - 1; o.tile = s0; o.frames = d.frames; o.cv = cv; crit.push(o); return; }
+    const big = d.w > 16, pool = near.filter(s => free(s.c, s.r) && (!big || (free(s.c + 1, s.r) && free(s.c, s.r + 1) && free(s.c + 1, s.r + 1))));
+    const s0 = pool[(R() * Math.min(6, pool.length)) | 0]; if (!s0) return; used.add(s0.c + ',' + s0.r); if (big) { used.add((s0.c + 1) + ',' + s0.r); used.add(s0.c + ',' + (s0.r + 1)); used.add((s0.c + 1) + ',' + (s0.r + 1)); }
+    const el = document.createElement('div'); el.className = 'vl-deco ' + d.id; el.dataset.deco = d.id; const cv = document.createElement('canvas'); cv.width = d.w; cv.height = d.h; cv.getContext('2d').drawImage(d.frames[0], 0, 0); el.appendChild(cv);
+    const o = add(el, s0.c * TS + (big ? 16 : 8), s0.r * TS + (big ? 16 : 8), d.w, d.h); o.ay = d.h - 2;
+    if (d.frames.length > 1) { let f = 0; timers.push(setInterval(() => { const g = cv.getContext('2d'); g.clearRect(0, 0, d.w, d.h); g.drawImage(d.frames[(f = 1 - f)], 0, 0); }, 450)); }
+    if (d.glow && night) { const gl = document.createElement('i'); gl.className = 'vl-glow lamp'; add(gl, o.x, o.y - 10, 44, 44, 9001); } });
   const step = () => crit.forEach(o => {
     const g = o.cv.getContext('2d'); if (Math.random() < .45) { g.clearRect(0, 0, 14, 12); g.drawImage(o.frames[(o.f = 1 - (o.f || 0))], 0, 0); }
     if (Math.random() < .4) return;
-    const opts = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dc, dr]) => ({c: o.tile.c + dc, r: o.tile.r + dr, dc})).filter(t => o.el.dataset.type === 'cat' ? walk(t.c, t.r) : grassy(t.c, t.r));
+    const opts = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dc, dr]) => ({c: o.tile.c + dc, r: o.tile.r + dr, dc})).filter(t => ['cat', 'dog'].includes(o.el.dataset.type) ? walk(t.c, t.r) : grassy(t.c, t.r));
     if (!opts.length) return; const t = opts[(Math.random() * opts.length) | 0]; if (t.dc) o.el.classList.toggle('flip', t.dc < 0);
     o.tile = t; o.x = t.c * TS + 8; o.y = t.r * TS + 10; const s = getS(); o.el.style.left = Math.round((o.x - o.ax) * s) + 'px'; o.el.style.top = Math.round((o.y - o.ay) * s) + 'px'; o.el.style.zIndex = Math.round(o.y) + 10; });
   timers.push(setInterval(step, 900));
-  return {critters: crit.length, particles: n, remove() { timers.forEach(clearInterval); }};
+  return {critters: crit.length, particles: n, decor: deco.length, remove() { timers.forEach(clearInterval); }};
 }
 
 // ---------- 💬 dialogue with villager portrait ----------

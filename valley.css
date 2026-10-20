@@ -439,3 +439,88 @@ html[data-skin=valley] .vl-slotc.empty{background:#d9bb88;border:2px solid #8a55
 html[data-theme][data-skin=valley] .hud-lv{position:relative;background:linear-gradient(#fff2a0,#f5c542);font-weight:400}
 html[data-theme][data-skin=valley] .hud-lv:after{content:"";position:absolute;right:-6px;top:-7px;width:12px;height:12px;background:var(--pi-star) center/12px 12px no-repeat;image-rendering:pixelated}
 html[data-skin=valley] .vl-slots.bag .vl-slotc.empty{min-height:0;align-self:stretch;width:auto;height:auto;margin:0}
+/* 🛒 shop decorations on the town map */
+.vl-deco{position:absolute;pointer-events:none}
+.vl-deco canvas{width:100%;height:100%;display:block;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;image-rendering:pixelated;filter:drop-shadow(0 1px 0 rgba(40,24,10,.35))}
+/* ===== 🛒 R5: coin shop, quest XP + fold, music toggle, pixel real map ===== */
+.vl-clock a.vc-gold{text-decoration:none;cursor:pointer}
+.vl-clock a.vc-gold:after{content:"›";margin-left:1px;opacity:.75}
+html[data-theme][data-skin=valley] #hud{position:relative}
+.mus-btn{position:absolute;left:6px;bottom:-14px;z-index:3;width:30px;height:24px;padding:0;display:flex;align-items:center;justify-content:center;background:var(--cream2,#f6e7c1);border:2px solid var(--woodX,#3a2414);border-radius:5px;box-shadow:0 2px 0 var(--woodX,#3a2414);cursor:pointer;font-size:13px}
+.mus-btn .pi{width:16px;height:16px;image-rendering:pixelated}
+.mus-btn.on{background:linear-gradient(#fff2a0,#f5c542);animation:musbob 1.3s steps(2) infinite}
+@keyframes musbob{50%{transform:translateY(-1px)}}
+.mus-set{min-width:44px;font:inherit}
+.btn.sm{padding:4px 10px;font-size:13px}
+/* folded quest board */
+.vl-quests.folded{display:flex;align-items:center;gap:6px;width:100%;font:inherit;font-size:14px;color:var(--ink,#3a2414);text-align:left;cursor:pointer;padding:7px 10px!important;min-height:40px}
+.vl-quests.folded b{font-weight:400}
+.vl-quests.folded .pi{width:20px;height:20px}
+.vl-quests.folded .vqf-n{font-size:12px;padding:0 6px;border-radius:8px;background:var(--woodX,#3a2414);color:#ffe08a}
+.vl-quests.folded .vqf-s{font-size:12px;color:var(--ink2,#7a5636);display:inline-flex;align-items:center;gap:2px}
+.vl-quests.folded .vqf-s.ready{color:#c8403a;animation:vqpulse 1.2s steps(3) infinite}
+.vl-quests.folded.ready{box-shadow:0 0 0 2px #f5c542,var(--winb,0 3px 0 #3a2414)}
+.vl-quests .vqf-arr{margin-left:auto;font-size:14px;color:var(--ink2,#7a5636)}
+.vl-quests.open .vq-head{cursor:pointer}
+.vl-quests.open .vq-head .vq-reset{margin-left:auto}
+.vl-quests.open .vq-head .vqf-arr{margin-left:6px}
+.vq-claim small,.vq-c small{font-size:10px;margin-left:3px;color:#d8f7ff;text-shadow:1px 1px 0 #2a4a7a}
+.vq-c small{color:#4f86c6;text-shadow:none}
+/* XP pop */
+.xp-pop{position:fixed;z-index:10001;pointer-events:none;font:400 18px "FusionPixel",monospace;color:#bfe8ff;text-shadow:2px 0 0 #1f3a6a,-2px 0 0 #1f3a6a,0 2px 0 #1f3a6a,0 -2px 0 #1f3a6a;white-space:nowrap}
+.xpbar.xp-flash{animation:xpflash .9s steps(3)}
+@keyframes xpflash{0%,60%{box-shadow:0 0 0 2px #bfe8ff,0 0 10px #8fd2f2;filter:brightness(1.5)}100%{box-shadow:none;filter:none}}
+.coin-pop.minus{color:#ff9e8a}
+/* shop screen */
+.vl-shophead{display:flex;gap:10px;align-items:center;padding:10px!important;margin-bottom:8px}
+.vl-shophead .sh-keeper{flex:none;width:64px;height:64px;border:3px solid var(--woodX,#3a2414);border-radius:6px;overflow:hidden;background:#e8c999}
+.vl-shophead .sh-keeper canvas{width:64px!important;height:64px!important;image-rendering:pixelated;display:block}
+.vl-shophead .sh-say{display:flex;flex-direction:column;gap:3px;font-size:13px;line-height:1.35}
+.vl-shophead .sh-say b{font-weight:400;font-size:14px;color:#8a4b2a}
+.sh-tabs{margin-bottom:8px}
+.sh-tabs .pi{width:16px;height:16px;vertical-align:-3px}
+.vl-shopgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sh-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px!important;text-align:center;position:relative;min-width:0}
+.sh-item b{font-weight:400;font-size:14px}
+.sh-item small{font-size:11px;color:var(--ink2,#7a5636);line-height:1.25;min-height:28px}
+.sh-prev{width:72px;height:72px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#e8d4a4 0 25%,#f2e2b8 0 50%) 0 0/12px 12px;border:2px solid #c9a46a;border-radius:4px}
+.sh-prev canvas{image-rendering:pixelated;max-width:68px;max-height:68px}
+.sh-prev.big{width:110px;height:110px}.sh-prev.big canvas{max-width:104px;max-height:104px}
+.sh-state{font-size:11px;color:#7a5636}
+.sh-item.owned .sh-state{color:#3f7a22}.sh-item.poor .sh-state{color:#b0503a}
+.sh-item.equipped{background:#eef8d8!important}
+.sh-item.equipped:before{content:"装备中";position:absolute;left:4px;top:4px;font-size:10px;padding:0 4px;background:#4f9a2e;color:#fffbe8;border-radius:3px}
+.sh-item.equipped[data-item=bench]:before,.sh-item.equipped[data-item=flowerbed]:before,.sh-item.equipped[data-item=lantern]:before,.sh-item.equipped[data-item=scarecrow]:before,.sh-item.equipped[data-item=dog]:before,.sh-item.equipped[data-item=fountain]:before{content:"已摆放"}
+.sh-buy,.sh-eq{display:inline-flex;align-items:center;justify-content:center;gap:3px;min-width:92px;min-height:32px;font:inherit;font-size:14px;padding:3px 10px;border:2px solid #3a2414;border-radius:5px;cursor:pointer;color:#3a2414;background:linear-gradient(#fff2a0,#f5c542);box-shadow:inset 0 2px 0 #fffbe0,inset 0 -2px 0 #c98a1a,0 2px 0 #3a2414}
+.sh-buy .vl-coin{width:14px;height:14px}
+.sh-buy.poor{filter:grayscale(.7);opacity:.75}
+.sh-buy:active,.sh-eq:active{transform:translateY(2px);box-shadow:none}
+.sh-eq{background:linear-gradient(#fbf3dc,#e8d4a4);box-shadow:inset 0 2px 0 #fffbe8,inset 0 -2px 0 #c9a46a,0 2px 0 #3a2414}
+.sh-eq.on{background:linear-gradient(#8ed65e,#4f9a2e);color:#fffbe8;text-shadow:1px 1px 0 #2f5a1a}
+.sh-eq[disabled]{cursor:default;opacity:.85}
+.shake{animation:shk .3s steps(4)}
+@keyframes shk{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.sh-item.bought{animation:shbought .6s steps(4)}
+@keyframes shbought{40%{transform:scale(1.06);box-shadow:0 0 0 3px #f5c542}}
+.sh-foot{margin:10px 2px 0;font-size:11px}
+.st-stats a.st-shop{color:inherit;text-decoration:none;display:flex;flex-direction:column;align-items:center}
+.st-stats a.st-shop small{font-size:10px;color:#8a4b2a}
+.vl-modal{position:fixed;inset:0;z-index:10002;background:rgba(30,18,8,.55);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.vl-modal.show{opacity:1}
+.sh-confirm{width:min(300px,86vw);display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px!important;text-align:center}
+.sh-confirm b{font-weight:400;font-size:17px}
+.sh-math{display:flex;gap:8px;align-items:center;font-size:14px}.sh-math span{display:inline-flex;align-items:center;gap:2px}
+.sh-math span:nth-child(2){color:#c8403a}
+.sh-btns{display:flex;gap:10px}.sh-btns .btn{min-width:100px}
+/* 🗺️ pixel real map */
+html[data-skin=valley] #map.real.px-tiles .leaflet-tile-pane{filter:none}
+.px-tile{width:256px;height:256px;overflow:hidden}
+.px-tile canvas{width:100%;height:100%;display:block;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;image-rendering:pixelated}
+#map.px-tiles .base-tiles.px-layer{filter:none;opacity:1;mix-blend-mode:normal}
+.px-tile.fallback img{width:256px;height:256px;display:block}
+.rmk.px{position:relative}
+.rmk.px .rmk-shop{position:absolute;left:-9px;top:-26px;width:48px;height:48px;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(40,24,10,.45));pointer-events:none}
+.rmk.px .num{position:relative;z-index:1;transform:translate(10px,6px) scale(.8)}
+.rmk.px.closed .rmk-shop{filter:grayscale(.6) drop-shadow(0 2px 0 rgba(40,24,10,.45))}
+.avatar-body .px-me{width:40px;height:40px;image-rendering:pixelated;display:block}
+#map.px-tiles .avatar-body{background:none!important;border:0!important;box-shadow:none!important}

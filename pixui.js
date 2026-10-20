@@ -63,6 +63,11 @@ const ICONS = {
   mute() { const P = Pix(16, 16);
     P.rect(2, 6, 3, 4, '#c98f55'); for (let i = 0; i < 4; i++) P.rect(5 + i, 5 - i, 1, 6 + i * 2, '#c98f55');
     for (let i = 0; i < 4; i++) { P.set(11 + i, 6 + i, '#e8403a'); P.set(14 - i, 6 + i, '#e8403a'); } P.outline(OUT); return P; },
+  note() { const P = Pix(16, 16); // ♫ music on
+    P.rect(5, 2, 9, 2, '#3a3040'); P.rect(5, 2, 2, 10, '#3a3040'); P.rect(12, 2, 2, 9, '#3a3040'); P.ell(4.5, 12, 2.6, 2, '#f5c542'); P.ell(11.5, 11, 2.6, 2, '#f5c542'); P.set(4, 11, '#fff2a0'); P.set(11, 10, '#fff2a0'); P.outline(OUT); return P; },
+  notex() { const P = Pix(16, 16); // ♫ music off
+    P.rect(5, 2, 9, 2, '#8a7a6a'); P.rect(5, 2, 2, 10, '#8a7a6a'); P.rect(12, 2, 2, 9, '#8a7a6a'); P.ell(4.5, 12, 2.6, 2, '#c9b89a'); P.ell(11.5, 11, 2.6, 2, '#c9b89a');
+    for (let i = 0; i < 12; i++) P.set(2 + i, 2 + i, '#e8403a'), P.set(3 + i, 2 + i, '#e8403a'); P.outline(OUT); return P; },
   star() { const P = Pix(16, 16);
     const pts = [[8, 1], [10, 6], [15, 6], [11, 9], [13, 14], [8, 11], [3, 14], [5, 9], [1, 6], [6, 6]];
     for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { let inside = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > y + .5) !== (yj > y + .5) && x + .5 < (xj - xi) * (y + .5 - yi) / (yj - yi) + xi) inside = !inside; } if (inside) P.set(x, y, y < 7 ? '#fff2a0' : '#f5c542'); }
