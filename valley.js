@@ -345,6 +345,20 @@ function harvest(el, data, onClose) {
   setTimeout(() => J.SFX.play('coin'), 380);
   el.querySelector('#celOk').onclick = () => { J.SFX.play('confirm'); onClose(); };
 }
+// ---------- 🌱 seed packet obtained (bean saved) — costs no 咖啡因 ----------
+function seedPacket(el, data, onClose) {
+  const b = data.bean || {}, hue = Math.abs([...(b.origin || b.name || 'x')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % 360;
+  el.className = 'vl-cel vl-seed';
+  el.innerHTML = `<div class="vl-sparkles">${'<i></i>'.repeat(12)}</div><div class="vwin vl-pop">
+    <div class="vl-pop-title">🌱 获得种子包！</div>
+    <div class="vl-packet big" style="--ph:${hue}"><span class="pk-top">${esc(b.origin || '咖啡种子')}</span><span class="pk-spr"></span><b>${esc(b.name || '未命名')}</b><small>${esc([b.process, b.roast].filter(Boolean).join(' · ') || b.roaster || '')}</small></div>
+    <div class="vl-gains"><span class="g-coin">${coinImg()} +${data.coins}</span></div>
+    <div class="vl-lines"><div class="vl-line">📜 标签文字已记进种子袋，可随时复制/分享</div><div class="vl-line">⚡ 不消耗咖啡因</div></div>
+    <button class="vbtn" id="celOk">收下！</button></div>`;
+  const spr = window.Beans && Beans.beanSprite && Beans.beanSprite(); if (spr) el.querySelector('.pk-spr').appendChild(J.scaled(spr, 4)); else el.querySelector('.pk-spr').textContent = '🫘';
+  el.classList.remove('hidden'); J.SFX.play('harvest'); setTimeout(() => J.SFX.play('coin'), 380);
+  el.querySelector('#celOk').onclick = () => { J.SFX.play('confirm'); onClose(); };
+}
 // ---------- 🌙 end-of-day summary (level up) ----------
 // info: {from, to, title, clk, rows:[[label, value]], friends:[{v, from, to}]}
 function daySummary(el, info, onClose) {
@@ -362,5 +376,5 @@ function daySummary(el, info, onClose) {
   el.querySelector('#lvOk').onclick = () => { J.SFX.play('confirm'); onClose(); };
 }
 
-window.Valley = {clock, seasonOf, SEASON, tiles, shop, villager, greeting, heartsHtml, itemSprite, itemZh, kindOf, isFood, quality, coinIcon, coinImg, heroSheet, drawHero, critter, kit, say, portraitEl, harvest, daySummary, Pix};
+window.Valley = {clock, seasonOf, SEASON, tiles, shop, villager, greeting, heartsHtml, itemSprite, itemZh, kindOf, isFood, quality, coinIcon, coinImg, heroSheet, drawHero, critter, kit, say, portraitEl, harvest, daySummary, seedPacket, Pix};
 })();

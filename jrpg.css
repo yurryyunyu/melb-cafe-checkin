@@ -236,3 +236,9 @@ html:not([data-theme=jrpg]) .snd-btn{background:#fffdf8;border:2px solid var(--p
 html[data-theme=jrpg] .stats .stat b{font-family:var(--px);font-weight:400;color:var(--gold)}
 /* dialogue moves to the top while a sheet is open so it never covers the menu */
 html[data-theme=jrpg].sheet-open #dlg{bottom:auto;top:calc(8px + env(safe-area-inset-top,0px))}
+/* beans */
+html[data-theme=jrpg] .cam-menu{background:var(--win);box-shadow:var(--winb);border:0;border-radius:6px;color:var(--jt)}
+html[data-theme=jrpg] .cam-menu button{border-radius:4px;border:2px solid #e9ecff;font-family:var(--px)}
+html[data-theme=jrpg] .cam-menu button:active,html[data-theme=jrpg] .cam-menu button:focus{background:#ffffff22}
+html[data-theme=jrpg] .bf input,html[data-theme=jrpg] .bf select,html[data-theme=jrpg] .bf textarea{background:#0b1240;color:#fff;border:2px solid #aab4ff;border-radius:3px;font-family:var(--px)}
+html[data-theme=jrpg] .bean-cap img,html[data-theme=jrpg] .bean-nophoto{border-radius:3px}

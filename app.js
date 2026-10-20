@@ -3,11 +3,14 @@
 // Optional modules must never take the main UI down: stub them if they failed to load.
 if (!window.MapKit) window.MapKit = {hasKey: false, provider: 'none', create: () => Promise.reject(new Error('map module unavailable')), nearbyCafes: async () => [], gmapsLink: c => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((c.name || '') + ' ' + (c.address || c.suburb || 'Melbourne'))};
 if (!window.Integrations) window.Integrations = {visionOn: false, formOn: false, recognizeFood: async () => null, submitToGoogleForm: async () => ({ok: false})};
+if (!window.Beans) window.Beans = {FIELDS: [['name', '豆名'], ['roaster', '烘焙商'], ['origin', '产地国家'], ['region', '产区'], ['farm', '庄园/生产者'], ['variety', '品种'], ['process', '处理法'], ['roast', '烘焙度'], ['roastDate', '烘焙日期'], ['altitude', '海拔'], ['notes', '风味'], ['weight', '重量']],
+  ocr: () => Promise.reject(new Error('识别模块没有加载')), vision: async () => null, parse: () => ({}), visionOn: false, beanSprite: () => null,
+  toText: b => [b.name, b.roaster, b.origin, b.notes].filter(Boolean).join('\n')};
 if (!window.SketchMap) window.SketchMap = {render: () => ({svg: '<div class="empty">草图地图暂不可用</div>', meIn: false})};
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const K = {cafes: 'mcc.customCafes', checkins: 'mcc.checkins'};
+const K = {cafes: 'mcc.customCafes', checkins: 'mcc.checkins', beans: 'mcc.beans'};
 const CBD = [-37.8136, 144.9631];
 const NEAR_M = 250; // auto-match radius for photo check-in
 
@@ -22,6 +25,8 @@ let checkins = load(K.checkins, []);
 const allCafes = () => [...SEED_CAFES, ...customCafes];
 const cafeById = id => allCafes().find(c => c.id === id);
 const saveCheckins = () => save(K.checkins, checkins);
+let beans = load(K.beans, []);
+const saveBeans = () => save(K.beans, beans);
 const visitedIds = () => new Set(checkins.filter(c => c.cafeId).map(c => c.cafeId));
 const checkinsOf = id => checkins.filter(c => c.cafeId === id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -52,7 +57,8 @@ function caffeine() { // 咖啡因: each check-in in the last 12h adds up to 40,
 const byTime = () => [...checkins].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 function coinLedger() { const seen = new Set(), out = new Map();
   byTime().forEach(c => { let n = 15 + (c.rating || 0) * 5 + (c.photo ? 5 : 0) + (c.drink ? 5 : 0); if (c.cafeId && !seen.has(c.cafeId)) { n += 50; seen.add(c.cafeId); } out.set(c.id, n); }); return out; }
-const totalCoins = () => { let t = 0; coinLedger().forEach(v => { t += v; }); return t; };
+const BEAN_COINS = 20;
+const totalCoins = () => { let t = beans.length * BEAN_COINS; coinLedger().forEach(v => { t += v; }); return t; };
 const heartsOf = id => Math.min(10, checkinsOf(id).length);
 const villagerOf = id => Valley.villager(id, Math.max(0, allCafes().findIndex(c => c.id === id)));
 const itemKey = n => String(n || '').trim().toLowerCase();
@@ -223,7 +229,96 @@ async function quickPhotoCheckin() {
   const places = pos && MapKit.hasKey ? await MapKit.nearbyCafes(pos, 300) : [];
   openPicker(assign, {pos, places, title: '📸 已保存！在哪家咖啡馆？'});
 }
-$('#camBtn').onclick = quickPhotoCheckin;
+// 📷 camera button = choice: 打卡 / 拍豆子
+function closeCamMenu() { const m = $('#camMenu'); if (m) m.remove(); }
+$('#camBtn').onclick = e => {
+  if ($('#camMenu')) return closeCamMenu();
+  const m = document.createElement('div'); m.id = 'camMenu'; m.className = 'cam-menu jwin vwin';
+  m.innerHTML = '<button id="camCheckin"><span>☕</span>打卡</button><button id="camBeans"><span>🫘</span>拍豆子</button>';
+  document.body.appendChild(m); SFXplay('blip');
+  $('#camCheckin').onclick = () => { closeCamMenu(); quickPhotoCheckin(); };
+  $('#camBeans').onclick = () => { closeCamMenu(); captureBean(true); };
+  setTimeout(() => document.addEventListener('click', function off(ev) { if (!ev.target.closest('#camMenu, #camBtn')) { closeCamMenu(); } document.removeEventListener('click', off, true); }, true), 0);
+};
+
+// ---------- 🫘 beans: photo → OCR text → editable fields → saved notes ----------
+const OCR_STAGE = {'准备图片': ['🖼️ 预处理图片（缩放 · 灰度 · 对比度）', 0, 5], 'loading tesseract core': ['⚙️ 加载识别引擎', 5, 30], 'initializing tesseract': ['⚙️ 启动识别引擎', 30, 34],
+  'loading language traineddata': ['📦 加载语言包', 34, 58], 'initializing api': ['⚙️ 初始化', 58, 62], 'recognizing text': ['🔍 正在识别文字', 62, 100]};
+async function captureBean(useCamera) {
+  const photo = await pickPhoto(useCamera); if (!photo) return;
+  openBeanSheet({photo, isNew: true, auto: true});
+}
+function thumbOf(photo, max = 480) { return new Promise(res => { if (!photo) return res(''); const i = new Image(); i.onload = () => { const k = Math.min(1, max / Math.max(i.width, i.height)), c = document.createElement('canvas'); c.width = Math.round(i.width * k); c.height = Math.round(i.height * k); c.getContext('2d').drawImage(i, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.7)); }; i.onerror = () => res(photo); i.src = photo; }); }
+let beanToken = 0;
+function openBeanSheet({photo = '', bean = null, isNew = !bean, auto = false}) {
+  const d = bean ? {...bean} : {id: uid(), photo, raw: '', date: today(), createdAt: Date.now(), cafeId: ''};
+  const tok = ++beanToken, chi = load('mcc.ocr.chi', false), V = isV();
+  const fieldRow = ([k, zh]) => `<div class="bf"><label for="bf-${k}">${zh}</label>${k === 'notes' ? `<textarea id="bf-${k}" rows="2">${esc(d[k] || '')}</textarea>` : `<input id="bf-${k}" value="${esc(d[k] || '')}" autocomplete="off">`}</div>`;
+  openSheet(`<h3>${V ? '🫘 种子情报' : '🫘 拍豆子'}${isNew ? '' : ' · 编辑'}</h3>
+    <div class="bean-cap">${d.photo ? `<img src="${d.photo}" alt="豆子照片" id="bPhoto">` : '<div class="bean-nophoto">✍️ 手动输入</div>'}
+      <div class="bean-ocr"><div class="ocr-st" id="ocrSt">${d.photo ? (auto ? '准备识别…' : '可以重新识别照片文字') : '没有照片，直接手动填写即可'}</div><div class="progress ocr-bar"><i id="ocrBar" style="width:0%"></i></div>
+        <label class="ocr-chi"><input type="checkbox" id="ocrChi" ${chi ? 'checked' : ''}> 识别中文 <small>(+1.7MB，首次使用时下载)</small></label>
+        ${d.photo ? '<button class="btn ghost sm" id="ocrRe">🔍 重新识别</button>' : ''}</div></div>
+    <div class="bean-form">${Beans.FIELDS.map(fieldRow).join('')}
+      <div class="bf wide"><label for="bCafe">在哪家店买的（可选）</label><select id="bCafe"><option value="">—— 不关联 ——</option>${allCafes().map(c => `<option value="${c.id}" ${d.cafeId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
+      <div class="bf wide"><label for="bMemo">备注</label><input id="bMemo" value="${esc(d.memo || '')}" placeholder="例如：适合手冲 1:15，93°C"></div></div>
+    <div class="field"><label for="bRaw">识别到的原文（可修改）</label><textarea id="bRaw" rows="5" placeholder="OCR 原文会显示在这里，也可以直接粘贴/输入标签文字">${esc(d.raw || '')}</textarea>
+      <button class="btn ghost sm" id="bReparse">↻ 按原文重新解析字段</button></div>
+    <button class="btn game-btn" id="bSave">${V ? '🌱 收进种子袋' : '💾 保存豆子'}</button>
+    <button class="btn ghost" id="bCancel">取消</button>`, el => {
+    const setSt = (t, pct) => { const st = $('#ocrSt', el), bar = $('#ocrBar', el); if (st) st.textContent = t; if (bar && pct != null) bar.style.width = Math.round(pct) + '%'; };
+    const fill = (f, onlyEmpty) => Beans.FIELDS.forEach(([k]) => { const i = $('#bf-' + k, el); if (i && f[k] && (!onlyEmpty || !i.value.trim())) i.value = f[k]; });
+    const run = async () => {
+      const myTok = beanToken; el.classList.add('ocr-busy'); const useChi = $('#ocrChi', el).checked; save('mcc.ocr.chi', useChi);
+      try {
+        let res = null;
+        if (Beans.visionOn) { setSt('🤖 AI 正在读取标签…', 20); res = await Beans.vision(d.photo); }
+        if (!res) res = await Beans.ocr(d.photo, {chi: useChi, onProgress: (status, p) => { if (myTok !== beanToken) return; const s = OCR_STAGE[status] || [status, 0, 100]; setSt(`${s[0]} ${Math.round(p * 100)}%`, s[1] + (s[2] - s[1]) * p); }});
+        if (myTok !== beanToken || !$('#bRaw', el)) return;
+        $('#bRaw', el).value = res.text; fill(res.fields || Beans.parse(res.text), false);
+        setSt(res.source === 'vision' ? '✅ AI 识别完成，请检查字段' : `✅ 识别完成（置信度 ${res.confidence}%），请检查并修改字段`, 100); el.dataset.ocr = 'done'; SFXplay('confirm');
+      } catch (e) { console.warn('bean OCR failed', e); if (myTok !== beanToken) return; setSt('⚠️ 识别失败：' + (e && e.message || e) + ' —— 可以直接手动填写/粘贴文字', 0); el.dataset.ocr = 'failed'; }
+      finally { el.classList.remove('ocr-busy'); }
+    };
+    const re = $('#ocrRe', el); if (re) re.onclick = run;
+    $('#ocrChi', el).onchange = e => save('mcc.ocr.chi', e.target.checked);
+    $('#bReparse', el).onclick = () => { fill(Beans.parse($('#bRaw', el).value), false); setSt('↻ 已按原文重新解析', null); };
+    $('#bCancel', el).onclick = () => { beanToken++; closeSheet(); render(); };
+    $('#bSave', el).onclick = async () => {
+      Beans.FIELDS.forEach(([k]) => { d[k] = $('#bf-' + k, el).value.trim(); }); d.raw = $('#bRaw', el).value.trim(); d.cafeId = $('#bCafe', el).value; d.memo = $('#bMemo', el).value.trim();
+      if (!d.name && !d.raw && !d.roaster && !d.origin) return toast('至少填一个豆名或识别原文吧');
+      if (!d.name) d.name = [d.origin, d.region].filter(Boolean).join(' ') || d.roaster || d.raw.split('\n')[0].slice(0, 30);
+      if (isNew && d.photo) d.photo = await thumbOf(d.photo);
+      d.updatedAt = Date.now(); beanToken++;
+      const before = totalCoins(), i = beans.findIndex(b => b.id === d.id); if (i >= 0) beans[i] = d; else beans.unshift(d);
+      if (!saveBeans()) { if (i < 0) beans.shift(); return; }
+      closeSheet(); location.hash = '#/bean/' + d.id;
+      if (!isNew) return toast('✅ 已保存修改');
+      if (isV()) { const c = $('#celebrate'); Valley.seedPacket(c, {bean: d, coins: totalCoins() - before}, () => { c.className = 'hidden'; c.innerHTML = ''; render(); }); drawHud(); }
+      else toast(isJ() ? `🫘 获得豆子情报：${d.name}！` : `🫘 已保存：${d.name}`);
+    };
+    if (auto && d.photo) run();
+  });
+}
+async function copyText(t) {
+  try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(t); return true; } } catch (e) {}
+  const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;top:0'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, t.length);
+  let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.remove(); return ok;
+}
+const beanText = b => Beans.toText({...b, cafeName: b.cafeId && cafeById(b.cafeId) ? cafeById(b.cafeId).name : ''});
+const packetHue = b => (Math.abs([...(b.origin || b.name || 'x')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % 360);
+function beanCard(b) {
+  const sub = [b.roaster, [b.origin, b.region].filter(Boolean).join(' · ')].filter(Boolean).join(' — '), tags = [b.process, b.roast].filter(Boolean);
+  return `<a class="card bean-card" href="#/bean/${b.id}" data-bean="${b.id}">${b.photo ? `<img class="thumb" src="${b.photo}" alt="">` : '<span class="bean-ico">🫘</span>'}
+    <div class="meta"><div class="name">${esc(b.name || '未命名豆子')}</div><div class="sub">${esc(sub || '—')}</div>${tags.length ? `<div class="bean-tags">${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}</div><span class="bean-date">${esc(b.date || '')}</span></a>`;
+}
+function beanPacket(b) { return `<a class="vl-packet" href="#/bean/${b.id}" style="--ph:${packetHue(b)}"><span class="pk-top">${esc(b.origin || '咖啡种子')}</span><canvas data-beanspr width="16" height="16"></canvas><b>${esc(b.name || '未命名')}</b><small>${esc([b.process, b.roast].filter(Boolean).join(' · ') || b.roaster || '')}</small></a>`; }
+function paintBeanSprites(root) { const spr = Beans.beanSprite(); if (!spr) return; root.querySelectorAll('canvas[data-beanspr]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(spr, 0, 0); }); }
+function beansSection() { // compact section for the JRPG / sketch footprint pages
+  return `<div class="section-title">🫘 ${isJ() ? '豆子图鉴' : '豆子笔记'} <small>${beans.length}</small> <a href="#/beans" style="text-decoration:none">全部 ›</a></div>
+    ${beans.slice(0, 4).map(beanCard).join('') || '<div class="hint">还没有豆子，点中间相机选「拍豆子」</div>'}<button class="btn ghost" data-newbean>🫘 拍豆子</button>`;
+}
+document.addEventListener('click', e => { const nb = e.target.closest('[data-newbean]'); if (nb) { e.preventDefault(); captureBean(nb.dataset.newbean !== 'album'); } const mb = e.target.closest('[data-manualbean]'); if (mb) { e.preventDefault(); openBeanSheet({}); } });
 
 // ---------- 🎮 game layer: XP, levels, celebration ----------
 const TITLES = [[1, '咖啡新手'], [3, '拿铁学徒'], [5, 'Flat White 骑士'], [8, '烘焙大师'], [12, '墨尔本咖啡传说']];
@@ -548,7 +643,7 @@ const views = {
   records() {
     setTop('打卡记录');
     if (!checkins.length) {
-      app.innerHTML = `<div class="empty"><div class="e">📷</div><p>还没有打卡记录</p><p class="hint">点下面中间的「拍照打卡」，拍一张就算打卡！</p></div>`;
+      app.innerHTML = `<div class="empty"><div class="e">📷</div><p>还没有打卡记录</p><p class="hint">点下面中间的「拍照」→「打卡」，拍一张就算打卡！</p></div>`;
       return;
     }
     const sorted = [...checkins].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
@@ -584,13 +679,44 @@ const views = {
       <div class="section-title">成就</div><div class="badges">${BADGES.map(b => `<div class="bdg ${b.test(s) ? '' : 'off'}"><span class="e">${b.e}</span>${b.name}</div>`).join('')}</div>
       <div class="section-title">照片墙 <a href="#/records" style="font-size:13px;color:var(--brown);font-weight:600;text-decoration:none">全部记录 ›</a></div>
       ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : '<div class="hint">还没有照片，去拍一张吧 📷</div>'}
-      <div class="section-title">去过的咖啡馆</div>${[...v].map(cafeById).filter(Boolean).map(cafeCard).join('') || '<div class="hint">还没有去过的咖啡馆</div>'}${settingsHtml()}`;
+      <div class="section-title">去过的咖啡馆</div>${[...v].map(cafeById).filter(Boolean).map(cafeCard).join('') || '<div class="hint">还没有去过的咖啡馆</div>'}${beansSection()}${settingsHtml()}`;
     bindSettings();
     const top = regions().filter(r => r.id !== 'more').sort((x, y) => y.done - x.done)[0];
     const TR = REGIONS.find(r => r.id === (top && top.done ? top.id : 'city'));
     $('#fpMap').innerHTML = SketchMap.render(TR, {visited: v, cafeById}).svg;
     $('#fpMap').onclick = e => { const g = e.target.closest('[data-id]'); if (g) { location.hash = '#/cafe/' + g.dataset.id; return; } mapState.region = TR.id; location.hash = '#/map'; };
     app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(c => c.id === ed.dataset.edit), false); };
+  },
+
+  beans() {
+    setTop(isV() ? '种子袋 · 豆子' : '豆子笔记', '<button data-newbean>＋ 拍豆子</button>');
+    app.innerHTML = `<div class="search"><input id="bq" placeholder="🔍 搜索豆名、产地、风味、处理法…" value="${esc(listState.bq || '')}" autocomplete="off"></div>
+      <div class="bean-actions"><button class="btn" data-newbean>📷 拍照</button><button class="btn ghost" data-newbean="album">🖼️ 相册</button><button class="btn ghost" data-manualbean>✍️ 手动</button></div>
+      <div class="hint" id="bCount"></div><div id="beanList"></div>`;
+    const draw = () => { const q = (listState.bq || '').trim().toLowerCase();
+      const L = beans.filter(b => !q || [...Beans.FIELDS.map(([k]) => b[k]), b.raw, b.memo].join(' ').toLowerCase().includes(q));
+      $('#bCount').textContent = `共 ${beans.length} 款豆子${q ? ` · 找到 ${L.length} 款` : ''}`;
+      $('#beanList').innerHTML = L.map(beanCard).join('') || `<div class="empty"><div class="e">🫘</div>${beans.length ? '没有找到匹配的豆子' : '还没有豆子<br><span class="hint">拍一下豆袋标签，文字会自动识别保存</span>'}</div>`; };
+    draw(); $('#bq').oninput = e => { listState.bq = e.target.value; draw(); };
+  },
+  bean(id) {
+    const b = beans.find(x => x.id === id);
+    if (!b) { setTop('豆子', '', true); app.innerHTML = '<div class="empty">找不到这款豆子 <a href="#/beans">返回列表</a></div>'; return; }
+    setTop(b.name || '豆子', '', true);
+    const c = b.cafeId && cafeById(b.cafeId);
+    app.innerHTML = `${b.photo ? `<img class="hero-photo" src="${b.photo}" alt="">` : ''}
+      <div class="hero bean-hero"><h2>🫘 ${esc(b.name || '未命名豆子')}</h2><div class="addr">${esc([b.roaster, b.weight].filter(Boolean).join(' · '))}</div></div>
+      <div class="card bean-fields"><dl>${Beans.FIELDS.filter(([k]) => k !== 'name' && b[k]).map(([k, zh]) => `<dt>${zh}</dt><dd data-f="${k}">${esc(b[k])}</dd>`).join('') || '<dd class="hint">没有字段，可以点编辑补充</dd>'}
+        ${c ? `<dt>购于</dt><dd><a href="#/cafe/${c.id}">${esc(c.name)}</a></dd>` : ''}${b.memo ? `<dt>备注</dt><dd>${esc(b.memo)}</dd>` : ''}<dt>记录</dt><dd>${esc(b.date || '')}</dd></dl></div>
+      <div class="row"><button class="btn" id="bCopy">📋 复制文字</button><button class="btn ghost" id="bShare">📤 分享</button></div>
+      <div class="row"><button class="btn ghost" id="bEdit">✏️ 编辑</button><button class="btn danger" id="bDel">🗑️ 删除</button></div>
+      <details class="bean-raw"${b.raw ? '' : ' hidden'}><summary>识别原文</summary><pre>${esc(b.raw || '')}</pre></details>`;
+    $('#bCopy').onclick = async () => toast(await copyText(beanText(b)) ? '📋 已复制，可以粘贴到别处' : '复制失败，请长按原文手动复制');
+    $('#bShare').onclick = async () => { const t = beanText(b);
+      if (navigator.share) { try { await navigator.share({title: b.name || '咖啡豆', text: t}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+      toast(await copyText(t) ? '📋 此设备不支持分享，已复制文字' : '分享失败'); };
+    $('#bEdit').onclick = () => openBeanSheet({bean: b});
+    $('#bDel').onclick = () => { if (!confirm(`删除「${b.name || '这款豆子'}」？`)) return; beans = beans.filter(x => x.id !== id); saveBeans(); toast('已删除'); location.hash = '#/beans'; };
   },
 
   cafe(id) {
@@ -680,6 +806,7 @@ function footprintJ() {
     <div class="jwin inv">${BADGES.map(b => `<div class="inv-item ${owned.has(b.id) ? 'own' : 'off'}"><span class="ii">${owned.has(b.id) ? b.e : '？'}</span><span class="in">${owned.has(b.id) ? esc(b.name) : '？？？'}</span>${owned.has(b.id) ? '<em>E</em>' : ''}</div>`).join('')}</div>
     <div class="section-title">🖼️ 冒险相册 <a href="#/records" style="text-decoration:none">全部记录 ›</a></div>
     ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : '<div class="hint">还没有照片，去拍一张吧 📷</div>'}
+    ${beansSection()}
     ${settingsHtml()}`;
   app.querySelectorAll('canvas[data-spr]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(JRPG.cafeSprite(cv.dataset.spr, v.has(cv.dataset.spr)), 0, 0); });
   const hc = document.createElement('canvas'); hc.width = hc.height = 16; JRPG.drawHero(hc, 'down', 0); $('#stHero').appendChild(JRPG.scaled(hc, 4));
@@ -698,11 +825,13 @@ function footprintV() {
     ...BADGES.filter(b => b.id !== 'first').map(b => ({name: b.name, zh: b.e, done: owned.has(b.id) ? 1 : 0, total: 1, reward: '🎒 ' + b.e}))];
   const friends = allCafes().map(c => ({c, h: heartsOf(c.id)})).sort((a, b) => b.h - a.h || a.c.name.localeCompare(b.c.name));
   const met = friends.filter(f => f.h > 0);
-  const tabs = [['collect', '📖 收藏'], ['friends', '❤ 好感'], ['board', '📌 任务板'], ['bag', '🎒 背包']];
+  const tabs = [['collect', '📖 收藏'], ['beans', '🫘 豆子'], ['friends', '❤ 好感'], ['board', '📌 任务板'], ['bag', '🎒 背包']];
   const body = {
     collect: () => `<div class="vl-colh">🥤 饮品 <small>${drinks.filter(i => col.has(itemKey(i.name))).length}/${drinks.length}</small></div><div class="vwin vl-slots">${drinks.map(slot).join('')}</div>
       <div class="vl-colh">🥐 美食 <small>${foods.filter(i => col.has(itemKey(i.name))).length}/${foods.length}</small></div><div class="vwin vl-slots">${foods.map(slot).join('')}</div>
       <div class="vl-colh">🏪 咖啡馆 <small>${s.cafes}/${s.total}</small></div><div class="vwin vl-slots shops">${allCafes().map(c => `<a class="vl-slotc ${v.has(c.id) ? 'seen' : 'unk'}" href="#/cafe/${c.id}"><canvas data-shop="${c.id}" width="32" height="32"></canvas><span>${v.has(c.id) ? esc(c.short || c.name) : '？？？'}</span></a>`).join('')}</div>`,
+    beans: () => `<div class="hint">拍豆袋标签 → 自动识别文字，存成种子包 · 每包 +${BEAN_COINS} 金币 · 共 ${beans.length} 包 <a href="#/beans">列表/搜索 ›</a></div>
+      <div class="vl-packets">${beans.map(beanPacket).join('')}<button class="vl-packet add" data-newbean><span class="pk-top">新种子</span><span class="pk-plus">＋</span><b>拍豆子</b><small>拍照识别标签</small></button></div>`,
     friends: () => `<div class="hint">每次打卡，和那家店的咖啡师好感 +1 ❤（最多 10）· 已认识 ${met.length}/${friends.length}</div>
       <div class="vl-friends">${friends.map(({c, h}) => { const vg = villagerOf(c.id); return h ? `<a class="vwin vl-fr" href="#/cafe/${c.id}"><span class="fr-face" data-vil="${c.id}"></span><span class="fr-main"><b>${esc(vg.name)}</b> <small>${esc(c.short || c.name)}</small>${Valley.heartsHtml(h)}</span></a>`
         : `<a class="vl-fr unk" href="#/cafe/${c.id}"><span class="fr-face unk">？</span><span class="fr-main"><b>？？？</b> <small>${esc(c.short || c.name)}</small></span></a>`; }).join('')}</div>`,
@@ -722,7 +851,7 @@ function footprintV() {
   const paint = () => {
     app.querySelectorAll('canvas[data-item]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(Valley.itemSprite(cv.dataset.item), 0, 0); });
     app.querySelectorAll('canvas[data-shop]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(Valley.shop(cv.dataset.shop, v.has(cv.dataset.shop), k.season, false), 0, 0); });
-    app.querySelectorAll('[data-vil]').forEach(el => el.appendChild(Valley.portraitEl(villagerOf(el.dataset.vil), 1))); };
+    app.querySelectorAll('[data-vil]').forEach(el => el.appendChild(Valley.portraitEl(villagerOf(el.dataset.vil), 1))); paintBeanSprites(app); };
   paint();
   const hc = document.createElement('canvas'); hc.width = hc.height = 16; Valley.drawHero(hc, 'down', 0); $('#stHero').appendChild(JRPG.scaled(hc, 4));
   $('#fpTabs').onclick = e => { const b = e.target.closest('[data-vt]'); if (!b) return; fpTab = b.dataset.vt; SFXplay('blip');
@@ -742,7 +871,8 @@ function render() {
   app.classList.remove('full'); app.onclick = null;
   const [, name = 'list', arg] = (location.hash || '#/list').split('/');
   const v = views[name] ? name : 'list';
-  document.querySelectorAll('#tabbar a').forEach(a => a.classList.toggle('active', a.dataset.tab === v));
+  closeCamMenu();
+  document.querySelectorAll('#tabbar a').forEach(a => a.classList.toggle('active', a.dataset.tab === (v === 'beans' || v === 'bean' ? 'footprint' : v)));
   try { views[v](arg && decodeURIComponent(arg)); }
   catch (e) { console.error('view render failed', e); app.innerHTML = `<div class="card"><b>页面出了点问题 😵</b><div class="hint">${String(e && e.message || e).replace(/[<>&]/g, '')}</div><a class="btn" href="#/list">回到发现页</a></div>`; }
   if (!['cafe', 'add'].includes(v)) window.scrollTo(0, 0);
@@ -752,6 +882,6 @@ render();
 // quietly fetch location if already permitted (for distances), never prompt on load
 if (navigator.permissions) navigator.permissions.query({name: 'geolocation'}).then(p => { if (p.state === 'granted') locate().then(() => render()); }).catch(() => {});
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-window.__mcc = {get checkins() { return checkins; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf}; // for testing
+window.__mcc = {get checkins() { return checkins; }, get beans() { return beans; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf}; // for testing
 window.__appBooted = true; document.documentElement.classList.add('booted');
 })();

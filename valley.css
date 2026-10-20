@@ -246,3 +246,10 @@ html[data-theme][data-skin=valley] .m3d-wrap{border:4px solid var(--woodX);box-s
 html[data-theme][data-skin=valley] .m3d-loading,html[data-theme][data-skin=valley] .m3d-hint{color:var(--ink)}
 html[data-theme][data-skin=valley] .region-head b,html[data-theme][data-skin=valley] .rg-count{color:inherit}
 html[data-theme][data-skin=valley] .quest{border-bottom-color:var(--woodL)}
+/* beans */
+html[data-theme][data-skin=valley] .cam-menu{background:var(--cream);box-shadow:var(--winb);border:3px solid var(--woodX);border-radius:6px;color:var(--ink)}
+html[data-theme][data-skin=valley] .cam-menu button{border:2px solid var(--wood);background:#e8c999;border-radius:4px;color:var(--ink);box-shadow:inset 2px 2px 0 #f6dfb0,0 2px 0 var(--woodD)}
+html[data-theme][data-skin=valley] .bf input,html[data-theme][data-skin=valley] .bf select,html[data-theme][data-skin=valley] .bf textarea{background:var(--cream2);color:var(--ink);border:2px solid var(--wood);border-radius:3px}
+html[data-theme][data-skin=valley] .bean-raw{background:var(--cream);border:3px solid var(--woodX);border-radius:6px;box-shadow:var(--winb);padding:8px 12px;color:var(--ink)}
+html[data-theme][data-skin=valley] .vl-seed .vl-packet.big{animation:vlbob 1.2s ease-in-out infinite alternate}
+@keyframes vlbob{to{transform:translateY(-4px) rotate(-2deg)}}
