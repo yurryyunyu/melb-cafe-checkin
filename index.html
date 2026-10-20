@@ -13,11 +13,8 @@
 <link rel="icon" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Web fonts are optional: loaded non-blocking so a slow/blocked font CDN can never blank the page -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Josefin+Sans:wght@600;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaigbscreen.css" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Josefin+Sans:wght@600;700&display=swap"></noscript>
+<!-- Hand-drawn web fonts are only for the ✏️ sketch theme: injected on demand (non-blocking), so the default pixel themes make no third-party requests -->
+<script>window.__sketchFonts=function(){if(window.__sfOn)return;window.__sfOn=1;["https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Josefin+Sans:wght@600;700&display=swap","https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaigbscreen.css"].forEach(function(u){var l=document.createElement("link");l.rel="stylesheet";l.href=u;l.media="print";l.onload=function(){this.media="all"};document.head.appendChild(l)})};if(__t==="sketch")window.__sketchFonts();</script>
 <style>
   html,body{background:#f7f4ec}
   #boot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font:16px/1.5 -apple-system,"PingFang SC",sans-serif;color:#4a4a4a;background:#f7f4ec;z-index:9999;text-align:center;padding:24px}
@@ -69,6 +66,7 @@
 <script src="integrations.js"></script>
 <script src="jrpg.js"></script>
 <script src="valley.js"></script>
+<script src="pixui.js"></script>
 <script src="beans.js"></script>
 <script src="pixelmap.js"></script>
 <script src="app.js"></script>
