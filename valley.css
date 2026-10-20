@@ -418,3 +418,24 @@ html[data-theme][data-skin=valley] .section-title a{margin-left:auto}
 html[data-theme][data-skin=valley] .vl-entry .cname{text-align:left;flex:1;min-width:0}
 html[data-theme][data-skin=valley] .rec.vl-entry img.ve-photo{width:52px;height:52px}
 html[data-theme][data-skin=valley] .vl-entry .body{text-align:left}
+/* ================= ✨ Round 4: check-in sheet as a game dialog, pixel star rating, bag slots ================= */
+html[data-theme][data-skin=valley] #sheet{animation:vsheet .28s steps(5) both;padding-top:0;border-radius:8px 8px 0 0}
+@keyframes vsheet{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}
+html[data-theme][data-skin=valley] #sheet:before{display:none}
+html[data-theme][data-skin=valley] #sheet h3{position:sticky;top:0;z-index:2;margin:0 -16px 12px;padding:10px 16px 9px;display:flex;align-items:center;gap:8px;font:400 19px "FusionPixel",monospace;color:#fffbe8;text-shadow:2px 2px 0 #3a2414;background:repeating-linear-gradient(180deg,#b0733d 0 9px,#9a6232 9px 10px);border-bottom:3px solid #3a2414;box-shadow:inset 0 -2px 0 #c98f55}
+html[data-theme][data-skin=valley] #sheet h3 .pi{width:24px;height:24px;filter:drop-shadow(1px 1px 0 #3a2414)}
+html[data-theme][data-skin=valley] #sheet .field>label{display:inline-block;font-size:13px;padding:1px 8px;margin-bottom:5px;color:#fffbe8;text-shadow:1px 1px 0 #5e3519;background:#a86b38;border:2px solid #3a2414;border-radius:3px}
+html[data-theme][data-skin=valley] .star-input{gap:4px}
+html[data-theme][data-skin=valley] .star-input span{font-size:0;width:36px;height:36px;background:var(--pi-star) center/32px 32px no-repeat;image-rendering:pixelated;-webkit-text-stroke:0;filter:grayscale(1) brightness(1.45) opacity(.55);transition:transform .1s steps(2)}
+html[data-theme][data-skin=valley] .star-input span.on{filter:none;animation:spop .3s steps(3)}
+html[data-theme][data-skin=valley] .star-input span:active{transform:scale(.85)}
+@keyframes spop{50%{transform:scale(1.3) rotate(-8deg)}}
+html[data-theme][data-skin=valley] .star-input.sm span{width:22px;height:22px;background-size:20px 20px}
+.pd-empty{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;color:var(--ink2,#7a5636)}
+.pi.big{width:40px;height:40px;animation:vlbob 1.2s steps(3) infinite alternate}
+/* bag: unused slots look like empty inventory squares */
+html[data-skin=valley] .vl-slotc.empty{background:#d9bb88;border:2px solid #8a5528;box-shadow:inset 3px 3px 0 #b8925a,inset -1px -1px 0 #ecd2a0}
+/* HUD level badge: little wooden plaque with a star */
+html[data-theme][data-skin=valley] .hud-lv{position:relative;background:linear-gradient(#fff2a0,#f5c542);font-weight:400}
+html[data-theme][data-skin=valley] .hud-lv:after{content:"";position:absolute;right:-6px;top:-7px;width:12px;height:12px;background:var(--pi-star) center/12px 12px no-repeat;image-rendering:pixelated}
+html[data-skin=valley] .vl-slots.bag .vl-slotc.empty{min-height:0;align-self:stretch;width:auto;height:auto;margin:0}

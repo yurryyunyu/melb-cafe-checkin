@@ -268,7 +268,7 @@ let pendingAssign = null;
 function openCheckinForm(ci, isNew) {
   const draft = {...ci};
   const cafe = () => cafeById(draft.cafeId);
-  openSheet(`<h3>${isNew ? '打卡 ☕' : '编辑打卡'}</h3>
+  openSheet(`<h3>${isNew ? (PXI() ? ic('cup', '') + ' 打卡' : '打卡 ☕') : (PXI() ? ic('quill', '') + ' 编辑打卡' : '编辑打卡')}</h3>
     <div class="field"><label>照片</label><div class="photo-drop" id="fPhoto"></div></div>
     <div class="field"><label>咖啡馆</label><button class="btn ghost" style="margin:0;text-align:left" id="fCafe"></button></div>
     <div class="field"><label>评分</label><div class="star-input" id="fStars">${[1,2,3,4,5].map(n => `<span data-n="${n}">★</span>`).join('')}</div></div>
@@ -277,7 +277,7 @@ function openCheckinForm(ci, isNew) {
     <div class="field"><label>日期</label><input type="date" id="fDate" value="${esc(draft.date || today())}"></div>
     <button class="btn" id="fSave">${isNew ? '保存打卡' : '保存'}</button>
     ${isNew ? '' : '<button class="btn danger" id="fDel">删除这条打卡</button>'}`, el => {
-    const drawPhoto = () => $('#fPhoto', el).innerHTML = draft.photo ? `<img src="${draft.photo}" alt="">` : '📷 点击添加照片（可选）';
+    const drawPhoto = () => $('#fPhoto', el).innerHTML = draft.photo ? `<img src="${draft.photo}" alt="">` : PXI() ? `<span class="pd-empty">${PixUI.img('camera', 'big')}<span>点击添加照片（可选）</span></span>` : '📷 点击添加照片（可选）';
     const drawCafe = () => $('#fCafe', el).innerHTML = cafe() ? `📍 ${esc(cafe().name)} <span class="hint">· 点击更换</span>` : '📍 选择咖啡馆';
     const drawStars = () => el.querySelectorAll('#fStars span').forEach(s => s.classList.toggle('on', +s.dataset.n <= (draft.rating || 0)));
     drawPhoto(); drawCafe(); drawStars();
