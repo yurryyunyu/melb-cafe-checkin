@@ -106,7 +106,65 @@ const byTime = () => [...checkins].sort((a, b) => (a.createdAt || 0) - (b.create
 function coinLedger() { const seen = new Set(), out = new Map();
   byTime().forEach(c => { let n = 15 + (c.rating || 0) * 5 + (c.photo ? 5 : 0) + (c.drink ? 5 : 0); if (c.cafeId && !seen.has(c.cafeId)) { n += 50; seen.add(c.cafeId); } out.set(c.id, n); }); return out; }
 const BEAN_COINS = 20; // beans never touch stamina
-const totalCoins = () => { let t = beans.length * BEAN_COINS; coinLedger().forEach(v => { t += v; }); return t; };
+const totalCoins = () => { let t = beans.length * BEAN_COINS + questCoins(); coinLedger().forEach(v => { t += v; }); return t; };
+// ---------- 📜 daily quests (每日委托): 3 per Melbourne day, picked deterministically from the date; rewards are coins you claim ----------
+const QK = 'mcc.quests';
+let questLog = load(QK, {claims: []}); if (!questLog || !Array.isArray(questLog.claims)) questLog = {claims: []};
+const questCoins = () => questLog.claims.reduce((t, x) => t + (+x.c || 0), 0);
+const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const bareName = n => itemKey(n).replace(/\(.*?\)|（.*?）/g, '').replace(/\s+/g, ' ').trim();
+const sigMatch = (cafeId, drink) => { const g = sigOf(cafeId), d = bareName(drink); return !!(g && d.length > 1 && g.s.some(([n]) => { const k = bareName(n); return k.length > 1 && (k.includes(d) || d.includes(k)); })); };
+const QUEST_BONUS = 50;
+function dailyQuests(day = today()) {
+  const tc = checkins.filter(c => ciDay(c) === day), seenBefore = new Set(checkins.filter(c => c.cafeId && ciDay(c) < day).map(c => c.cafeId));
+  const prior = id => checkins.filter(c => c.cafeId === id && ciDay(c) < day).length, RG = REGIONS[hashStr(day + '#r') % REGIONS.length];
+  const POOL = {
+    new: {icon: 'map', t: '解锁一家没去过的店', c: 60, done: tc.some(c => c.cafeId && cafeById(c.cafeId) && !seenBefore.has(c.cafeId))},
+    region: {icon: 'boot', t: `去 ${RG.name} 打一次卡`, c: 50, done: tc.some(c => c.cafeId && regionOf(c.cafeId).r.id === RG.id)},
+    friend: {icon: 'heart', t: '回访老朋友（去过 2 次的店）', c: 40, done: tc.some(c => c.cafeId && prior(c.cafeId) >= 2)},
+    sig: {icon: 'star', t: '点一道那家店的招牌', c: 50, done: tc.some(c => sigMatch(c.cafeId, c.drink))},
+    photo: {icon: 'camera', t: '拍照打卡一次', c: 40, done: tc.some(c => c.photo)},
+    rate: {icon: 'cup', t: '给一杯打 4 星以上', c: 30, done: tc.some(c => (c.rating || 0) >= 4)},
+    note: {icon: 'quill', t: '写一句打卡心得', c: 30, done: tc.some(c => String(c.note || '').trim())},
+    bean: {icon: 'bean', t: '拍一包咖啡豆', c: 40, done: beans.some(b => (b.date || '') === day)}};
+  const visit = ['new', 'region', 'friend'], other = Object.keys(POOL).filter(k => !visit.includes(k)).sort((a, b) => hashStr(day + a) - hashStr(day + b)).slice(0, 2);
+  const claimed = new Set(questLog.claims.filter(x => x.d === day).map(x => x.id));
+  return [visit[hashStr(day) % 3], ...other].map(id => ({id, ...POOL[id], claimed: claimed.has(id)}));
+}
+const questState = (day = today()) => { const q = dailyQuests(day); return {q, done: q.filter(x => x.done).length, ready: q.filter(x => x.done && !x.claimed).length, all: q.every(x => x.claimed)}; };
+function questBoard(compact) {
+  const S = questState(), coin = isV() ? Valley.coinImg() : '🪙';
+  return `<div class="vwin jwin vl-quests${S.all ? ' all' : ''}${compact ? ' compact' : ''}" id="vlQuests"><div class="vq-head">${ic('scroll', '📜')}<b>今日委托</b><small>${S.done}/3</small><span class="vq-reset">每天 0 点刷新</span></div>
+    ${S.all ? `<div class="vq-all">🎉 今天的委托全部完成！奖励 ${coin} +${QUEST_BONUS} 已领取</div>` : ''}
+    ${S.all && compact ? '' : S.q.map(x => `<div class="vq-row${x.done ? ' done' : ''}${x.claimed ? ' claimed' : ''}" data-q="${x.id}"><span class="vq-ic">${ic(x.icon, '•')}</span><span class="vq-t">${esc(x.t)}</span>${x.claimed ? '<span class="vq-ok">✔ 已领取</span>' : x.done ? `<button class="vq-claim" data-claim="${x.id}">领取 ${coin}${x.c}</button>` : `<span class="vq-c">${coin}${x.c}</span>`}</div>`).join('')}
+    ${!S.all ? `<div class="vq-foot">三项都领取再奖励 ${coin}+${QUEST_BONUS}</div>` : ''}</div>`;
+}
+function bindQuests(root = app) { root.querySelectorAll('[data-claim]').forEach(b => b.onclick = e => { e.preventDefault(); e.stopPropagation(); claimQuest(b.dataset.claim, b); }); }
+function claimQuest(id, fromEl) {
+  const d = today(), q = dailyQuests(d).find(x => x.id === id); if (!q || !q.done || q.claimed) return;
+  const before = totalCoins(), r = fromEl && fromEl.getBoundingClientRect(); questLog.claims.push({d, id, c: q.c}); let gain = q.c;
+  if (dailyQuests(d).every(x => x.claimed) && !questLog.claims.some(x => x.d === d && x.id === 'all')) { questLog.claims.push({d, id: 'all', c: QUEST_BONUS}); gain += QUEST_BONUS; }
+  save(QK, questLog); SFXplay('coin');
+  const box = $('#vlQuests'); if (box) { const fresh = document.createElement('div'); fresh.innerHTML = questBoard(box.classList.contains('compact')); box.replaceWith(fresh.firstElementChild); bindQuests(); }
+  drawHud(); coinBurst(r, gain, before);
+  if (gain > q.c) setTimeout(() => toast(`🎉 今日委托全部完成！额外 +${QUEST_BONUS} 金币`), 700);
+}
+// 🪙 juice: coins fly from a point into the HUD purse, then the counter ticks up
+function coinBurst(from, gain, startVal) {
+  const to = $('#vlGold'), H = $('#hud'); if (!isV() || !to || !gain || (H && H.classList.contains('hidden'))) return;
+  const end = totalCoins(), start = startVal != null ? startVal : end - gain, tr = to.getBoundingClientRect();
+  const fx = from && from.width != null ? {x: from.left + from.width / 2, y: from.top + from.height / 2} : {x: innerWidth / 2, y: innerHeight / 2};
+  to.textContent = fmtN(start); const n = Math.min(12, 4 + Math.floor(gain / 20)), layer = document.createElement('div'); layer.className = 'coin-fx'; document.body.appendChild(layer);
+  const pop = document.createElement('b'); pop.className = 'coin-pop'; pop.textContent = '+' + gain; pop.style.left = fx.x + 'px'; pop.style.top = fx.y + 'px'; layer.appendChild(pop);
+  let landed = 0; const src = Valley.coinIcon();
+  for (let i = 0; i < n; i++) { const c = document.createElement('img'); c.src = src; c.className = 'coin-fly'; c.alt = ''; layer.appendChild(c);
+    const sx = fx.x + (Math.random() - .5) * 60, sy = fx.y + (Math.random() - .5) * 30, mx = (sx + tr.left) / 2 + (Math.random() - .5) * 80, my = Math.min(sy, tr.top) - 40 - Math.random() * 60;
+    const kf = [{transform: `translate(${fx.x - 9}px,${fx.y - 9}px) scale(.4)`, opacity: 0}, {transform: `translate(${sx - 9}px,${sy - 9}px) scale(1.2)`, opacity: 1, offset: .2}, {transform: `translate(${mx - 9}px,${my - 9}px) scale(1)`, opacity: 1, offset: .55}, {transform: `translate(${tr.left + tr.width / 2 - 9}px,${tr.top + tr.height / 2 - 9}px) scale(.7)`, opacity: .9}];
+    let a = null; try { a = c.animate(kf, {duration: 760, delay: i * 55, easing: 'ease-in', fill: 'both'}); } catch (e) {}
+    const land = () => { c.remove(); landed++; const v = Math.round(start + (end - start) * landed / n), t2 = $('#vlGold'); if (t2) { t2.textContent = fmtN(v); const g = t2.closest('.vc-gold'); if (g) { g.classList.remove('bump'); void g.offsetWidth; g.classList.add('bump'); } } if (landed % 3 === 1) SFXplay('coin'); if (landed === n) setTimeout(() => layer.remove(), 400); };
+    if (a) a.onfinish = land; else setTimeout(land, 300 + i * 55); }
+  setTimeout(() => { const t2 = $('#vlGold'); if (t2) t2.textContent = fmtN(totalCoins()); if (layer.isConnected) layer.remove(); }, 2600); // safety net
+}
 const heartsOf = id => Math.min(10, checkinsOf(id).length);
 const villagerOf = id => { const v = Valley.villager(id, Math.max(0, allCafes().findIndex(c => c.id === id))); return isClosed(cafeById(id)) ? {...v, title: '前' + v.title} : v; };
 const itemKey = n => String(n || '').trim().toLowerCase();
@@ -403,6 +461,7 @@ function drawHud() {
       <div class="vl-clock" id="vlClock" data-season="${k.season}" data-phase="${k.phase}"><div class="vc-date">${k.wk} ${k.day}日</div>
         <div class="vc-mid"><span class="vc-sky">${k.sky}</span><span class="vc-season">${k.icon}${k.zh}·${k.dayOf}</span></div><div class="vc-time">${k.hhmm}</div>
         <div class="vc-gold">${Valley.coinImg()}<b id="vlGold">${fmtN(totalCoins())}</b></div></div>`;
+    const qa = document.querySelector('#tabbar a[data-tab=list]'); if (qa) { const r = questState().ready; qa.classList.toggle('q-ready', r > 0); qa.dataset.qn = r || ''; }
     return playStDrop(); }
   if (isJ()) { const on = JRPG.SFX.on;
     $('#hud').innerHTML = `<div class="hud-lv">Lv.${L.lv}</div><div class="hud-main"><div class="hud-title">${L.title}</div>
@@ -432,7 +491,7 @@ function celebrate(before, cafeId, extra = '') {
     const lines = [reg ? `<div class="vl-line">🗺️ ${esc(reg.name)} 探索 ${reg.done}/${reg.total}${reg.done === reg.total ? ' 👑 全区制霸！' : ''}</div>` : '',
       ...newBadges.map(b => `<div class="vl-line">🎒 放入背包：${b.e} ${b.name}</div>`), stLine ? `<div class="vl-line st-line">❤️ ${stLine}</div>` : '', extra];
     let stage = 'harvest';
-    const done = () => { clearTimeout(celebrate._t); el.className = 'hidden'; el.innerHTML = ''; render(); };
+    const done = () => { clearTimeout(celebrate._t); el.className = 'hidden'; el.innerHTML = ''; render(); if (coins > 0) setTimeout(() => coinBurst(null, coins, after.coins - coins), 120); };
     const next = () => { clearTimeout(celebrate._t);
       if (lvUp && stage === 'harvest') { stage = 'day'; const td = today(), led = coinLedger(), todays = checkins.filter(x => x.date === td);
         Valley.daySummary(el, {from: before.lv, to: after.lv, title: levelInfo().title, clk: Valley.clock(),
@@ -591,7 +650,7 @@ const views = {
     $('#addCafeBtn').onclick = () => location.hash = '#/add';
     const subs = [...new Set(allCafes().map(c => c.suburb))].sort();
     const v = visitedIds();
-    app.innerHTML = `<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
+    app.innerHTML = `${isV() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
       <select id="sub"><option value="">全部区域</option>${[...REGIONS, REGION_MORE].map(r => `<option value="${r.id}" ${r.id === listState.suburb ? 'selected' : ''}>${esc(r.name)}${r.zh && r.id !== 'more' ? ' ' + r.zh : ''}</option>`).join('')}</select></div>
       <div class="chips">${[['all', '全部'], ['todo', '未解锁'], ['done', '已解锁'], ['near', '离我最近']].map(([k, t]) => `<button class="chip ${listState.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
       <div class="hint">已解锁 ${v.size} / ${allCafes().length} 家</div><div id="cards"></div>`;
@@ -603,7 +662,7 @@ const views = {
       if (listState.filter === 'near' && lastPos) L.sort((a, b) => isClosed(a) - isClosed(b) || distM(lastPos, [a.lat, a.lng]) - distM(lastPos, [b.lat, b.lng]));
       $('#cards').innerHTML = L.map(cafeCard).join('') || '<div class="empty"><div class="e">🫖</div>没有符合条件的咖啡馆</div>';
     };
-    draw();
+    draw(); bindQuests();
     $('#q').oninput = e => { listState.q = e.target.value; draw(); };
     $('#sub').onchange = e => { listState.suburb = e.target.value; draw(); };
     app.querySelector('.chips').onclick = async e => {
@@ -886,13 +945,14 @@ function footprintV() {
   const body = {
     collect: () => `<div class="vl-colh">🥤 饮品 <small>${drinks.filter(i => col.has(itemKey(i.name))).length}/${drinks.length}</small></div><div class="vwin vl-slots">${drinks.map(slot).join('')}</div>
       <div class="vl-colh">🥐 美食 <small>${foods.filter(i => col.has(itemKey(i.name))).length}/${foods.length}</small></div><div class="vwin vl-slots">${foods.map(slot).join('')}</div>
+      <div class="vl-colh">🏅 区域徽章 <small>${regions().filter(r => r.done === r.total).length}/${regions().length}</small></div><div class="vwin vl-medals">${regions().map(r => { const t = r.done === r.total ? 'gold' : r.done * 3 >= r.total * 2 ? 'silver' : r.done * 3 >= r.total ? 'bronze' : r.done ? 'wood' : 'none'; return `<div class="vl-medal ${t}" data-region="${r.id}"><i></i><b>${esc(r.name)}</b><small>${r.done}/${r.total}</small></div>`; }).join('')}</div>
       <div class="vl-colh">🏪 咖啡馆 <small>${s.cafes}/${s.total}</small></div><div class="vwin vl-slots shops">${allCafes().map(c => `<a class="vl-slotc ${v.has(c.id) ? 'seen' : 'unk'}" href="#/cafe/${c.id}"><canvas data-shop="${c.id}" width="32" height="32"></canvas><span>${v.has(c.id) ? esc(c.short || c.name) : '？？？'}</span></a>`).join('')}</div>`,
     beans: () => `<div class="hint">拍豆袋标签 → 自动识别文字，存成种子包 · 每包 +${BEAN_COINS} 金币 · 共 ${beans.length} 包 <a href="#/beans">列表/搜索 ›</a></div>
       <div class="vl-packets">${beans.map(beanPacket).join('')}<button class="vl-packet add" data-newbean><span class="pk-top">新种子</span><span class="pk-plus">＋</span><b>拍豆子</b><small>拍照识别标签</small></button></div>`,
     friends: () => `<div class="hint">每次打卡，和那家店的咖啡师好感 +1 ❤（最多 10）· 已认识 ${met.length}/${friends.length}</div>
       <div class="vl-friends">${friends.map(({c, h}) => { const vg = villagerOf(c.id); return h ? `<a class="vwin vl-fr" href="#/cafe/${c.id}"><span class="fr-face" data-vil="${c.id}"></span><span class="fr-main"><b>${esc(vg.name)}</b> <small>${esc(c.short || c.name)}</small>${Valley.heartsHtml(h)}</span></a>`
         : `<a class="vl-fr unk" href="#/cafe/${c.id}"><span class="fr-face unk">？</span><span class="fr-main"><b>？？？</b> <small>${esc(c.short || c.name)}</small></span></a>`; }).join('')}</div>`,
-    board: () => `<div class="vl-board">${quests.map((q, i) => `<div class="vl-note ${q.done >= q.total ? 'clear' : ''}" style="--rot:${((i * 37) % 7) - 3}deg"><i class="pin"></i><b>${esc(q.name)}</b><small>${esc(q.zh)}</small>
+    board: () => `${questBoard(false)}<div class="vl-colh">📌 长期任务</div><div class="vl-board">${quests.map((q, i) => `<div class="vl-note ${q.done >= q.total ? 'clear' : ''}" style="--rot:${((i * 37) % 7) - 3}deg"><i class="pin"></i><b>${esc(q.name)}</b><small>${esc(q.zh)}</small>
       ${q.total > 1 ? `<div class="xpbar"><i style="width:${Math.round(q.done / q.total * 100)}%"></i></div><span class="nb">${q.done}/${q.total}</span>` : `<span class="nb">${q.done ? '✔ 已完成' : '进行中'}</span>`}<span class="rw">奖励 ${q.reward}</span>${q.done >= q.total ? '<span class="stamp">完成</span>' : ''}</div>`).join('')}</div>`,
     bag: () => `<div class="vwin vl-slots bag">${BADGES.map(b => `<div class="vl-slotc ${owned.has(b.id) ? 'seen' : 'unk'}"><span class="bi">${owned.has(b.id) ? b.e : '？'}</span><span>${owned.has(b.id) ? esc(b.name) : '？？？'}</span></div>`).join('')}${Array.from({length: 3}, () => '<div class="vl-slotc empty"></div>').join('')}</div>`};
   const photos = [...checkins].filter(c => c.photo).slice(0, 9);
@@ -909,10 +969,10 @@ function footprintV() {
     app.querySelectorAll('canvas[data-item]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(Valley.itemSprite(cv.dataset.item), 0, 0); });
     app.querySelectorAll('canvas[data-shop]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(Valley.shop(cv.dataset.shop, v.has(cv.dataset.shop), k.season, false), 0, 0); });
     app.querySelectorAll('[data-vil]').forEach(el => el.appendChild(Valley.portraitEl(villagerOf(el.dataset.vil), 1))); paintBeanSprites(app); };
-  paint();
+  paint(); bindQuests();
   const hc = document.createElement('canvas'); hc.width = hc.height = 16; Valley.drawHero(hc, 'down', 0); if (stamina() <= 0) JRPG.tire(hc); $('#stHero').appendChild(JRPG.scaled(hc, 4));
   $('#fpTabs').onclick = e => { const b = e.target.closest('[data-vt]'); if (!b) return; fpTab = b.dataset.vt; SFXplay('blip');
-    app.querySelectorAll('#fpTabs .chip').forEach(x => x.classList.toggle('on', x === b)); const fb = $('#fpBody'); fb.dataset.tab = fpTab; fb.innerHTML = body[fpTab](); paint(); };
+    app.querySelectorAll('#fpTabs .chip').forEach(x => x.classList.toggle('on', x === b)); const fb = $('#fpBody'); fb.dataset.tab = fpTab; fb.innerHTML = body[fpTab](); paint(); bindQuests(); };
   bindSettings();
   app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(c => c.id === ed.dataset.edit), false); };
 }
@@ -940,7 +1000,7 @@ render();
 // quietly fetch location if already permitted (for distances), never prompt on load
 if (navigator.permissions) navigator.permissions.query({name: 'geolocation'}).then(p => { if (p.state === 'granted') locate().then(() => render()); }).catch(() => {});
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-window.__mcc = {stamina, today, xp: () => totalXP(), badges: () => BADGES.filter(b => b.test(stats())).map(b => b.id), get checkins() { return checkins; }, get beans() { return beans; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf}; // for testing
+window.__mcc = {stamina, today, xp: () => totalXP(), badges: () => BADGES.filter(b => b.test(stats())).map(b => b.id), get checkins() { return checkins; }, get beans() { return beans; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf, quests: () => dailyQuests()}; // for testing
 window.__appBooted = true; document.documentElement.classList.add('booted');
 if (window.PixUI) { try { PixUI.installVars(); if (isV()) PixUI.splash(/[?&]splash\b/.test(location.search)); } catch (e) { console.warn('pixui', e); } }
 })();
