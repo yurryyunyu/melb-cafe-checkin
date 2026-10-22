@@ -1,4 +1,21 @@
-# 墨尔本咖啡打卡 (prototype)
+# 墨尔本咖啡打卡 · Melbourne Cafe Check-in
+
+A cozy pixel-art game for checking in to 101 real Melbourne cafes: photo check-ins, a pixel map of real streets, villager baristas, quests, a coin shop, a bean collection and Google review links.
+
+**Play it:** https://yurryyunyu.github.io/melb-cafe-checkin/
+
+<p>
+<img src="docs/title.png" width="200" alt="Title screen">
+<img src="docs/home.png" width="200" alt="Home with 101 cafes">
+<img src="docs/detail.png" width="200" alt="Cafe detail">
+</p>
+<p>
+<img src="docs/map.png" width="200" alt="Pixel real map">
+<img src="docs/shop.png" width="300" alt="Coin shop">
+<img src="docs/diary.png" width="200" alt="Diary">
+</p>
+
+## Developer notes
 Static mobile web app, no backend; data in localStorage. Serve the folder with any static host (HTTPS needed for camera/geolocation on phones).
 - config.js — the only place for keys: GOOGLE_MAPS_API_KEY (+ optional GOOGLE_MAP_ID), VISION_API, GOOGLE_FORM.
 - Google APIs to enable for the key: Maps JavaScript API, Places API (New). Restrict the key by HTTP referrer — see **Google 评价 / Google reviews** below.
