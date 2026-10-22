@@ -45,6 +45,18 @@ This is a main storyline in 8 chapters, taught by the mentor villager 老焙. It
 - Rewards are coins and XP through the existing quest ledger, plus cosmetics in the pixel shop: 手摇磨豆机 (ch 3), 杯测白袍 (ch 7) and 咖啡学士帽 (ch 8). Progress is saved in `localStorage['mcc.edu']`.
 - The lessons are original Simplified Chinese, checked against SCA (cupping protocol, Golden Cup, flavor wheel), World Coffee Research, roaster and barista education pages, and Melbourne history sources. Tests: `/workspace/pwtest/testedu.mjs`.
 
+## 🎭 隐藏角色 / Hidden NPCs (npc.js, `#/npc`)
+The town has 10 original hidden characters who only appear when a condition is met:
+- **Easy:** tap the title 5 times; open the closed Hash Specialty Coffee page; check in on an in-game rainy day.
+- **Depends on timing:** check in between 04:00 and 07:00 Melbourne time; open the app on a Victorian holiday or festival day; run your stamina down to 0.
+- **Long-term:** check in 5 days in a row; collect beans with 3 different processes; check in 10 times at one cafe; finish the coffee course.
+
+Each character has their own dialogue, which opens as an encounter. You get coins and XP through the quest ledger. The festival guest and the old barista also give unique cosmetics for the pixel shop.
+
+The codex (图鉴) shows unmet characters as `?` silhouettes with vague hints. Conditions based on stored data count past records. Stamina 0, the title tap and the Hash page only count at the time they happen.
+
+Progress is stored in localStorage under `mcc.npc`. Tests: `/workspace/pwtest/testnpc.mjs`. Under automation, encounters stay off unless `?npc` or `mcc.npcTest` is set.
+
 ## 🌐 官网 / Instagram links (websites.js)
 Each cafe page has a **官网** button, or **Instagram** when the cafe has no official site, and each card shows a small globe or Instagram icon. Links open in a new tab with `rel=noopener`. The links come from `research/websites.json`, where every URL was fetched and checked to name the venue. Multi-venue brands link to the location page where one exists. There are 99 links: 89 websites and 10 Instagram accounts. Two cafes have no verified link, so no button is shown: Hash Specialty Coffee (closed) and Reunion and Co (the site doesn't load). Tests: `/workspace/pwtest/testweb.mjs`.
 

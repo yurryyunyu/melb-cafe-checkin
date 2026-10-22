@@ -148,3 +148,10 @@ html[data-theme=foundation] .edu-dlg .ed-next{background:var(--fd-wood);border-c
 html[data-theme=foundation] .edu-rankup .er-card{background:linear-gradient(180deg,#fbf3df,#ead6a6);border:2px solid var(--fd-wood);box-shadow:0 0 0 4px #e9d3a2,0 0 0 6px var(--fd-wood),0 16px 40px rgba(0,0,0,.4)}
 html[data-theme=foundation] .edu-rankup .er-title{font-family:var(--serif);color:#8a4a18}
 html[data-theme=foundation] .eq-o{background:rgba(255,250,236,.8);border-color:var(--fd-edge)}
+/* 🎭 hidden NPCs */
+html[data-theme=foundation] :is(.npc-entry,.npc-head,.npc-card){background:var(--fd-panel);border:1px solid var(--fd-edge);box-shadow:var(--fd-shadow);color:var(--ink)}
+html[data-theme=foundation] .npc-entry{border-left:5px solid #6a4a8a}
+html[data-theme=foundation] :is(.npc-entry .ne-t b,.npc-head b,.npc-card .nc-t b){font-family:var(--serif)}
+html[data-theme=foundation] .npc-card.unknown{background:linear-gradient(180deg,#efe4cc,#e2d3b2);border-style:dashed}
+html[data-theme=foundation] .npc-ava{border-color:var(--fd-gold);background:#efe0c0}html[data-theme=foundation] .npc-ava.sil{background:#b8a88c}
+html[data-theme=foundation] .npc-visitor{background:linear-gradient(180deg,#fbf3df,#efdfba);border-color:var(--fd-wood);font-family:var(--serif)}

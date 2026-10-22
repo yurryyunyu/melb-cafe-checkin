@@ -811,15 +811,77 @@ function eduRankUp(n, before, L0) { let m = $('#eduRankUp'); if (m) m.remove(); 
   document.body.appendChild(m); requestAnimationFrame(() => m.classList.add('show'));
   const L1 = levelInfo(); if (L1.lv > L0.lv) setTimeout(() => toast(`⬆️ 升级！Lv.${L1.lv} ${L1.title}`, 2600), 900);
   $('#erOk').onclick = () => { m.remove(); location.hash = n < Edu.CH.length ? '#/edu/' + (n + 1) : '#/edu'; }; }
+// ---------- 🎭 hidden NPCs (隐藏角色): encounters, codex, map visitor. Logic in npc.js; state in localStorage 'mcc.npc' ----------
+// Under automation (navigator.webdriver) encounters stay off unless ?npc or localStorage mcc.npcTest — keeps older test suites undisturbed.
+const NPC_ON = () => !!window.Npc && (!navigator.webdriver || /[?&]npc\b/.test(location.search) || !!load('mcc.npcTest', false));
+const npcWx = d => { try { return window.Fests && window.Valley && d ? Fests.weather(d, Valley.seasonOf(+d.slice(5, 7))).id : ''; } catch (e) { return ''; } };
+const npcFest = d => { try { return window.Fests && d ? Fests.on(d) : []; } catch (e) { return []; } };
+const npcCtx = () => ({checkins, beans, today: today(), stamina: stamina(), eduRank: window.Edu ? Edu.rank() : 0, eduMax: window.Edu ? Edu.CH.length : 0, fest: npcFest, wx: npcWx});
+const NPC_ITEM = {bunting: '节日彩旗串', oldapron: '旧帆布围裙'};
+const npcItemName = id => { const it = window.PixShop && PixShop.byId(id); return it ? it.name : NPC_ITEM[id] || id; };
+const NPC_EASE = {easy: '容易遇到', mid: '要看时机', long: '长期目标'};
+function npcAva(id, sil, cls = '') { return `<span class="edu-ava px npc-ava ${cls}${sil ? ' sil' : ''}" data-npc-ava="${id}"${sil ? ' data-sil="1"' : ''}>${sil ? '?' : ''}</span>`; }
+function paintNpc(root) { root.querySelectorAll('[data-npc-ava]').forEach(el => { const id = el.dataset.npcAva, sil = !!el.dataset.sil; try { const c = sil ? Npc.silhouette(id) : Npc.portrait(id); if (!c) return;
+  el.textContent = ''; el.appendChild(Npc.scaled(c, 2)); if (sil) { const q = document.createElement('b'); q.className = 'npc-q'; q.textContent = '?'; el.appendChild(q); } else el.style.background = Npc.BG[id] || ''; } catch (e) {} }); }
+function npcFestName() { const t = npcFest(today())[0]; if (t) return t.zh; const c = byTime().reverse().find(x => npcFest(ciDay(x)).length); return c ? npcFest(ciDay(c))[0].zh : '节日'; }
+const npcLine = (n, t) => t.replace('{fest}', (Npc.state.met[n.id] && Npc.state.met[n.id].fest) || npcFestName());
+let npcTimer = null, npcHold = false; // npcHold: after an encounter closes, wait for the next navigation before another one
+function npcSchedule(ms = 700) { if (!NPC_ON()) return; clearTimeout(npcTimer); npcTimer = setTimeout(npcTick, ms); }
+const npcBlocked = () => !!document.querySelector('#celebrate:not(.hidden), #eduDlg, #eduRankUp, #npcDlg, #fdSplash, #vlSplash, #shModal') || !($('#sheetWrap') || {classList: {contains: () => true}}).classList.contains('hidden') || /^#\/(edu\/q|add)/.test(location.hash);
+function npcTick() { if (!NPC_ON() || npcHold) return; const p = Npc.pending(npcCtx()); if (!p.length) return; if (npcBlocked()) return npcSchedule(1500); npcEncounter(p[0]); }
+// one encounter per page view: met + reward are recorded when the dialogue opens, so closing early never loses them
+function npcEncounter(id, replay) { const n = Npc.byId(id); if (!n) return; let d = $('#npcDlg'); if (d) d.remove(); { const g = $('#dlg'); if (g) g.classList.remove('show'); } // the encounter takes over the barista's speech bubble
+  const L0 = levelInfo(), before = totalCoins(), isNew = !replay && Npc.meet(id, today(), id === 'fest' ? {fest: npcFestName()} : null);
+  if (isNew && !questLog.claims.some(x => x.id === 'npc-' + id)) { questLog.claims.push({d: today(), id: 'npc-' + id, c: n.c}); save(QK, questLog); }
+  const lines = n.lines.map(t => npcLine(n, t)), pages = replay ? lines : [...lines, ''];
+  d = document.createElement('div'); d.id = 'npcDlg'; d.className = 'edu-dlg npc-dlg' + (replay ? ' replay' : ''); d.dataset.npc = id; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', '隐藏角色 · ' + n.name);
+  d.innerHTML = `${replay ? '' : '<div class="np-tag">✨ 隐藏角色出现了！</div>'}<div class="ed-box">${npcAva(id, false)}<div class="ed-body"><div class="ed-name">${esc(n.name)} <small>${esc(n.role)}</small></div><div class="ed-text" id="npText"></div>
+    <div class="ed-foot"><span id="npPage"></span><button class="ed-skip" id="npSkip">${replay ? '关闭' : '跳过'}</button><button class="ed-next" id="npNext">▼ 继续</button></div></div></div>`;
+  document.body.appendChild(d); paintNpc(d); let i = 0;
+  const rw = () => `<div class="np-rw" id="npReward"><b>🎭 已记入隐藏角色图鉴 ${Npc.count()}/${Npc.NPCS.length}</b><span>🪙 +${n.c}</span><span>⭐ +${Math.round(n.c / 2)} XP</span>${n.item ? `<span>🎁 ${esc(npcItemName(n.item))}</span>` : ''}${n.item ? `<small>${isV() ? '礼物已经放进杂货店，可以免费装备。' : '礼物会出现在像素主题（田园 / 牧场）的杂货店里。'}</small>` : ''}</div>`;
+  const show = () => { const last = i === pages.length - 1, t = $('#npText');
+    if (!replay && last) t.innerHTML = rw(); else t.textContent = pages[i];
+    $('#npPage').textContent = replay || !last ? `${i + 1}/${lines.length}` : '';
+    $('#npNext').textContent = last ? (replay ? '✔ 好的' : '✔ 收下') : '▼ 继续'; $('#npSkip').classList.toggle('hidden', !replay && last); };
+  const end = () => { d.remove(); if (!replay) { npcHold = true; SFXplay('harvest'); drawHud(); if (isNew) { coinBurst(null, n.c, before); xpPop(null, Math.round(n.c / 2), L0); const L1 = levelInfo(); if (L1.lv > L0.lv) setTimeout(() => toast(`⬆️ 升级！Lv.${L1.lv} ${L1.title}`, 2600), 1300); }
+    if (app.dataset.view === 'npc' || app.dataset.view === 'list') render(); } };
+  $('#npNext').onclick = e => { e.stopPropagation(); SFXplay('blip'); if (++i >= pages.length) return end(); show(); };
+  $('#npSkip').onclick = e => { e.stopPropagation(); if (replay) return end(); i = pages.length - 1; show(); };
+  SFXplay(replay ? 'blip' : 'harvest'); requestAnimationFrame(() => d.classList.add('show')); show(); }
+function npcEntry() { if (!window.Npc) return ''; const k = Npc.count(), N = Npc.NPCS.length;
+  return `<a class="npc-entry vwin jwin" href="#/npc" id="npcEntry"><span class="ne-ic">🎭</span><span class="ne-t"><b>隐藏角色图鉴 ${k}/${N}</b><small>${k ? '有些人只在特定的时候出现……' : '小镇里藏着一些不常露面的人'}</small></span><span class="ne-sil">${Npc.NPCS.slice(0, 5).map(n => npcAva(n.id, !Npc.met(n.id), 'mini')).join('')}</span><span class="ee-go">›</span></a>`; }
+function npcCodex() { const k = Npc.count(), N = Npc.NPCS.length, x = npcCtx();
+  setTop(isR() ? '隐藏角色 · 访客簿' : isF() ? '隐藏角色 · 城镇名录' : '隐藏角色图鉴', '', true);
+  app.innerHTML = `<div class="npc-head vwin jwin"><b>🎭 已遇见 ${k}/${N}</b><small>小镇里有 ${N} 位不常露面的角色，只在满足条件时出现。遇见后会记在这里，并送上金币、XP，有两位还会送礼物。</small></div>
+    <div class="npc-codex" id="npcCodex">${Npc.NPCS.map(n => { const m = Npc.state.met[n.id];
+      return m ? `<div class="npc-card vwin jwin met" data-npc="${n.id}">${npcAva(n.id, false, 'big')}<div class="nc-t"><b>${esc(n.name)}</b><small class="nc-role">${esc(n.role)}</small>
+          <div class="nc-how">🔓 ${esc(n.how)}</div><div class="nc-meta">${esc(m.d)} 遇见 · 🪙${n.c} · ⭐${Math.round(n.c / 2)}XP${n.item ? ` · 🎁 ${esc(npcItemName(n.item))}` : ''}</div>${n.note ? `<div class="nc-note">${esc(n.note)}</div>` : ''}<button class="btn ghost nc-replay" data-replay="${n.id}">💬 再聊一次</button></div></div>`
+        : `<div class="npc-card vwin jwin unknown" data-npc="${n.id}">${npcAva(n.id, true, 'big')}<div class="nc-t"><b>？？？</b><small class="nc-role">${NPC_EASE[n.ease] || ''}</small><div class="nc-hint">${esc(n.hint)}</div></div></div>`; }).join('')}</div>
+    <div class="hint npc-foot">提示是故意写得模糊的。大部分条件会把以前的记录也算进去（例如以前在雨天、节日打过卡）；体力耗尽、标题彩蛋和 Hash 的店门口只在当时触发。</div>`;
+  paintNpc(app);
+  $('#npcCodex').onclick = e => { const b = e.target.closest('[data-replay]'); if (b) npcEncounter(b.dataset.replay, true); };
+  npcSchedule(); }
+// 🗺️ today's visitor: a met NPC whose moment is now (dawn hours, a festival, a rainy day, stamina 0, or met today) waits on the map
+function npcActive() { if (!window.Npc) return null; const t = today(), h = window.Valley && Valley.clock ? Valley.clock().h : 12;
+  const now = {dawn: h >= 4 && h < 7, fest: npcFest(t).length > 0, rain: npcWx(t) === 'rain', sleepy: stamina() <= 0};
+  return Npc.NPCS.find(n => Npc.met(n.id) && (now[n.id] || Npc.state.met[n.id].d === t)) || null; }
+function npcVisitor() { const o = $('#npcVisitor'); if (o) o.remove(); const n = npcActive(); if (!n) return;
+  const b = document.createElement('button'); b.id = 'npcVisitor'; b.className = 'npc-visitor'; b.dataset.npc = n.id; b.setAttribute('aria-label', `${n.name} 在小镇里`);
+  b.innerHTML = `${npcAva(n.id, false, 'mini')}<span><b>${esc(n.name)}</b><small>今天在小镇里</small></span>`; document.body.appendChild(b); paintNpc(b); b.onclick = () => npcEncounter(n.id, true); }
+// 🔔 title easter egg: 5 quick taps on the title (title screen or top bar)
+let npcTaps = [];
+document.addEventListener('click', e => { if (!window.Npc || Npc.met('tap') || !e.target.closest('#title, .fs-title, .fs-card, .sp-logo')) return; const t = Date.now(); npcTaps = [...npcTaps.filter(x => t - x < 4000), t];
+  if (npcTaps.length >= 5) { npcTaps = []; Npc.flag('tap', today()); SFXplay('coin'); npcSchedule(200); } }, true);
 const views = {
   calendar(arg) { return calendarV(arg); },
+  npc() { if (!window.Npc) { location.hash = '#/list'; return; } return npcCodex(); },
   edu(arg) { if (!window.Edu) { location.hash = '#/list'; return; } const q = /^q(\d)$/.exec(arg || ''); if (q) return eduQuiz(+q[1]); if (/^\d$/.test(arg || '')) return eduChapter(+arg); return eduJournal(); },
   list() {
     setTop('墨尔本咖啡打卡', '<button id="addCafeBtn">＋ 添加</button>');
     $('#addCafeBtn').onclick = () => location.hash = '#/add';
     const subs = [...new Set(allCafes().map(c => c.suburb))].sort();
     const v = visitedIds();
-    app.innerHTML = `${festBanner()}${eduEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
+    app.innerHTML = `${festBanner()}${eduEntry()}${npcEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
       <select id="sub"><option value="">全部区域</option>${[...REGIONS, REGION_MORE].map(r => `<option value="${r.id}" ${r.id === listState.suburb ? 'selected' : ''}>${esc(r.name)}${r.zh && r.id !== 'more' ? ' ' + r.zh : ''}</option>`).join('')}</select></div>
       <div class="chips">${[['all', '全部'], ['todo', '未解锁'], ['done', '已解锁'], ['near', '离我最近']].map(([k, t]) => `<button class="chip ${listState.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
       <div class="hint">已解锁 ${v.size} / ${allCafes().length} 家</div><div id="cards"></div>`;
@@ -1090,12 +1152,12 @@ function shopV() {
   const draw = () => {
     const coins = totalCoins();
     $('#shGrid').innerHTML = PixShop.ITEMS.filter(i => i.kind === shopCat).map(i => { const own = PixShop.owns(i.id), eq = PixShop.equipped(i.id); let poor = !own && coins < i.price;
-      const eduLock = !own && i.edu; if (eduLock) poor = false;
-      const btn = eduLock ? `<a class="sh-buy edu-lock" href="#/edu">📖 咖啡课第 ${i.edu} 章</a>` : !own ? `<button class="sh-buy${poor ? ' poor' : ''}" data-buy="${i.id}">${V.coinImg()}${fmtN(i.price)}</button>`
+      const eduLock = !own && i.edu, npcLock = !own && i.npc; if (eduLock || npcLock) poor = false;
+      const btn = npcLock ? `<a class="sh-buy edu-lock npc-lock" href="#/npc">🎭 隐藏角色礼物</a>` : eduLock ? `<a class="sh-buy edu-lock" href="#/edu">📖 咖啡课第 ${i.edu} 章</a>` : !own ? `<button class="sh-buy${poor ? ' poor' : ''}" data-buy="${i.id}">${V.coinImg()}${fmtN(i.price)}</button>`
         : i.kind === 'decor' ? `<button class="sh-eq${eq ? ' on' : ''}" data-eq="${i.id}">${eq ? '✔ 已摆放' : '摆放'}</button>`
         : `<button class="sh-eq${eq ? ' on' : ''}" data-eq="${i.id}"${eq && i.free ? ' disabled' : ''}>${eq ? '✔ 装备中' : '装备'}</button>`;
       return `<div class="vwin sh-item${own ? ' owned' : ''}${eq ? ' equipped' : ''}${poor ? ' poor' : ''}" data-item="${i.id}"><div class="sh-prev" data-prev="${i.id}"></div><b>${esc(i.name)}</b><small>${esc(i.desc)}</small>
-        <div class="sh-state">${own ? (i.free ? '默认' : i.edu ? '课程奖励' : '已拥有') : eduLock ? '主线奖励' : poor ? `还差 ${fmtN(i.price - coins)}` : '可购买'}</div>${btn}</div>`; }).join('');
+        <div class="sh-state">${own ? (i.free ? '默认' : i.edu ? '课程奖励' : i.npc ? '角色礼物' : '已拥有') : npcLock ? '遇见隐藏角色后获得' : eduLock ? '主线奖励' : poor ? `还差 ${fmtN(i.price - coins)}` : '可购买'}</div>${btn}</div>`; }).join('');
     $('#shGrid').querySelectorAll('[data-prev]').forEach(el => { const c = PixShop.preview(el.dataset.prev); if (c) el.appendChild(JRPG.scaled(c, c.width > 16 ? 2 : 3)); });
   };
   const say = t => { const e = $('#shSay'); if (e) e.textContent = t; };
@@ -1247,11 +1309,13 @@ function render() {
   closeCamMenu();
   document.querySelectorAll('#tabbar a').forEach(a => a.classList.toggle('active', a.dataset.tab === (['beans', 'bean', 'shop'].includes(v) ? 'footprint' : v)));
   app.dataset.view = v; if (isV()) { app.classList.remove('vt-in'); void app.offsetWidth; app.classList.add('vt-in'); }
+  { const ov = $('#npcVisitor'); if (ov) ov.remove(); }
   try { views[v](arg && decodeURIComponent(arg)); }
   catch (e) { console.error('view render failed', e); app.innerHTML = `<div class="card"><b>页面出了点问题 😵</b><div class="hint">${String(e && e.message || e).replace(/[<>&]/g, '')}</div><a class="btn" href="#/list">回到发现页</a></div>`; }
   if (!['cafe', 'add'].includes(v)) window.scrollTo(0, 0);
+  if (window.Npc) { try { paintNpc(app); if (v === 'cafe' && arg === 'hash') Npc.flag('hash', today()); if (v === 'map') npcVisitor(); npcSchedule(); } catch (e) { console.warn('npc', e); } }
 }
-window.addEventListener('hashchange', () => { closeSheet(); ['eduDlg', 'eduRankUp'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
+window.addEventListener('hashchange', () => { npcHold = false; closeSheet(); ['eduDlg', 'eduRankUp', 'npcDlg'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
 render();
 // quietly fetch location if already permitted (for distances), never prompt on load
 if (navigator.permissions) navigator.permissions.query({name: 'geolocation'}).then(p => { if (p.state === 'granted') locate().then(() => render()); }).catch(() => {});
