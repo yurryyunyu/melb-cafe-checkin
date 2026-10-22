@@ -402,3 +402,40 @@ html[data-theme][data-skin=valley] .closed-note{background:var(--cream2);border:
 .gr-fail,.gr-loading{font-size:12px;margin:6px 2px}
 .gr-set small{display:block;font-size:11px;line-height:1.35;margin-top:2px}
 .gr-set-st{font-size:12px;color:#8a7a65;white-space:nowrap}
+/* ================= 📅 calendar + 🎉 festival banner (shared by all themes; skins restyle) ================= */
+.fest-banner{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:8px 12px;text-decoration:none;color:var(--ink);background:#fff4d6;border:2px solid var(--pencil);border-radius:12px}
+.fest-banner span{display:flex;flex-direction:column;min-width:0}.fest-banner b{font-size:15px}.fest-banner small{font-size:12px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fest-banner.today{background:#ffe2c4}
+.cal{padding:10px 10px 8px;margin-bottom:10px;background:#fffdf8;border:2px solid var(--pencil);border-radius:12px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.cal-title{display:flex;flex-direction:column;align-items:center;line-height:1.15}.cal-title b{font-size:19px}.cal-title span{font-size:13px;opacity:.75}
+.cal-nav{min-width:38px;height:34px;border:2px solid var(--pencil);border-radius:8px;background:#fff;font-size:20px;line-height:1;cursor:pointer;color:inherit}
+.cal-nav.sm{min-width:0;height:26px;font-size:12px;padding:0 8px;margin-left:auto}
+.cal-wk,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-wk span{text-align:center;font-size:12px;opacity:.7;padding:2px 0}
+.cal-c{position:relative;aspect-ratio:1/1.05;min-width:0;border:1.5px solid rgba(0,0,0,.18);border-radius:7px;background:rgba(255,255,255,.7);padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;font:inherit;color:inherit;cursor:pointer}
+.cal-c.pad{border:0;background:none;cursor:default}
+.cal-c b{font-size:14px;line-height:1.2}.cal-c.wkend b{opacity:.75}
+.cal-c .cal-f{font-style:normal;font-size:15px;line-height:1}
+.cal-c .cal-ci{position:absolute;right:1px;bottom:1px;font-style:normal;font-size:9px;min-width:13px;height:13px;line-height:13px;border-radius:7px;background:#7a4a28;color:#fff;text-align:center}
+.cal-c.ph{background:#ffd9cc}.cal-c.fest:not(.ph){background:#e6f0ff}
+.cal-c.today{outline:3px solid #e0a020;outline-offset:-1px}
+.cal-c.sel{box-shadow:inset 0 0 0 2px var(--pencil)}
+.cal-legend{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:12px;margin-top:8px;opacity:.85}
+.cal-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:3px}
+.cal-legend .lg-ph{background:#ffd9cc;border:1px solid #c98a70}.cal-legend .lg-ev{background:#e6f0ff;border:1px solid #8aa0c8}
+.cal-legend .lg-ci{width:auto;min-width:13px;height:13px;line-height:13px;font-size:9px;font-style:normal;border-radius:7px;background:#7a4a28;color:#fff;text-align:center;padding:0 3px}
+.cal-day{padding:10px 12px;margin-bottom:10px;background:#fffdf8;border:2px solid var(--pencil);border-radius:12px}
+.cal-day-h{font-weight:700;margin-bottom:6px}
+.cal-fe{padding:6px 0;border-top:1px dashed rgba(0,0,0,.2)}.cal-fe:first-of-type{border-top:0}
+.cal-fe-t{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}.cal-fe-t small{opacity:.7}
+.cal-fe-n{font-size:13px;opacity:.85;margin-top:2px}.cal-fe-q{font-size:13px;margin-top:4px;color:#8a4a10}
+.cal-kind{margin-left:auto;font-size:11px;padding:0 6px;border-radius:8px;background:rgba(0,0,0,.08)}
+.cal-approx,.cal-sub{display:inline-block;font-size:11px;padding:0 5px;border-radius:6px;background:#fff0b8;border:1px solid #c9a23a;color:#6a4a00;line-height:1.5}
+.cal-sub{background:#e4f2dc;border-color:#7aa060;color:#2f5a20}
+.cal-cis{font-size:13px;margin-top:6px}
+.cal-up{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.cal-up-r{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;text-align:left;padding:7px 10px;border:1.5px solid rgba(0,0,0,.2);border-radius:9px;background:#fffdf8;font:inherit;color:inherit;cursor:pointer}
+.cal-up-r small{opacity:.7;font-size:12px}.cal-up-d{font-weight:700}
+.cal-src{font-size:12px;margin:6px 2px 12px;line-height:1.5}
+.theme-sel{flex-wrap:wrap;justify-content:flex-end;max-width:240px}

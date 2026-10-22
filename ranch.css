@@ -1,0 +1,64 @@
+/* ================= 🐄 牧场 (ranch) — bright, chunky SNES-era farm-life skin on top of the valley engine (html[data-ranch]) ================= */
+html[data-ranch]{--cream:#fff6d6;--cream2:#fffbe8;--ink:#2b1a0e;--ink2:#6a4424;--wood:#e07a2a;--woodL:#ffb04a;--woodD:#a04a10;--woodX:#2b1a0e;--gold:#ffd23f;--vgreen:#38b030;
+  --winb:inset 0 0 0 3px var(--woodL),inset 0 0 0 6px var(--wood),0 4px 0 var(--woodX)}
+html[data-ranch],html[data-ranch] body{background-color:#48c040;background-image:linear-gradient(90deg,rgba(0,0,0,.05) 50%,transparent 50%),linear-gradient(rgba(0,0,0,.05) 50%,transparent 50%);background-size:16px 16px}
+html[data-ranch] .jwin,html[data-ranch] .vwin,html[data-ranch] .card,html[data-ranch] .stat,html[data-ranch] .bdg,html[data-ranch] .region,html[data-ranch] .rec,html[data-ranch] .hero,html[data-ranch] #sheet,html[data-ranch] .settings,html[data-ranch] .map-legend{border:4px solid var(--woodX);border-radius:10px}
+/* top bar: bright sky + painted wooden sign */
+html[data-ranch] #topbar{background:linear-gradient(#58b8f8 0 58%,#8ad0ff 58% 64%,#58b8f8 64%);border-bottom:6px solid var(--woodX);box-shadow:inset 0 -6px 0 #38a0e8}
+html[data-ranch] #topbar h1{color:#fff;text-shadow:3px 0 0 var(--woodX),-3px 0 0 var(--woodX),0 3px 0 var(--woodX),0 -3px 0 var(--woodX),3px 3px 0 var(--woodX)}
+html[data-ranch] .hud-title,html[data-ranch] .hud-bar span,html[data-ranch] .hud-bar em{text-shadow:2px 0 0 var(--woodX),-2px 0 0 var(--woodX),0 2px 0 var(--woodX),0 -2px 0 var(--woodX)}
+html[data-ranch] .hud-lv{background:var(--gold);border:3px solid var(--woodX);color:var(--woodX)}
+html[data-ranch] .xpbar{border:3px solid var(--woodX)}
+/* calendar-style date board (big season + day, weather, time, gold) */
+html[data-ranch] .vl-clock{background:#fff6d6;border:3px solid var(--woodX);box-shadow:inset 0 0 0 3px #ffb04a;border-radius:8px;min-width:96px}
+html[data-ranch] .vl-clock .vc-date{font-size:13px;background:#e8503c;color:#fff;margin:-3px -6px 1px;padding:1px 0;text-shadow:1px 1px 0 var(--woodX)}
+html[data-ranch] .vl-clock .vc-season{font-size:13px;font-weight:700}
+html[data-ranch] .vl-clock .vc-wx{font-size:11px;white-space:nowrap}
+html[data-ranch] .vl-clock .vc-mid{flex-wrap:wrap;gap:2px 4px}
+html[data-ranch] .vl-clock .vc-gold{background:var(--woodX);color:var(--gold)}
+html[data-ranch] .rn-fest{flex-basis:100%;order:9;display:flex;align-items:center;gap:6px;justify-content:center;margin:2px 0 0;padding:2px 8px;background:#ffd23f;color:var(--woodX);border:3px solid var(--woodX);border-radius:8px;font-size:13px;text-decoration:none;animation:rnbob 1.2s steps(2) infinite}
+@keyframes rnbob{50%{transform:translateY(-2px)}}
+/* 🎒 rucksack / tool bar */
+html[data-ranch] .rk-bar{flex-basis:100%;order:10;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:4px 0 2px;padding:4px;background:#a04a10;border:3px solid var(--woodX);border-radius:8px;box-shadow:inset 0 0 0 2px #e07a2a}
+html[data-ranch] .rk-slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 0 2px;background:#fff6d6;border:3px solid #5a2a08;border-radius:5px;color:var(--woodX);text-decoration:none;font-size:11px;line-height:1.1}
+html[data-ranch] .rk-slot img,html[data-ranch] .rk-slot .pi{width:22px;height:22px;image-rendering:pixelated}
+html[data-ranch] .rk-slot.on{background:#ffd23f;border-color:#fff;box-shadow:0 0 0 3px var(--woodX)}
+html[data-ranch] .rk-k{position:absolute;left:2px;top:0;font-size:9px;color:#a04a10}
+/* dialogue box: cream page in a thick orange frame, green name ribbon, bouncing arrow */
+html[data-ranch] #dlg{background:#fff6d6!important;color:var(--woodX)!important;border:4px solid var(--woodX)!important;border-radius:12px!important;box-shadow:inset 0 0 0 4px #ffb04a,inset 0 0 0 7px #e07a2a,0 5px 0 var(--woodX)!important;padding:16px 14px 16px!important}
+html[data-ranch] #dlg .dlg-name{display:inline-block;background:#38b030;color:#fff;border:3px solid var(--woodX);border-radius:6px;padding:0 8px;margin:-28px 0 4px;text-shadow:1px 1px 0 var(--woodX)}
+html[data-ranch] #dlg .dlg-face{border:3px solid var(--woodX);border-radius:6px;background:#8ad0ff}
+html[data-ranch] #dlg .dlg-text{font-size:16px;line-height:1.5}
+html[data-ranch] #dlg .dlg-next{color:#e8503c;font-size:14px}
+/* hearts: chunky red */
+html[data-ranch] .vh{filter:saturate(1.4)}
+/* buttons + chips */
+html[data-ranch] .vbtn,html[data-ranch] .btn{background:#38b030;color:#fff;border:4px solid var(--woodX);border-radius:10px;box-shadow:inset 0 -4px 0 #208818;text-shadow:2px 2px 0 var(--woodX)}
+html[data-ranch] .btn.ghost{background:#fff6d6;color:var(--woodX);box-shadow:inset 0 -4px 0 #e8c98a;text-shadow:none}
+html[data-ranch] .chip.on{background:#ffd23f}
+html[data-ranch] #tabbar{background:#e07a2a;border-top:5px solid var(--woodX)}
+/* map: bunting on festival days, rain */
+.vl-bunting{position:absolute;left:0;right:0;top:0;height:22px;z-index:9500;display:flex;justify-content:space-around;pointer-events:none;background:linear-gradient(#5a2a08,#5a2a08) 0 3px/100% 2px no-repeat}
+.vl-bunting i{width:12px;height:16px;margin-top:4px;clip-path:polygon(0 0,100% 0,50% 100%);background:#e8503c}
+.vl-bunting i:nth-child(4n+2){background:#ffd23f}.vl-bunting i:nth-child(4n+3){background:#3f8fd0}.vl-bunting i:nth-child(4n){background:#4fae5a}
+.vl-p.rain{width:2px;height:10px;background:rgba(200,230,255,.85);animation-name:rnrain;animation-timing-function:linear;animation-iteration-count:infinite}
+@keyframes rnrain{from{transform:translate(0,-40px)}to{transform:translate(-30px,420px)}}
+.rn-world.rn-wx-rain .vl-tint{background:rgba(40,70,120,.18)}
+html[data-ranch] .region-banner{background:#fff6d6;border:4px solid var(--woodX)}
+/* calendar: big chunky cells */
+html[data-ranch] .cal,html[data-ranch] .cal-day{background:#fff6d6;border:4px solid var(--woodX);border-radius:10px;box-shadow:inset 0 0 0 3px #ffb04a}
+html[data-ranch] .cal-title b{font-size:20px;color:#e8503c;text-shadow:1px 1px 0 var(--woodX)}
+html[data-ranch] .cal-c{border:3px solid var(--woodX);border-radius:4px;background:#fffbe8}
+html[data-ranch] .cal-c.ph{background:#ffb0a0}html[data-ranch] .cal-c.fest:not(.ph){background:#b8e0ff}
+html[data-ranch] .cal-c.today{outline:3px solid #ffd23f;outline-offset:-6px}
+html[data-ranch] .cal-nav{border:3px solid var(--woodX);background:#ffd23f}
+html[data-ranch] .fest-banner{background:#ffd23f;border:4px solid var(--woodX);border-radius:10px;color:var(--woodX)}
+html[data-ranch] .cal-up-r{border:3px solid var(--woodX);background:#fffbe8}
+/* title screen */
+#vlSplash.rn-splash .sp-t2{color:#ffd23f}
+#vlSplash.rn-splash .sp-press{margin-top:8px;font-size:14px;color:#fff;text-shadow:2px 2px 0 #2b1a0e;animation:rnbob 1s steps(2) infinite}
+html[data-ranch] #hud{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+html[data-ranch] #hud .hud-main{flex:1 1 110px;min-width:110px}
+html[data-ranch] #hud .rn-fest{writing-mode:horizontal-tb;white-space:nowrap;font-size:13px}
+html[data-ranch] .rk-bar{width:100%;box-sizing:border-box}
+html[data-ranch] .rk-slot{min-width:0}

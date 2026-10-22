@@ -50,15 +50,20 @@ const stars = n => n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '';
 
 // ---------- 🎨 theme: cozy valley (default) · JRPG · sketch ----------
 // valley + JRPG share the pixel engine (data-theme=jrpg); valley adds data-skin=valley on top.
-const THEMES = ['valley', 'jrpg', 'sketch'];
-let THEME = load('mcc.theme', 'valley'); if (!THEMES.includes(THEME)) THEME = 'valley';
-const isJ = () => (THEME === 'jrpg' || THEME === 'valley') && !!window.JRPG;
-const isV = () => THEME === 'valley' && isJ() && !!window.Valley;
+// 🏰 foundation (default, warm painterly town) · 🐄 ranch (牧场: bright SNES-era farm life, built on the valley engine) · 🌾 valley · ⚔️ jrpg · ✏️ sketch
+const THEMES = ['foundation', 'ranch', 'valley', 'jrpg', 'sketch'];
+let THEME = load('mcc.theme', 'foundation'); if (!THEMES.includes(THEME)) THEME = 'foundation';
+const isJ = () => (THEME === 'jrpg' || THEME === 'valley' || THEME === 'ranch') && !!window.JRPG;
+const isV = () => (THEME === 'valley' || THEME === 'ranch') && isJ() && !!window.Valley;
+const isR = () => THEME === 'ranch' && isV();
+const isF = () => THEME === 'foundation';
 const SFXplay = n => { try { if (window.JRPG) JRPG.SFX.play(n); } catch (e) {} };
 function applyTheme() {
-  const t = isJ() ? 'jrpg' : 'sketch', h = document.documentElement; h.dataset.theme = t;
+  const t = isJ() ? 'jrpg' : isF() ? 'foundation' : 'sketch', h = document.documentElement; h.dataset.theme = t;
   if (isV()) h.dataset.skin = 'valley'; else delete h.dataset.skin;
-  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = isV() ? '#7a4a25' : t === 'jrpg' ? '#0b0f2a' : '#f7f4ec';
+  if (isR()) h.dataset.ranch = '1'; else delete h.dataset.ranch;
+  if (window.Valley && Valley.setStyle) Valley.setStyle(isR() ? 'ranch' : 'valley');
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = isR() ? '#e07a2a' : isV() ? '#7a4a25' : isF() ? '#3e2c1e' : t === 'jrpg' ? '#0b0f2a' : '#f7f4ec';
 }
 applyTheme();
 function setTheme(t) { THEME = t; save('mcc.theme', t); if (t === 'sketch' && window.__sketchFonts) window.__sketchFonts(); applyTheme(); const d = $('#dlg'); if (d) d.classList.remove('show'); render(); }
@@ -120,7 +125,7 @@ const QF = 'mcc.questFold', questOpen = () => { const f = load(QF, null); return
 const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 const bareName = n => itemKey(n).replace(/\(.*?\)|（.*?）/g, '').replace(/\s+/g, ' ').trim();
 const sigMatch = (cafeId, drink) => { const g = sigOf(cafeId), d = bareName(drink); return !!(g && d.length > 1 && g.s.some(([n]) => { const k = bareName(n); return k.length > 1 && (k.includes(d) || d.includes(k)); })); };
-const QUEST_BONUS = 50;
+const QUEST_BONUS = 50, FEST_BONUS = 80;
 function dailyQuests(day = today()) {
   const tc = checkins.filter(c => ciDay(c) === day), seenBefore = new Set(checkins.filter(c => c.cafeId && ciDay(c) < day).map(c => c.cafeId));
   const prior = id => checkins.filter(c => c.cafeId === id && ciDay(c) < day).length, RG = REGIONS[hashStr(day + '#r') % REGIONS.length];
@@ -135,16 +140,18 @@ function dailyQuests(day = today()) {
     bean: {icon: 'bean', t: '拍一包咖啡豆', c: 40, done: beans.some(b => (b.date || '') === day)}};
   const visit = ['new', 'region', 'friend'], other = Object.keys(POOL).filter(k => !visit.includes(k)).sort((a, b) => hashStr(day + a) - hashStr(day + b)).slice(0, 2);
   const claimed = new Set(questLog.claims.filter(x => x.d === day).map(x => x.id));
-  return [visit[hashStr(day) % 3], ...other].map(id => ({id, ...POOL[id], claimed: claimed.has(id)}));
+  const fe = window.Fests ? Fests.on(day)[0] : null, ids = [visit[hashStr(day) % 3], ...other];
+  if (fe) { POOL.fest = {icon: 'flag', t: `🎉 ${fe.zh}：今天去任意一家咖啡馆打卡`, c: FEST_BONUS, done: tc.some(c => c.cafeId), fest: fe}; ids.push('fest'); } // festival-day bonus quest
+  return ids.map(id => ({id, ...POOL[id], claimed: claimed.has(id)}));
 }
 const questState = (day = today()) => { const q = dailyQuests(day); return {q, done: q.filter(x => x.done).length, ready: q.filter(x => x.done && !x.claimed).length, all: q.every(x => x.claimed)}; };
 function questBoard(compact) {
-  const S = questState(), coin = isV() ? Valley.coinImg() : '🪙';
-  if (compact && !questOpen()) return `<button class="vwin jwin vl-quests compact folded${S.all ? ' all' : ''}${S.ready ? ' ready' : ''}" id="vlQuests" data-qfold aria-expanded="false">${ic('scroll', '📜')}<b>每日委托</b><span class="vqf-n">${S.done}/3</span>${S.all ? '<span class="vqf-s">✔ 全部完成</span>' : S.ready ? `<span class="vqf-s ready">· 可领 ${S.ready}</span>` : `<span class="vqf-s">· 奖励 ${coin}+XP</span>`}<span class="vqf-arr">▸</span></button>`;
-  return `<div class="vwin jwin vl-quests${S.all ? ' all' : ''}${compact ? ' compact open' : ''}" id="vlQuests"><div class="vq-head"${compact ? ' data-qfold aria-expanded="true"' : ''}>${ic('scroll', '📜')}<b>今日委托</b><small>${S.done}/3</small><span class="vq-reset">每天 0 点刷新</span>${compact ? '<span class="vqf-arr">▾</span>' : ''}</div>
+  const S = questState(), coin = isV() ? Valley.coinImg() : '🪙', N = S.q.length;
+  if (compact && !questOpen()) return `<button class="vwin jwin vl-quests compact folded${S.all ? ' all' : ''}${S.ready ? ' ready' : ''}" id="vlQuests" data-qfold aria-expanded="false">${ic('scroll', '📜')}<b>每日委托</b><span class="vqf-n">${S.done}/${N}</span>${S.all ? '<span class="vqf-s">✔ 全部完成</span>' : S.ready ? `<span class="vqf-s ready">· 可领 ${S.ready}</span>` : `<span class="vqf-s">· 奖励 ${coin}+XP</span>`}<span class="vqf-arr">▸</span></button>`;
+  return `<div class="vwin jwin vl-quests${S.all ? ' all' : ''}${compact ? ' compact open' : ''}" id="vlQuests"><div class="vq-head"${compact ? ' data-qfold aria-expanded="true"' : ''}>${ic('scroll', '📜')}<b>今日委托</b><small>${S.done}/${N}</small><span class="vq-reset">每天 0 点刷新</span>${compact ? '<span class="vqf-arr">▾</span>' : ''}</div>
     ${S.all ? `<div class="vq-all">🎉 今天的委托全部完成！奖励 ${coin} +${QUEST_BONUS} · +${QUEST_ALL_XP} XP 已领取</div>` : ''}
     ${S.all && compact ? '' : S.q.map(x => `<div class="vq-row${x.done ? ' done' : ''}${x.claimed ? ' claimed' : ''}" data-q="${x.id}"><span class="vq-ic">${ic(x.icon, '•')}</span><span class="vq-t">${esc(x.t)}</span>${x.claimed ? '<span class="vq-ok">✔ 已领取</span>' : x.done ? `<button class="vq-claim" data-claim="${x.id}">领取 ${coin}${x.c}<small>+${questXPof(x)}XP</small></button>` : `<span class="vq-c">${coin}${x.c}<small>+${questXPof(x)}XP</small></span>`}</div>`).join('')}
-    ${!S.all ? `<div class="vq-foot">三项都领取再奖励 ${coin}+${QUEST_BONUS} · +${QUEST_ALL_XP} XP</div>` : ''}</div>`;
+    ${!S.all ? `<div class="vq-foot">${N === 3 ? '三' : '四'}项都领取再奖励 ${coin}+${QUEST_BONUS} · +${QUEST_ALL_XP} XP</div>` : ''}</div>`;
 }
 function bindQuests(root = app) { root.querySelectorAll('[data-claim]').forEach(b => b.onclick = e => { e.preventDefault(); e.stopPropagation(); claimQuest(b.dataset.claim, b); });
   root.querySelectorAll('[data-qfold]').forEach(b => b.onclick = e => { e.preventDefault(); const box = $('#vlQuests'); if (!box) return; save(QF, {d: today(), open: !questOpen()}); SFXplay('blip'); refreshQuestBoard(); }); }
@@ -486,16 +493,31 @@ function regions() { // progress per sketch region (+ 更多 for everything else
   out.push({id: 'more', name: REGION_MORE.name, zh: REGION_MORE.zh, total: more.length, done: more.filter(c => v.has(c.id)).length});
   return out.filter(r => r.total);
 }
+// 🏰 resource-bar HUD (foundation)
+function hudF() { const L = levelInfo(), k = window.Valley ? Valley.clock() : null, fe = k && k.fest[0], s = stats();
+  return `<div class="fd-res" id="fdRes">
+    <a class="fd-r coin" href="#/shop" aria-label="金币">${FD.icon('coin')}<b id="fdGold">${fmtN(totalCoins())}</b></a>
+    <span class="fd-r lv" title="${esc(L.title)}">${FD.icon('star')}<b>Lv.${L.lv}</b><span class="fd-xp"><i style="width:${L.pct}%"></i></span></span>
+    <span class="fd-r bld" title="已建成的据点">${FD.icon('house')}<b>${s.cafes}</b><small>/${s.total}</small></span>
+    ${k ? `<a class="fd-r day" href="#/calendar" id="fdDay" aria-label="小镇日历">${FD.icon('cal')}<b>${k.zh}·${k.dayOf}</b><small class="fd-wx" title="小镇天气（游戏内，非真实预报）">${k.wx ? k.wx.icon : ''}</small><small class="fd-time">${k.hhmm}</small></a>` : ''}
+    <button class="fd-r mus${musicOn() ? ' on' : ''}" data-music aria-label="背景音乐" aria-pressed="${musicOn()}">${musicOn() ? '♪' : '♪̸'}</button></div>
+    ${fe ? `<a class="fd-fest" href="#/calendar">${fe.icon} 今天是 ${esc(fe.zh)}${fe.approx ? '（约）' : ''}</a>` : ''}
+    <div class="fd-st">${stBar()}</div>`; }
+// 🐄 ranch rucksack: tool-slot bar (reuses existing pages)
+const RK = [['calendar', '#/calendar', '日历', 'cal', '📅'], ['beans', '#/beans', '种子袋', 'bean', '🫘'], ['records', '#/records', '日记', 'quill', '📒'], ['footprint', '#/footprint', '背包', 'chest', '🎒'], ['shop', '#/shop', '杂货店', 'scroll', '🛒']];
+function rkBar() { const cur = (location.hash || '#/list').split('/')[1] || 'list';
+  return `<nav class="rk-bar" id="rkBar" aria-label="背包工具栏">${RK.map(([v, href, zh, icn, e], i) => `<a class="rk-slot${cur === v || (v === 'beans' && cur === 'bean') ? ' on' : ''}" href="${href}" data-rk="${v}"><span class="rk-k">${i + 1}</span>${ic(icn, e)}<small>${zh}</small></a>`).join('')}</nav>`; }
 function drawHud() {
   const L = levelInfo();
-  if (isV()) { const k = Valley.clock();
+  if (isF() && window.FD) { $('#hud').innerHTML = hudF(); return playStDrop(); }
+  if (isV()) { const k = Valley.clock(), R = isR(), fe = k.fest && k.fest[0];
     $('#hud').innerHTML = `<div class="hud-lv">Lv.${L.lv}</div><div class="hud-main"><div class="hud-title">${L.title}</div>
       ${stBar()}
       <div class="hud-bar"><span>XP</span><div class="xpbar"><i style="width:${L.pct}%"></i></div><em>${L.into}/${L.need}</em></div></div>
       <div class="vl-clock" id="vlClock" data-season="${k.season}" data-phase="${k.phase}"><div class="vc-date">${k.wk} ${k.day}日</div>
-        <div class="vc-mid"><span class="vc-sky">${k.sky}</span><span class="vc-season">${k.icon}${k.zh}·${k.dayOf}</span></div><div class="vc-time">${k.hhmm}</div>
+        <div class="vc-mid"><span class="vc-sky">${k.sky}</span><span class="vc-season">${k.icon}${k.zh}·${k.dayOf}</span>${R && k.wx ? `<span class="vc-wx" title="小镇天气（游戏内，非真实预报）">${k.wx.icon}${k.wx.zh}</span>` : ''}</div><div class="vc-time">${k.hhmm}</div>
         <a class="vc-gold" href="#/shop" aria-label="金币商店">${Valley.coinImg()}<b id="vlGold">${fmtN(totalCoins())}</b></a></div>
-      <button class="mus-btn${musicOn() ? ' on' : ''}" data-music aria-label="背景音乐" aria-pressed="${musicOn()}">${PXI() ? PixUI.img(musicOn() ? 'note' : 'notex', 'pi') : musicOn() ? '🎵' : '🔕'}</button>`;
+      <button class="mus-btn${musicOn() ? ' on' : ''}" data-music aria-label="背景音乐" aria-pressed="${musicOn()}">${PXI() ? PixUI.img(musicOn() ? 'note' : 'notex', 'pi') : musicOn() ? '🎵' : '🔕'}</button>${R && fe ? `<a class="rn-fest" href="#/calendar">${ic('flag', '🎌')} ${esc(fe.zh)}${fe.approx ? '（约）' : ''}</a>` : ''}${R ? rkBar() : ''}`;
     const qa = document.querySelector('#tabbar a[data-tab=list]'); if (qa) { const r = questState().ready; qa.classList.toggle('q-ready', r > 0); qa.dataset.qn = r || ''; }
     return playStDrop(); }
   if (isJ()) { const on = JRPG.SFX.on;
@@ -508,7 +530,8 @@ function drawHud() {
   playStDrop();
 }
 function snapshot() { return {n: checkins.length, st: stamina(), xp: totalXP(), lv: levelInfo().lv, badges: new Set(BADGES.filter(b => b.test(stats())).map(b => b.id)), visited: new Set(visitedIds()), coins: totalCoins(), tried: new Set(collection().keys())}; }
-setInterval(() => { if (isV() && $('#vlClock')) { const k = Valley.clock(), el = $('#vlClock'); el.querySelector('.vc-time').textContent = k.hhmm; el.querySelector('.vc-sky').textContent = k.sky; } }, 20000);
+setInterval(() => { if (isV() && $('#vlClock')) { const k = Valley.clock(), el = $('#vlClock'); el.querySelector('.vc-time').textContent = k.hhmm; el.querySelector('.vc-sky').textContent = k.sky; }
+  if (isF() && $('#fdDay')) { const t = $('#fdDay .fd-time'); if (t) t.textContent = Valley.clock().hhmm; } }, 20000);
 function celebrate(before, cafeId, extra = '') {
   const after = snapshot(), c = cafeById(cafeId);
   const isNew = c && !before.visited.has(cafeId);
@@ -657,6 +680,7 @@ const can3D = (() => { try { const c = document.createElement('canvas'); return 
 let map3dFailed = false, map3dMod = null;
 mapState.mode = load('mcc.mapMode', null) || (can3D ? '3d' : '2d');
 mapState.jmode = load('mcc.mapMode.jrpg', null) || 'px';
+mapState.fmode = load('mcc.mapMode.f', null) || (can3D ? '3d' : '2d');
 let pxFailed = false; const heroAt = {};
 const dynImport = (() => { try { return new Function('u', 'return import(u)'); } catch (e) { return () => Promise.reject(new Error('dynamic import unsupported')); } })();
 function loadMap3d() {
@@ -673,19 +697,52 @@ function cafeCard(c) {
   const ro = regionOf(c.id);
   const num = `<span class="num ${cis.length ? 'done' : ''}" title="${esc(ro.r.name)}">${ro.no || '☕'}</span>`;
   return `<a class="card${isClosed(c) ? ' closed' : ''}${PXI() ? ' vl-card' : ''}" href="#/cafe/${c.id}">
-    ${PXI() ? `<span class="vl-shopic${cis.length ? ' lit' : ''}"><img src="${PixUI.shopUrl(c.id, cis.length > 0, isClosed(c))}" alt="">${ro.no ? num : ''}</span>` : num}
+    ${PXI() ? `<span class="vl-shopic${cis.length ? ' lit' : ''}"><img src="${PixUI.shopUrl(c.id, cis.length > 0, isClosed(c))}" alt="">${ro.no ? num : ''}</span>` : isF() && window.FD ? `<span class="fd-bic${cis.length ? ' built' : ''}"><img src="${FD.url(c.id, cis.length > 0 && !isClosed(c))}" alt="">${ro.no ? num : ''}</span>` : num}
     ${last ? `<img class="thumb" src="${last.photo}" alt="">` : ''}
     <div class="meta"><div class="name">${esc(c.name)}</div><div class="sub">${esc(ro.r.name)} · ${esc(c.suburb)}${d} · ${esc(c.address)}</div>${sigLine(c)}${window.GReviews ? `<div class="gr-line">${GReviews.chipHtml(c)}</div>` : ''}</div>
     ${isClosed(c) ? closedBadge : cis.length ? `<span class="badge-done">⭐ ${cis.length}次</span>` : '<span class="badge-new">🔒 未解锁</span>'}</a>`;
 }
 
+// 🎉 festival banner (today, or the next one within a week)
+function festBanner() { if (!window.Fests || !(isV() || isF())) return ''; const d = today(), f = Fests.on(d)[0];
+  if (f) return `<a class="fest-banner today" href="#/calendar/${d.slice(0, 7)}">${ic('flag', '🎉')}<span><b>${f.icon} 今天是 ${esc(f.zh)}${f.approx ? '（约）' : ''}</b><small>${esc(f.en)} · ${f.kind === 'ph' ? '维州公众假期' : '墨尔本活动'} · 节日委托 +${FEST_BONUS} 金币</small></span></a>`;
+  const n = Fests.upcoming(d, 1)[0]; if (!n) return ''; const days = Math.round((Date.parse(n.date) - Date.parse(d)) / 864e5);
+  return days > 0 && days <= 7 ? `<a class="fest-banner soon" href="#/calendar/${n.date.slice(0, 7)}">${ic('cal', '📅')}<span><b>${days} 天后：${n.icon} ${esc(n.zh)}${n.approx ? '（约）' : ''}</b><small>${esc(n.en)} · ${n.date}</small></span></a>` : ''; }
+const SEASON_ZH = {spring: ['🌸', '春'], summer: ['☀️', '夏'], autumn: ['🍂', '秋'], winter: ['❄️', '冬']};
+const seasonOfM = m => m >= 9 && m <= 11 ? 'spring' : (m === 12 || m <= 2) ? 'summer' : m <= 5 ? 'autumn' : 'winter';
+let calSel = null;
+function calendarV(arg) {
+  const td = today(), [ty, tm] = td.split('-').map(Number); let [y, m] = /^\d{4}-\d{2}$/.test(arg || '') ? arg.split('-').map(Number) : [ty, tm];
+  setTop(isR() ? '牧场日历' : isF() ? '城镇年历' : '小镇日历');
+  const key = `${y}-${String(m).padStart(2, '0')}`, first = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(), days = new Date(Date.UTC(y, m, 0)).getUTCDate(), lead = (first + 6) % 7; // Monday first
+  const fests = window.Fests ? Fests.list(y).filter(f => f.date.startsWith(key)) : [], byDay = {}; fests.forEach(f => { (byDay[f.date] = byDay[f.date] || []).push(f); });
+  const ciBy = {}; checkins.forEach(c => { const d = ciDay(c); if (d && d.startsWith(key)) ciBy[d] = (ciBy[d] || 0) + 1; });
+  const se = seasonOfM(m), [sic, szh] = SEASON_ZH[se], sel = calSel && calSel.startsWith(key) ? calSel : (td.startsWith(key) ? td : (fests[0] || {}).date || `${key}-01`);
+  const prev = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`, next = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+  let cells = ''; for (let i = 0; i < lead; i++) cells += '<span class="cal-c pad"></span>';
+  for (let d = 1; d <= days; d++) { const ds = `${key}-${String(d).padStart(2, '0')}`, F = byDay[ds] || [], wd = (lead + d - 1) % 7;
+    cells += `<button class="cal-c${ds === td ? ' today' : ''}${ds === sel ? ' sel' : ''}${F.length ? ' fest' : ''}${F.some(f => f.kind === 'ph') ? ' ph' : ''}${wd >= 5 ? ' wkend' : ''}" data-day="${ds}"><b>${d}</b>${F.length ? `<i class="cal-f">${F[0].icon}</i>` : ''}${ciBy[ds] ? `<i class="cal-ci" title="打卡 ${ciBy[ds]} 次">${ciBy[ds]}</i>` : ''}</button>`; }
+  const SF = byDay[sel] || [], sci = checkins.filter(c => ciDay(c) === sel);
+  const detail = `<div class="cal-day vwin jwin"><div class="cal-day-h">${sel}${sel === td ? ' · 今天' : ''}</div>${SF.length ? SF.map(f => `<div class="cal-fe"><div class="cal-fe-t">${f.icon} <b>${esc(f.zh)}</b> <small>${esc(f.en)}</small>${f.approx ? ' <span class="cal-approx" title="日期为估算">约</span>' : ''}${f.sub ? ' <span class="cal-sub">补假</span>' : ''}<span class="cal-kind">${f.kind === 'ph' ? '公众假期' : '活动'}</span></div><div class="cal-fe-n">${esc(f.note)}</div>${sel === td ? `<div class="cal-fe-q">🎁 今日节日委托：打卡一次 +${FEST_BONUS} 金币 · +${FEST_BONUS / 2} XP</div>` : ''}</div>`).join('') : '<div class="hint">这天没有节日。</div>'}
+    ${sci.length ? `<div class="cal-cis">☕ 这天打卡 ${sci.length} 次：${sci.map(c => esc((cafeById(c.cafeId) || {}).short || (cafeById(c.cafeId) || {}).name || '未选择')).join('、')}</div>` : ''}</div>`;
+  const up = window.Fests ? Fests.upcoming(td, 6) : [];
+  app.innerHTML = `${festBanner()}<div class="cal vwin jwin" id="cal" data-month="${key}"><div class="cal-head"><button class="cal-nav" data-go="${prev}" aria-label="上个月">‹</button><div class="cal-title"><b>${sic} ${szh}季</b><span>${y} 年 ${m} 月</span></div><button class="cal-nav" data-go="${next}" aria-label="下个月">›</button></div>
+    <div class="cal-wk">${['一', '二', '三', '四', '五', '六', '日'].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div>
+    <div class="cal-legend"><span><i class="lg-ph"></i>公众假期</span><span><i class="lg-ev"></i>活动</span><span><i class="lg-ci">1</i>打卡</span>${td.startsWith(key) ? '' : `<button class="cal-nav sm" data-go="${td.slice(0, 7)}">回到今天</button>`}</div></div>
+    ${detail}
+    <div class="section-title">${ic('flag', '🎌')} 接下来的节日</div><div class="cal-up">${up.map(f => `<button class="cal-up-r" data-go="${f.date.slice(0, 7)}" data-pick="${f.date}"><span class="cal-up-d">${f.date.slice(5).replace('-', '/')}</span><span>${f.icon} ${esc(f.zh)}${f.approx ? ' <span class="cal-approx">约</span>' : ''}${f.sub ? ' <span class="cal-sub">补假</span>' : ''}</span><small>${f.kind === 'ph' ? '公众假期' : '活动'}</small></button>`).join('')}</div>
+    <div class="hint cal-src">维州公众假期按 Business Victoria 公布的规则计算（复活节用公历复活节算法；周末补假按维州规则）。AFL 总决赛前的周五以州政府公布为准，未公布的年份标「约」。Moomba、咖啡博览会只列出官方已公布的日期。季节按南半球：春 9–11 月、夏 12–2 月、秋 3–5 月、冬 6–8 月。天气是小镇游戏天气，不是真实预报。</div>`;
+  app.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { SFXplay('blip'); calSel = b.dataset.pick || null; location.hash = '#/calendar/' + b.dataset.go; });
+  app.querySelectorAll('[data-day]').forEach(b => b.onclick = () => { SFXplay('blip'); calSel = b.dataset.day; calendarV(key); });
+}
 const views = {
+  calendar(arg) { return calendarV(arg); },
   list() {
     setTop('墨尔本咖啡打卡', '<button id="addCafeBtn">＋ 添加</button>');
     $('#addCafeBtn').onclick = () => location.hash = '#/add';
     const subs = [...new Set(allCafes().map(c => c.suburb))].sort();
     const v = visitedIds();
-    app.innerHTML = `${isV() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
+    app.innerHTML = `${festBanner()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
       <select id="sub"><option value="">全部区域</option>${[...REGIONS, REGION_MORE].map(r => `<option value="${r.id}" ${r.id === listState.suburb ? 'selected' : ''}>${esc(r.name)}${r.zh && r.id !== 'more' ? ' ' + r.zh : ''}</option>`).join('')}</select></div>
       <div class="chips">${[['all', '全部'], ['todo', '未解锁'], ['done', '已解锁'], ['near', '离我最近']].map(([k, t]) => `<button class="chip ${listState.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
       <div class="hint">已解锁 ${v.size} / ${allCafes().length} 家</div><div id="cards"></div>`;
@@ -735,7 +792,7 @@ const views = {
       const R = REGIONS.find(r => r.id === ms.region) || REGIONS[0];
       const prog = regions().find(r => r.id === R.id);
       const J = isJ();
-      const use3d = (J ? ms.jmode : ms.mode) === '3d' && can3D && !map3dFailed;
+      const FDm = isF(), use3d = (J ? ms.jmode : FDm ? ms.fmode : ms.mode) === '3d' && can3D && !map3dFailed;
       const usePx = J && !use3d && window.PixelMap && !pxFailed;
       const {svg, meIn} = SketchMap.render(R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M});
       const ids = Object.keys(R.cafes);
@@ -743,25 +800,27 @@ const views = {
       const toggle = `<span class="dim-toggle" id="dimT"><button data-m="${flat}" class="${use3d ? '' : 'on'}">${J ? '像素' : '2D'}</button><button data-m="3d" class="${use3d ? 'on' : ''}" ${can3D ? '' : 'disabled title="此设备不支持 3D"'}>3D</button></span>`;
       const crown = prog.done === prog.total ? ' 👑' : '';
       const VK = isV() ? Valley.clock() : null;
-      const bar = VK ? `<div class="jwin region-banner vl-banner"><div class="rb-name">${esc(R.name)}</div><div class="rb-sub">${esc(R.zh)} · 已解锁 <b class="rg-count">${prog.done}/${prog.total}</b>${crown}</div><div class="rb-time">${VK.icon} ${VK.zh}季 第 ${VK.dayOf} 天 · ${VK.sky} ${VK.hhmm}</div></div>`
+      const FK = FDm && window.Valley ? Valley.clock() : null;
+      const bar = FK ? `<div class="fd-panel region-banner fd-banner"><div class="rb-name">${esc(R.name)}</div><div class="rb-sub">${esc(R.zh)} · 已建成 <b class="rg-count">${prog.done}/${prog.total}</b>${crown}</div><div class="rb-time">${FK.icon} ${FK.zh}季 第 ${FK.dayOf} 天 · ${FK.wx ? FK.wx.icon + ' ' : ''}${FK.hhmm}${FK.fest[0] ? ' · ' + FK.fest[0].icon + ' ' + esc(FK.fest[0].zh) : ''}</div></div>`
+        : VK ? `<div class="jwin region-banner vl-banner"><div class="rb-name">${esc(R.name)}</div><div class="rb-sub">${esc(R.zh)} · 已解锁 <b class="rg-count">${prog.done}/${prog.total}</b>${crown}</div><div class="rb-time">${VK.icon} ${VK.zh}季 第 ${VK.dayOf} 天 · ${VK.sky} ${VK.hhmm}</div></div>`
         : J ? `<div class="jwin region-banner"><div class="rb-name">～ ${esc(R.name)} ～</div><div class="rb-sub">${esc(R.zh)} · 已解锁 <b class="rg-count">${prog.done}/${prog.total}</b>${crown}</div></div>`
         : `<div class="region-head"><div><b>${esc(R.name)}</b> <span class="hint">${esc(R.zh)}</span></div><div class="rg-count">${prog.done}/${prog.total}${crown}</div></div>
         <div class="progress" style="margin:0 14px 6px"><i style="width:${Math.round(prog.done / prog.total * 100)}%"></i></div>`;
       app.innerHTML = head + bar + `
-        ${use3d ? `<div class="m3d-wrap" id="m3d" data-region="${R.id}"><div class="m3d-loading">${VK ? '🌾 正在搭建 3D 小镇…' : J ? '⚔️ 正在生成 3D 大地图…' : '✏️ 正在搭建 3D 小镇…'}</div><div class="m3d-hint">单指旋转 · 双指缩放/平移</div></div>`
+        ${use3d ? `<div class="m3d-wrap${FDm ? ' fd-tilt' : ''}" id="m3d" data-region="${R.id}"><div class="m3d-loading">${FDm ? '🏰 正在铺设道路、搭建房屋…' : VK ? '🌾 正在搭建 3D 小镇…' : J ? '⚔️ 正在生成 3D 大地图…' : '✏️ 正在搭建 3D 小镇…'}</div><div class="m3d-hint">单指旋转 · 双指缩放/平移</div></div>`
           : usePx ? `<div class="px-wrap" id="pxWrap" data-region="${R.id}"${VK ? ` data-season="${VK.season}" data-phase="${VK.phase}"` : ''}></div>`
           : `<div class="sk-wrap" id="skWrap"><div class="sk-inner" style="width:${ms.zoom * 100}%">${svg}</div></div>`}
         <div class="sk-tools">${toggle}<button id="zOut">－</button><button id="zIn">＋</button>${use3d || usePx ? '<button id="m3dReset" aria-label="重置视角">⟲</button>' : ''}<button id="skLoc">🎯 ${lastPos ? (meIn ? '我在这里' : '不在此区') : '定位我'}</button></div>
         <div class="sk-list">${ids.map(id => cafeById(id)).filter(Boolean).map(cafeCard).join('')}</div>`;
       $('#dimT').onclick = e => { const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; SFXplay('blip');
-        if (J) { ms.jmode = b.dataset.m; save('mcc.mapMode.jrpg', ms.jmode); } else { ms.mode = b.dataset.m; save('mcc.mapMode', ms.mode); }
+        if (J) { ms.jmode = b.dataset.m; save('mcc.mapMode.jrpg', ms.jmode); } else if (FDm) { ms.fmode = b.dataset.m; save('mcc.mapMode.f', ms.fmode); } else { ms.mode = b.dataset.m; save('mcc.mapMode', ms.mode); }
         if (b.dataset.m === '3d') map3dFailed = false; if (b.dataset.m === 'px') pxFailed = false; render(); };
       const focusId = ms.focusId; ms.focusId = null;
       if (use3d) {
         const token = ++mapToken, wrap = $('#m3d');
-        const fail = e => { console.warn('3D map failed, falling back', e); if (token !== mapToken) return; map3dFailed = true; if (mapRef && mapRef.kind === '3d') { try { mapRef.remove(); } catch (x) {} mapRef = null; } toast(J ? '3D 地图暂不可用，已切换为像素地图' : '3D 地图暂不可用，已切换为 2D 手绘地图'); render(); };
+        const fail = e => { console.warn('3D map failed, falling back', e); if (token !== mapToken) return; map3dFailed = true; if (mapRef && mapRef.kind === '3d') { try { mapRef.remove(); } catch (x) {} mapRef = null; } toast(e && e.slow ? '这台设备上 3D 有点慢，已切换为 2D 地图（可随时点 3D 再试）' : J ? '3D 地图暂不可用，已切换为像素地图' : '3D 地图暂不可用，已切换为 2D 手绘地图'); render(); };
         const seen = new Set(load('mcc.seen3d', [])), pop = new Set([...v].filter(id => R.cafes[id] && !seen.has(id)));
-        loadMap3d().then(mod => mod.create(wrap, R, {theme: J ? 'jrpg' : 'sketch', visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
+        loadMap3d().then(mod => mod.create(wrap, R, {theme: J ? 'jrpg' : FDm ? 'foundation' : 'sketch', season: FK ? FK.season : null, onSlow: FDm ? () => fail(Object.assign(new Error('slow'), {slow: true})) : null, visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
           .then(m => {
             if (token !== mapToken) return m.remove();
             mapRef = m; const ld = wrap.querySelector('.m3d-loading'); if (ld) ld.remove();
@@ -879,10 +938,12 @@ const views = {
     const hero = cis.find(x => x.photo);
     const avg = cis.filter(x => x.rating).length ? (cis.reduce((s, x) => s + (x.rating || 0), 0) / cis.filter(x => x.rating).length).toFixed(1) : null;
     const d = lastPos ? fmtDist(distM(lastPos, [c.lat, c.lng])) : null;
-    app.innerHTML = `${hero ? `<img class="hero-photo" src="${hero.photo}" alt="">` : PXI() ? PixUI.sceneHtml(c, {closed: isClosed(c)}) : ''}
+    const FDd = isF() && window.FD && window.Valley;
+    app.innerHTML = `${hero ? `<img class="hero-photo" src="${hero.photo}" alt="">` : PXI() ? PixUI.sceneHtml(c, {closed: isClosed(c)}) : FDd ? `<div class="fd-scene${cis.length ? ' built' : ''}"><div class="fd-scene-sky"></div><img class="fd-scene-b" src="${FD.url(c.id, cis.length > 0 && !isClosed(c), {flag: cis.length >= 5})}" alt=""><div class="fd-scene-cap">${isClosed(c) ? '已关店' : cis.length ? `已建成 · 打卡 ${cis.length} 次` : '蓝图 · 打卡后建成'}</div></div>` : ''}
       <div class="hero${isClosed(c) ? ' closed' : ''}"><div class="hero-reg">${regionOf(c.id).no ? `<span class="num">${regionOf(c.id).no}</span> ` : ''}${esc(regionOf(c.id).r.name)}${isClosed(c) ? ' ' + closedBadge : ''}</div><h2>${esc(c.name)}</h2><div class="addr">📍 ${esc(c.address)}</div><div class="addr" style="margin-top:4px">${esc(c.suburb)}${d ? ' · 距你 ' + d : ''}${avg ? ' · 我的评分 ' + avg + ' ★' : ''}</div></div>
       <div>${(c.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${c.custom ? '<span class="tag">我添加的</span>' : ''}</div>
       ${isClosed(c) ? `<div class="closed-note">🚪 这家店已永久关闭，以前的打卡记录都还在。</div>` : ''}${sigBox(c)}
+      ${FDd ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="fd-panel fd-barista"><div class="fdb-ava">${esc([...vg.name][0] || '咖')}</div><div class="fdb-main"><div class="fdb-name">${esc(vg.title)} <b>${esc(vg.name)}</b> <small>好感 ${h}/10</small></div>${Valley.heartsHtml(h)}<div class="fdb-say" id="fdbSay">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="fdb-talk" id="talkBtn" aria-label="聊天">💬</button></div>`; })() : ''}
       ${isV() ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="jwin vl-barista"><div class="vb-face" id="vbFace"></div><div class="vb-main"><div class="vb-name">${esc(vg.title)} <b>${esc(vg.name)}</b></div>${Valley.heartsHtml(h)}<div class="vb-h">好感 ${h}/10${h >= 10 ? ' · 挚友' : h >= 5 ? ' · 好朋友' : h ? ' · 熟客' : ' · 初次见面'}</div><div class="vb-say">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="vb-talk" id="talkBtn">💬</button></div>`; })() : ''}
       <div class="gr-box">${window.GReviews ? GReviews.btnHtml(c, 'btn ghost', '在 Google 地图看评价', 'gmLink') : `<a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图看评价</a>`}<div id="grPanelBox"></div></div>
       <button class="btn${isClosed(c) ? ' ghost' : ''}" id="ciBtn">${isClosed(c) ? ic('quill', '📝') + ' 补记一次以前的打卡' : ic('cup', '☕') + ' 在这里打卡'}</button>
@@ -894,6 +955,7 @@ const views = {
     if (window.GReviews && GReviews.hasKey) GReviews.mount($('#grPanelBox'), c); // lazy: Google is only contacted here, and only with a key
     if (isV()) { const vg = villagerOf(id), h = heartsOf(id); $('#vbFace').appendChild(Valley.portraitEl(vg, 2)); let talks = 0;
       const talk = () => { const t = talks++, st = stamina(); Valley.say(t === 0 && st <= ST_LOW ? (st <= 0 ? ST_OUT : ST_WARN) : Valley.greeting(vg, t === 0 ? h : Math.max(0, h + (t % 3) - 1), id), 3200, vg); }; talk(); $('#talkBtn').onclick = () => { SFXplay('blip'); talk(); }; }
+    if (FDd) { const vg = villagerOf(id), h = heartsOf(id); let talks = 1; $('#talkBtn').onclick = () => { const t = talks++, st = stamina(); $('#fdbSay').textContent = '「' + (t === 1 && st <= ST_LOW ? (st <= 0 ? ST_OUT : ST_WARN) : Valley.greeting(vg, Math.max(0, h + (t % 3) - 1), id, {...Valley.clock(), day: Valley.clock().day + t})) + '」'; }; }
     $('#ciBtn').onclick = () => openCheckinForm({id: uid(), cafeId: id, photo: '', rating: 0, drink: '', note: '', date: today(), createdAt: Date.now()}, true);
     $('#mapBtn').onclick = () => { const ro = regionOf(c.id); if (ro.no) { mapState.region = ro.r.id; mapState.focusId = c.id; } else { mapState.region = 'real'; pendingFocus = c; } location.hash = '#/map'; };
     app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(x => x.id === ed.dataset.edit), false); };
@@ -981,16 +1043,17 @@ function shopConfirm(it, coins, ok) {
 window.addEventListener('hashchange', () => { const m = $('#shModal'); if (m) m.remove(); });
 // ---------- 🎶 background music toggle (music.js does the synth; off by default, starts only from a tap) ----------
 const musicOn = () => !!(window.Music && Music.enabled);
-function musicMood() { try { return isV() ? (Valley.clock().lit ? 'night' : 'day') : 'day'; } catch (e) { return 'day'; } }
+function musicMood() { try { if (isF()) return Valley.clock().lit ? 'f-night' : 'f-day'; if (isR()) { const k = Valley.clock(); return k.lit ? 'night' : 'r-' + k.season; } return isV() ? (Valley.clock().lit ? 'night' : 'day') : 'day'; } catch (e) { return 'day'; } }
 document.addEventListener('click', e => { const b = e.target.closest('[data-music]'); if (!b || !window.Music) return; e.preventDefault(); Music.set(!Music.enabled, musicMood());
   toast(Music.enabled ? '🎶 背景音乐：开（原创 8-bit 小曲）' : '🔕 背景音乐：关', 1600); drawHud(); const t = $('#musT'); if (t) { t.setAttribute('aria-pressed', Music.enabled); t.textContent = Music.enabled ? '开' : '关'; } });
 setInterval(() => { if (window.Music && Music.enabled) Music.mood(musicMood()); }, 60000);
 function settingsHtml() {
   const on = window.JRPG && JRPG.SFX.on;
   return `<div class="section-title">${ic('gear', '⚙️')} 设置</div><div class="settings">
-    <div class="set-row"><span>界面主题</span><span class="dim-toggle" id="themeSel"><button data-theme="valley" class="${THEME === 'valley' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🌾 田园</button><button data-theme="jrpg" class="${THEME === 'jrpg' ? 'on' : ''}" ${window.JRPG ? '' : 'disabled'}>⚔️ JRPG</button><button data-theme="sketch" class="${THEME === 'sketch' ? 'on' : ''}">✏️ 手绘</button></span></div>
+    <div class="set-row"><span>界面主题</span><span class="dim-toggle theme-sel" id="themeSel"><button data-theme="foundation" class="${THEME === 'foundation' ? 'on' : ''}" ${window.FD ? '' : 'disabled'}>🏰 城镇</button><button data-theme="ranch" class="${THEME === 'ranch' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🐄 牧场</button><button data-theme="valley" class="${THEME === 'valley' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🌾 田园</button><button data-theme="jrpg" class="${THEME === 'jrpg' ? 'on' : ''}" ${window.JRPG ? '' : 'disabled'}>⚔️ JRPG</button><button data-theme="sketch" class="${THEME === 'sketch' ? 'on' : ''}">✏️ 手绘</button></span></div>
+    <div class="set-row"><span>📅 日历与节日</span><a class="btn ghost sm" href="#/calendar">打开日历 ›</a></div>
     <div class="set-row"><span>${isV() ? '🎵 小音效' : '8-bit 音效'}</span><button class="snd-btn" data-snd id="sndT" aria-pressed="${!!on}">${on ? '🔊' : '🔇'}</button></div>
-    <div class="set-row"><span>${isV() ? '🎶 背景音乐' : '🎶 像素背景音乐'} <small class="hint">原创 8-bit 小曲，白天轻快、夜晚安静</small></span><button class="snd-btn mus-set" data-music id="musT" aria-pressed="${musicOn()}">${musicOn() ? '开' : '关'}</button></div>
+    <div class="set-row"><span>${isV() ? '🎶 背景音乐' : '🎶 像素背景音乐'} <small class="hint">${isF() ? '原创拨弦小曲（像鲁特琴），白天温暖、夜晚安静' : isR() ? '原创 8-bit 小曲，春夏秋冬各一首，夜晚安静' : '原创 8-bit 小曲，白天轻快、夜晚安静'}</small></span><button class="snd-btn mus-set" data-music id="musT" aria-pressed="${musicOn()}">${musicOn() ? '开' : '关'}</button></div>
     <div class="set-row gr-set"><span>⭐ Google 评分 <small class="hint">${window.GReviews && GReviews.hasKey ? '已配置 key：咖啡馆详情页会显示 Google 星级和最近评价' : '未配置：在 config.js 填入 GOOGLE_MAPS_API_KEY 后，详情页可显示 Google 星级和评价（见 README）。现在可以点「看 Google 评价」去 Google 地图看。'}</small></span><span class="gr-set-st">${window.GReviews && GReviews.hasKey ? '开' : '未配置'}</span></div>
     ${isV() ? '<div class="set-row"><span>🛒 金币商店</span><a class="btn ghost sm" href="#/shop">去逛逛 ›</a></div>' : ''}</div>`;
 }
@@ -1102,6 +1165,7 @@ function render() {
   app.classList.remove('full'); app.onclick = null;
   const [, name = 'list', arg] = (location.hash || '#/list').split('/');
   const v = views[name] ? name : 'list';
+  if (isR() && $('#rkBar')) $('#rkBar').querySelectorAll('.rk-slot').forEach(a => a.classList.toggle('on', a.dataset.rk === v || (a.dataset.rk === 'beans' && v === 'bean')));
   closeCamMenu();
   document.querySelectorAll('#tabbar a').forEach(a => a.classList.toggle('active', a.dataset.tab === (['beans', 'bean', 'shop'].includes(v) ? 'footprint' : v)));
   app.dataset.view = v; if (isV()) { app.classList.remove('vt-in'); void app.offsetWidth; app.classList.add('vt-in'); }
@@ -1116,5 +1180,6 @@ if (navigator.permissions) navigator.permissions.query({name: 'geolocation'}).th
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 window.__mcc = {stamina, today, xp: () => totalXP(), badges: () => BADGES.filter(b => b.test(stats())).map(b => b.id), get checkins() { return checkins; }, get beans() { return beans; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf, quests: () => dailyQuests(), questXP: () => questXP(), earned: () => earnedCoins(), level: () => levelInfo()}; // for testing
 window.__appBooted = true; document.documentElement.classList.add('booted');
-if (window.PixUI) { try { PixUI.installVars(); if (isV()) PixUI.splash(/[?&]splash\b/.test(location.search)); } catch (e) { console.warn('pixui', e); } }
+if (window.PixUI) { try { PixUI.installVars(); if (isV()) PixUI.splash(/[?&]splash\b/.test(location.search), isR() ? 'ranch' : 'valley'); } catch (e) { console.warn('pixui', e); } }
+if (isF() && window.FD) { try { FD.splash(/[?&]splash\b/.test(location.search)); } catch (e) { console.warn('fd splash', e); } }
 })();

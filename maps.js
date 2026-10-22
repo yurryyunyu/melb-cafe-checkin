@@ -96,7 +96,8 @@ function leafletMap(el, center, zoom) {
   const px = isValley() && PixelTiles; el.classList.toggle('px-tiles', !!px);
   (px ? new PixelTiles({maxZoom: 19, className: 'base-tiles px-layer', attribution: OSM_ATTR}) : L.tileLayer(OSM_URL, {maxZoom: 19, className: 'base-tiles', attribution: OSM_ATTR})).addTo(map);
   let me = null, ring = null, removed = false; const markers = [];
-  const shopImg = (done, o) => px && o.id && window.PixUI ? `<img class="rmk-shop" src="${PixUI.shopUrl(o.id, done, !!o.closed)}" alt="">` : '';
+  const fdn = !px && document.documentElement.dataset.theme === 'foundation' && window.FD; // 🏰 little cottages (blueprint ghost = not yet visited)
+  const shopImg = (done, o) => px && o.id && window.PixUI ? `<img class="rmk-shop" src="${PixUI.shopUrl(o.id, done, !!o.closed)}" alt="">` : fdn && o.id ? `<img class="rmk-shop fd" src="${FD.url(o.id, done && !o.closed)}" alt="">` : '';
   const icon = (done, o = {}) => L.divIcon({className: '', html: `<div class="rmk${o.closed ? ' closed' : ''}${shopImg(done, o) ? ' px' : ''}">${shopImg(done, o)}<span class="num ${done ? 'done' : ''}">${o.no || (done ? '✓' : '·')}</span>${o.label ? `<span class="cafe-label">${String(o.label).replace(/[<>&]/g, '')}</span>` : ''}</div>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14]});
   const heroImg = () => { if (!px || !window.Valley) return '🧑'; try { const c = document.createElement('canvas'); c.width = c.height = 16; Valley.drawHero(c, 'down', 0); return `<img class="px-me" src="${c.toDataURL()}" alt="">`; } catch (e) { return '🧑'; } };
   const zc = () => { el.classList.toggle('zoom-lo', map.getZoom() < 15); };

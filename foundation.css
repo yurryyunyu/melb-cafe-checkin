@@ -1,0 +1,138 @@
+/* ================= 🏰 城镇 (foundation, default) — warm pastoral painterly town; parchment + wood panels, clean modern type ================= */
+html[data-theme=foundation]{
+  --paper:#f4e8cc;--paper2:#ead9b2;--pencil:#6b4a2b;--pencil-l:#a8896a;--ink:#3a2a1c;--muted:#7a6650;
+  --slate:#6f8f4a;--slate-d:#55733a;--slate-l:#dfe8c8;--pink:#c8643c;--pink-d:#9a4626;--pink-l:#f6d9c2;
+  --hand:"Avenir Next","Segoe UI","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",Helvetica,sans-serif;
+  --body:"Avenir Next","Segoe UI","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",Helvetica,sans-serif;
+  --serif:"Iowan Old Style","Palatino","Songti SC","Noto Serif CJK SC",Georgia,serif;
+  --r1:10px;--r2:10px;--hatch:none;--hatch-pink:none;--hatch-slate:none;
+  --fd-wood:#5b3d24;--fd-woodL:#8a6038;--fd-gold:#e6b44a;--fd-parch:#f6ecd2;--fd-edge:#b89262;
+  --fd-panel:linear-gradient(180deg,#f8efd8,#efdfba);--fd-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 0 0 1px #c9a878 inset,0 4px 14px rgba(70,45,20,.18)}
+html[data-theme=foundation] body{background-color:#d7c48e;background-image:
+  radial-gradient(120% 60% at 50% -10%,rgba(255,226,160,.95),rgba(255,226,160,0) 60%),
+  radial-gradient(80% 40% at 15% 105%,rgba(120,150,70,.55),transparent 70%),radial-gradient(90% 45% at 90% 110%,rgba(140,160,80,.5),transparent 70%),
+  linear-gradient(180deg,#f2deae 0%,#dccf98 45%,#b9c27e 100%);background-attachment:fixed}
+html[data-theme=foundation] body,html[data-theme=foundation] .card .name,html[data-theme=foundation] #topbar h1{letter-spacing:.01em}
+/* panels: parchment cards with a thin carved-wood edge */
+html[data-theme=foundation] .card,html[data-theme=foundation] .stat,html[data-theme=foundation] .bdg,html[data-theme=foundation] .region,html[data-theme=foundation] .player,html[data-theme=foundation] .rec,
+html[data-theme=foundation] .hero,html[data-theme=foundation] .settings,html[data-theme=foundation] .map-legend,html[data-theme=foundation] #sheet,html[data-theme=foundation] .cel-card,
+html[data-theme=foundation] .fd-panel,html[data-theme=foundation] .cal,html[data-theme=foundation] .cal-day,html[data-theme=foundation] .vl-quests,html[data-theme=foundation] .fest-banner,html[data-theme=foundation] .empty{
+  background:var(--fd-panel);border:1px solid var(--fd-edge);border-radius:10px;box-shadow:var(--fd-shadow);color:var(--ink)}
+html[data-theme=foundation] .card{padding:10px 12px;margin-bottom:9px}
+html[data-theme=foundation] .card .name{font-family:var(--serif);font-weight:700;font-size:18px}
+html[data-theme=foundation] .card .sub,html[data-theme=foundation] .hint{color:var(--muted)}
+html[data-theme=foundation] .section-title{font-family:var(--serif);font-weight:700;font-size:18px;color:var(--fd-wood);border:0;background:none}
+html[data-theme=foundation] .section-title:after{content:"";display:block;height:2px;margin-top:4px;background:linear-gradient(90deg,var(--fd-edge),transparent)}
+/* top bar: dark carved wood with gold title */
+html[data-theme=foundation] #topbar{background:linear-gradient(180deg,#6a482b,#4a321e);border-bottom:2px solid #2e1f12;box-shadow:inset 0 -2px 0 #8a6038,0 3px 10px rgba(40,25,10,.35);color:#f6e7c4}
+html[data-theme=foundation] #topbar:after{display:none}
+html[data-theme=foundation] #topbar h1{font-family:var(--serif);font-size:22px;color:#f3d89a;text-shadow:0 1px 0 #2e1f12}
+html[data-theme=foundation] .icon-btn{color:#f3d89a}
+html[data-theme=foundation] .top-right button{font-family:var(--body);font-size:14px;font-weight:600;background:#f3d89a;color:#3a2a1c;border:1px solid #2e1f12;border-radius:8px}
+/* 📊 resource bar HUD */
+html[data-theme=foundation] #hud{display:block;flex-basis:100%;padding:0}
+.fd-res{display:flex;gap:5px;align-items:stretch;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.fd-res::-webkit-scrollbar{display:none}
+.fd-r{flex:none;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:7px;background:rgba(20,12,6,.38);border:1px solid rgba(243,216,154,.35);color:#f6e7c4;font:600 13px/1.2 var(--body);text-decoration:none;white-space:nowrap}
+.fd-r b{font-weight:700;color:#fff3d2}.fd-r small{font-size:11px;opacity:.8}
+.fd-r.mus{cursor:pointer;font-size:14px}.fd-r.mus.on{background:rgba(230,180,74,.35)}
+.fd-ic{display:inline-block;width:16px;height:16px;flex:none}.fd-ic svg{display:block;width:100%;height:100%}
+.fd-xp{display:inline-block;width:34px;height:6px;border-radius:3px;background:rgba(0,0,0,.4);overflow:hidden}.fd-xp i{display:block;height:100%;background:linear-gradient(90deg,#e6b44a,#f6d98a)}
+.fd-fest{display:block;margin:4px 0 0;padding:3px 10px;border-radius:7px;background:linear-gradient(90deg,#c8643c,#d98a4a);color:#fff;font:600 13px var(--body);text-decoration:none;text-align:center}
+.fd-st{margin-top:3px}
+html[data-theme=foundation] .fd-st .hud-bar span{color:#f3d89a}html[data-theme=foundation] .fd-st .hud-bar em{color:#f6e7c4}
+html[data-theme=foundation] .xpbar,html[data-theme=foundation] .progress{border:1px solid #2e1f12;background:rgba(0,0,0,.35);border-radius:5px;height:9px}
+html[data-theme=foundation] .xpbar i,html[data-theme=foundation] .progress i{background:linear-gradient(90deg,#9ab85a,#c9d97a);border-radius:4px}
+html[data-theme=foundation] .stbar.st-mid i{background:linear-gradient(90deg,#e6b44a,#f2cf7a)}html[data-theme=foundation] .stbar.st-lo i{background:linear-gradient(90deg,#c8643c,#e0845a)}
+/* controls */
+html[data-theme=foundation] .btn{font-family:var(--body);font-size:17px;font-weight:700;background:linear-gradient(180deg,#7f9e52,#5f7f3c);color:#fffbe8;border:1px solid #3f5a26;border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 0 #3f5a26}
+html[data-theme=foundation] .btn.ghost{background:var(--fd-panel);color:var(--ink);border:1px solid var(--fd-edge);box-shadow:var(--fd-shadow)}
+html[data-theme=foundation] .chip{font-family:var(--body);font-size:14px;background:#f8efd8;border:1px solid var(--fd-edge);border-radius:20px}
+html[data-theme=foundation] .chip.on{background:#5b3d24;color:#f6e7c4;border-color:#2e1f12}
+html[data-theme=foundation] .search input,html[data-theme=foundation] .search select,html[data-theme=foundation] .field input,html[data-theme=foundation] .field select,html[data-theme=foundation] .field textarea{background:#fffaf0;border:1px solid var(--fd-edge);border-radius:9px;font-family:var(--body)}
+html[data-theme=foundation] .badge-done,html[data-theme=foundation] .badge-new{font-family:var(--body);font-size:12px;border-radius:8px;border-width:1px}
+html[data-theme=foundation] .num{border:1px solid #9a4626;border-radius:50%;background:#f6d9c2;color:#7a3416;font:700 13px var(--body)}
+html[data-theme=foundation] .num.done{background:#c8643c;color:#fff}
+html[data-theme=foundation] .tag{border-radius:8px;border:1px solid var(--fd-edge);background:#f8efd8;font-family:var(--body)}
+html[data-theme=foundation] #tabbar{background:linear-gradient(180deg,#5b3d24,#3e2a18);border-top:2px solid #2e1f12;box-shadow:0 -3px 10px rgba(40,25,10,.3)}
+html[data-theme=foundation] #tabbar a{color:#d8c39a;font-family:var(--body)}html[data-theme=foundation] #tabbar a.active{color:#f6d98a}
+html[data-theme=foundation] .cam-circle{background:radial-gradient(circle at 40% 35%,#f6d98a,#c89a3a);border:2px solid #2e1f12}
+html[data-theme=foundation] .cam-label{font-family:var(--body);font-size:13px;color:#f6d98a}
+/* card building icon */
+.fd-bic{position:relative;flex:none;width:52px;height:52px;border-radius:10px;background:radial-gradient(circle at 50% 70%,#cfe0a0,#a9c47a);border:1px solid var(--fd-edge);display:flex;align-items:center;justify-content:center;overflow:visible}
+.fd-bic img{width:50px;height:50px}.fd-bic .num{position:absolute;left:-6px;top:-6px;width:22px;height:22px;font-size:11px;line-height:20px}
+.fd-bic:not(.built){background:radial-gradient(circle at 50% 70%,#e6edf2,#c9d6e0)}
+/* quest board */
+html[data-theme=foundation] .vl-quests{padding:8px 12px}
+html[data-theme=foundation] .vl-quests.folded{display:flex;align-items:center;gap:6px;width:100%;font:600 14px var(--body);text-align:left;cursor:pointer}
+html[data-theme=foundation] .vl-quests .vqf-n,html[data-theme=foundation] .vl-quests .vq-head small{background:#5b3d24;color:#f6e7c4;border-radius:8px;padding:0 6px;font-size:12px}
+html[data-theme=foundation] .vl-quests .vqf-arr{margin-left:auto}
+html[data-theme=foundation] .vq-row{border-top:1px dashed #cdb184}
+html[data-theme=foundation] .vq-row .vq-ic{background:#efdcb4;border:1px solid var(--fd-edge);border-radius:6px}
+html[data-theme=foundation] .vq-claim{font:600 12px var(--body);background:#c8643c;color:#fff;border:1px solid #7a3416;border-radius:8px;padding:3px 8px}
+/* festival banner */
+html[data-theme=foundation] .fest-banner{border-left:5px solid #c8643c}
+html[data-theme=foundation] .fest-banner b{font-family:var(--serif)}
+/* cafe detail: painted vignette with the building */
+.fd-scene{position:relative;height:170px;margin:0 -14px 10px;overflow:hidden;background:linear-gradient(180deg,#f6d9a0 0%,#efe2b0 45%,#b8c97e 46%,#9cb868 100%)}
+.fd-scene-sky{position:absolute;inset:0;background:radial-gradient(40% 50% at 78% 18%,rgba(255,240,190,.95),transparent 70%),radial-gradient(60% 30% at 20% 46%,rgba(120,150,80,.6),transparent 70%),radial-gradient(70% 34% at 85% 50%,rgba(110,140,70,.55),transparent 70%)}
+.fd-scene-b{position:absolute;left:50%;bottom:8px;width:150px;height:150px;transform:translateX(-50%);filter:drop-shadow(0 6px 6px rgba(60,40,10,.25))}
+.fd-scene-cap{position:absolute;right:10px;bottom:8px;font:600 12px var(--body);color:#3a2a1c;background:rgba(248,239,216,.9);border:1px solid var(--fd-edge);border-radius:8px;padding:2px 8px}
+.fd-scene:after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 -16px 18px -12px rgba(60,40,10,.35)}
+.fd-barista{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin:10px 0}
+.fdb-ava{flex:none;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#f6d98a,#c89a3a);border:2px solid #5b3d24;display:flex;align-items:center;justify-content:center;font:700 20px var(--serif);color:#3a2a1c}
+.fdb-main{flex:1;min-width:0}.fdb-name{font-size:14px}.fdb-name b{font-family:var(--serif);font-size:16px}.fdb-name small{color:var(--muted);margin-left:4px}
+.fdb-say{margin-top:5px;font-size:14px;line-height:1.45}
+.fdb-talk{flex:none;border:1px solid var(--fd-edge);background:#f8efd8;border-radius:8px;font-size:18px;padding:4px 8px;cursor:pointer}
+html[data-theme=foundation] .vh{background:#7a3416}html[data-theme=foundation] .vh:after{background:#ead9b2}html[data-theme=foundation] .vh.on:after{background:linear-gradient(#f08a70 0 35%,#c8443a 35%)}
+/* map */
+html[data-theme=foundation] .region-tabs .chip{font-weight:600}
+.fd-banner{padding:8px 12px;margin:0 0 8px;text-align:center}.fd-banner .rb-name{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--fd-wood)}
+.fd-banner .rb-sub,.fd-banner .rb-time{font-size:13px;color:var(--muted)}
+html[data-theme=foundation] .m3d-wrap{border:1px solid var(--fd-edge);border-radius:12px;background:linear-gradient(180deg,#f3e2b6,#e4d7a4 60%,#c9c88a);box-shadow:var(--fd-shadow);overflow:hidden}
+.m3d-wrap.fd-tilt:before,.m3d-wrap.fd-tilt:after{content:"";position:absolute;left:0;right:0;height:22%;z-index:2;pointer-events:none;-webkit-backdrop-filter:blur(2.5px);backdrop-filter:blur(2.5px)}
+.m3d-wrap.fd-tilt:before{top:0;-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent);background:linear-gradient(rgba(255,236,190,.45),transparent)}
+.m3d-wrap.fd-tilt:after{bottom:0;-webkit-mask-image:linear-gradient(transparent,#000);mask-image:linear-gradient(transparent,#000)}
+html[data-theme=foundation] .m3d-mk .m3d-no{background:#f8efd8;border:1px solid #5b3d24;color:#3a2a1c;font-family:var(--body);border-radius:50%}
+html[data-theme=foundation] .m3d-mk.done .m3d-no{background:#c8643c;color:#fff;-webkit-text-stroke:0}
+html[data-theme=foundation] .m3d-mk.done::after{content:"";display:none}
+html[data-theme=foundation] .m3d-mk .m3d-name{font:600 12px var(--body);color:#3a2a1c;background:rgba(248,239,216,.92);border:1px solid var(--fd-edge);border-radius:6px;padding:1px 6px;text-shadow:none;-webkit-text-stroke:0}
+html[data-theme=foundation] .m3d-mk.locked .m3d-name{color:#3f6a96;background:rgba(232,242,250,.9);border-color:#9cbcd8}
+html[data-theme=foundation] .m3d-pill{font-family:var(--serif)}
+html[data-theme=foundation] .sk-wrap{border:1px solid var(--fd-edge);border-radius:12px;background:#efe2bc;box-shadow:var(--fd-shadow)}
+html[data-theme=foundation] .sk-wrap svg{filter:sepia(.35) saturate(1.15) hue-rotate(-8deg)}
+html[data-theme=foundation] .sk-tools button,html[data-theme=foundation] .dim-toggle button{font-family:var(--body);font-weight:600;border-radius:8px}
+html[data-theme=foundation] #map.real .base-tiles{filter:sepia(.4) saturate(1.1) brightness(1.03) hue-rotate(-10deg)}
+html[data-theme=foundation] .rmk-shop.fd{width:40px;height:40px;image-rendering:auto}
+/* calendar */
+html[data-theme=foundation] .cal-title b{font-family:var(--serif);font-size:20px;color:var(--fd-wood)}
+html[data-theme=foundation] .cal-c{border:1px solid #d5bd8e;background:rgba(255,250,236,.85)}
+html[data-theme=foundation] .cal-c.ph{background:#f3cdb0}html[data-theme=foundation] .cal-c.fest:not(.ph){background:#dce8f0}
+html[data-theme=foundation] .cal-c.today{outline:2px solid #c8643c}
+html[data-theme=foundation] .cal-nav{border:1px solid var(--fd-edge);background:#f8efd8}
+html[data-theme=foundation] .cal-up-r{border:1px solid var(--fd-edge);background:#fbf4e2}
+/* 🏰 title card */
+#fdSplash{position:fixed;inset:0;z-index:9999;overflow:hidden;background:#f2deae;transition:opacity .6s}
+#fdSplash.out{opacity:0}
+#fdSplash .fs-sky{position:absolute;inset:0;background:linear-gradient(180deg,#f6c98a 0%,#f8e2b0 40%,#e9e3b8 62%)}
+#fdSplash .fs-sun{position:absolute;left:62%;top:14%;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,#fff6d0,rgba(255,230,160,0) 70%)}
+#fdSplash .fs-hill{position:absolute;left:-20%;right:-20%;border-radius:50%}
+#fdSplash .h1{bottom:22%;height:36%;background:#a9bd74}#fdSplash .h2{bottom:8%;height:34%;left:20%;background:#93ae5e}#fdSplash .h3{bottom:-14%;height:30%;background:#7d9a4c}
+#fdSplash .fs-road{position:absolute;left:10%;right:10%;bottom:16%;height:9%;border-radius:50%;border-top:10px solid #e2cd9c;transform:rotate(-4deg)}
+#fdSplash .fs-town{position:absolute;inset:0}
+#fdSplash .fs-town img{position:absolute;width:64px;height:64px;opacity:0;animation:fsrise .7s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes fsrise{from{opacity:0;transform:translateY(24px) scale(.6)}to{opacity:1;transform:none}}
+#fdSplash .fs-card{position:absolute;left:50%;top:18%;transform:translateX(-50%);width:min(300px,82vw);padding:16px 18px 14px;text-align:center;background:var(--fd-panel,#f6ecd2);border:1px solid #b89262;border-radius:12px;box-shadow:0 0 0 1px #c9a878 inset,0 10px 30px rgba(70,45,20,.3)}
+#fdSplash .fs-kicker{font:600 10px/1.4 "Avenir Next",Helvetica,sans-serif;letter-spacing:.2em;color:#8a6038}
+#fdSplash .fs-title{font:700 28px/1.25 "Iowan Old Style","Palatino","Songti SC",Georgia,serif;color:#4a321e;margin-top:4px}
+#fdSplash .fs-sub{font:14px "Avenir Next","PingFang SC",sans-serif;color:#6b4a2b;margin-top:2px}
+#fdSplash .fs-bar{height:6px;border-radius:3px;background:rgba(90,60,30,.2);margin-top:12px;overflow:hidden}#fdSplash .fs-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#9ab85a,#e6b44a);animation:fsbar 2.2s ease-out forwards}
+@keyframes fsbar{to{width:100%}}
+html[data-theme=foundation] .fd-st .hud-bar{display:flex;align-items:center;gap:6px;margin:0}
+html[data-theme=foundation] .fd-st .hud-bar span{font:600 12px var(--body);width:auto;flex:none}
+html[data-theme=foundation] .fd-st .hud-bar em{font:600 12px var(--body);font-style:normal;flex:none;min-width:3.6em;text-align:right}
+html[data-theme=foundation] .fd-st .xpbar{flex:1;height:7px;margin:0}
+html[data-theme=foundation] .m3d-pill{background:rgba(248,239,216,.92);border:1px solid #8a6038;color:#4a321e;border-radius:8px;font-weight:700;letter-spacing:.08em;text-shadow:none;-webkit-text-stroke:0;background-image:none}
+html[data-theme=foundation] .m3d-mk.locked .m3d-name{font-size:11px;opacity:.9}
+@media (max-width:420px){html[data-theme=foundation] .fd-res{gap:4px}html[data-theme=foundation] .fd-r{padding:3px 6px;gap:3px}html[data-theme=foundation] .fd-xp{width:30px}}
+@media (max-width:420px){html[data-theme=foundation] .fd-r.bld small{display:none}html[data-theme=foundation] .fd-r{font-size:12.5px}html[data-theme=foundation] .fd-res{gap:3px}}

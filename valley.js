@@ -40,8 +40,10 @@ function clock() {
   const y = +p.year, m = +p.month, day = +p.day, h = (+p.hour) % 24, mi = +p.minute, season = seasonOf(m), S = SEASON[season];
   const sy = season === 'summer' && m <= 2 ? y - 1 : y, dayOf = Math.floor((Date.UTC(y, m - 1, day) - Date.UTC(sy, S.from - 1, 1)) / 864e5) + 1;
   const phase = h >= 19 || h < 5 ? 'night' : h >= 17 ? 'dusk' : h < 7 ? 'dawn' : 'day';
+  const date = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`, F = window.Fests;
   return {y, m, day, h, mi, season, zh: S.zh, icon: S.icon, dayOf, phase, wk: WK[p.weekday] || '', hhmm: String(h).padStart(2, '0') + ':' + String(mi).padStart(2, '0'),
-    lit: phase === 'night' || phase === 'dusk', sky: phase === 'night' ? '🌙' : phase === 'dusk' ? '🌇' : phase === 'dawn' ? '🌅' : '☀️'};
+    lit: phase === 'night' || phase === 'dusk', sky: phase === 'night' ? '🌙' : phase === 'dusk' ? '🌇' : phase === 'dawn' ? '🌅' : '☀️',
+    date, wx: F ? F.weather(date, season) : null, fest: F ? F.on(date) : []};
 }
 
 // ---------- seasonal palette ----------
@@ -51,14 +53,23 @@ const PALS = {
   autumn: {grass: ['#a9b84b', '#94a53f', '#c4c95d', '#7e8e35'], leaf: ['#f08a2c', '#d6641e', '#ffb648', '#a5431a'], fl: ['#e2552a', '#f2a03d', '#9a4ab0', '#ffd96a'], ground: '#7e8e35'},
   winter: {grass: ['#eef4fa', '#dde8f2', '#ffffff', '#c3d3e2'], leaf: null, fl: ['#d33a3a', '#2f7a3a', '#ffffff', '#b02a2a'], ground: '#c3d3e2'}};
 
+// 🐄 '牧场' (ranch) style: brighter, chunkier SNES-era palette; Melbourne winters are frosty-green, not snowy
+const RPALS = {
+  spring: {grass: ['#58c848', '#40b038', '#80e060', '#309028'], leaf: ['#ff98c0', '#f070a0', '#ffd0e0', '#c04880'], fl: ['#ff5890', '#ffffff', '#ffe040', '#a070ff'], ground: '#40b038'},
+  summer: {grass: ['#48c040', '#38a830', '#70d850', '#288820'], leaf: ['#38b030', '#289020', '#60d048', '#186818'], fl: ['#ffd020', '#ff6030', '#ffffff', '#ffb000'], ground: '#38a830'},
+  autumn: {grass: ['#b8c040', '#a0a830', '#d0d058', '#808820'], leaf: ['#ff8020', '#e05810', '#ffb040', '#a03808'], fl: ['#ff4020', '#ffa020', '#a040c0', '#ffe060'], ground: '#a0a830'},
+  winter: {grass: ['#70a878', '#609868', '#90c098', '#4a8058'], leaf: ['#2f7a48', '#246a3c', '#4a9a60', '#185030'], fl: ['#e04848', '#ffffff', '#ffe060', '#c03030'], ground: '#609868'}};
+let STYLE = 'valley';
+function setStyle(st) { STYLE = st === 'ranch' ? 'ranch' : 'valley'; }
 const tileCache = {};
 function tiles(season = 'spring', lit = false) {
-  const key = season + lit; if (tileCache[key]) return tileCache[key];
-  const S = PALS[season] || PALS.spring, W = season === 'winter', T = {};
+  const RN = STYLE === 'ranch', key = season + lit + STYLE; if (tileCache[key]) return tileCache[key];
+  const S = (RN ? RPALS : PALS)[season] || PALS.spring, W = season === 'winter' && !RN, T = {};
   const mk = () => { const c = document.createElement('canvas'); c.width = c.height = 16; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; return [c, g, (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); }]; };
   const tile = fn => { const [c, g, px] = mk(); fn(px, g); return c; };
   const grass = (px, seed) => { const r = rng(seed * 131 + 7); px(0, 0, 16, 16, S.grass[0]);
-    for (let i = 0; i < 18; i++) px((r() * 16) | 0, (r() * 16) | 0, 1, 1, r() < .5 ? S.grass[1] : S.grass[2]);
+    if (RN) { for (let i = 0; i < 7; i++) px(((r() * 8) | 0) * 2, ((r() * 8) | 0) * 2, 2, 2, r() < .5 ? S.grass[1] : S.grass[2]); if (season === 'winter') for (let i = 0; i < 3; i++) px((r() * 15) | 0, (r() * 15) | 0, 1, 1, '#e8f4f0'); }
+    else for (let i = 0; i < 18; i++) px((r() * 16) | 0, (r() * 16) | 0, 1, 1, r() < .5 ? S.grass[1] : S.grass[2]);
     for (let i = 0; i < 3; i++) { const x = (r() * 13) | 0, y = (r() * 12 + 3) | 0; if (W) { px(x, y, 1, 1, '#9fb8a0'); px(x + 1, y - 1, 1, 1, '#9fb8a0'); } else { px(x, y, 1, 2, S.grass[3]); px(x + 2, y, 1, 2, S.grass[3]); px(x + 1, y - 1, 1, 2, S.grass[3]); } }
     if (season === 'spring' && r() < .5) px((r() * 15) | 0, (r() * 15) | 0, 1, 1, '#ffc1d8');
     if (season === 'autumn') for (let i = 0; i < 2; i++) px((r() * 15) | 0, (r() * 15) | 0, 2, 1, r() < .5 ? '#e0742a' : '#c9501e'); };
@@ -110,6 +121,7 @@ function tiles(season = 'spring', lit = false) {
       if (season === 'spring') { px(x, y, 1, 2, '#6cc24a'); px(x - 1, y, 1, 1, '#8ade62'); px(x + 1, y - 1, 1, 1, '#8ade62'); }
       else if (season === 'summer') { px(x, y - 1, 1, 3, '#3f8f2b'); px(x - 1, y, 1, 1, '#5fbf3f'); px(x + 1, y - 1, 1, 2, '#5fbf3f'); px(x + 1, y, 1, 1, '#e8403a'); }
       else if (season === 'autumn') { px(x - 1, y - 1, 3, 2, '#e8862a'); px(x, y - 1, 1, 2, '#c8661a'); px(x, y - 2, 1, 1, '#4f7a2a'); }
+      else if (RN) { px(x, y, 1, 2, '#3f8f4a'); px(x + 1, y, 1, 1, '#e8f4f0'); }
       else { px(x, y, 2, 1, '#fff'); } } });
   T.planter = tile(px => { grass(px, 16); px(1, 14, 14, 2, 'rgba(30,50,10,.3)');
     for (let x = 3; x < 13; x += 3) { const col = S.fl[(x / 3) % 4 | 0]; if (W) { px(x, 6, 2, 3, '#2f6a3a'); px(x, 6, 2, 1, '#fff'); } else { px(x, 6, 1, 3, '#3f8f2b'); px(x - 1, 4, 3, 2, col); px(x, 4, 1, 1, '#fff3a0'); } }
@@ -126,8 +138,8 @@ const WALLS = ['#e8c999', '#f3dcb4', '#d9a878', '#f0d0c8', '#cfe0c0', '#e0d0f0',
 const AWN = ['#e85a5a', '#3f8fd0', '#4fae5a', '#f0a030', '#c060b0', '#2fa0a0'];
 const shopCache = {};
 function shop(id, lit, season = 'spring', night = false) {
-  const key = [id, lit, season, night].join('|'); if (shopCache[key]) return shopCache[key];
-  const R = rng(hash(id) ^ 0x51ed), [rf, rd] = pick(R, ROOFS), wall = pick(R, WALLS), awn = pick(R, AWN), P = Pix(32, 32), W = season === 'winter';
+  const key = [id, lit, season, night, STYLE].join('|'); if (shopCache[key]) return shopCache[key];
+  const R = rng(hash(id) ^ 0x51ed), [rf, rd] = pick(R, ROOFS), wall = pick(R, WALLS), awn = pick(R, AWN), P = Pix(32, 32), W = season === 'winter' && STYLE !== 'ranch';
   P.rect(22, 2, 4, 6, '#a5503a'); P.rect(22, 2, 4, 1, '#c86a50'); // chimney
   for (let y = 5; y <= 13; y++) { const inset = Math.round((13 - y) * 0.85); P.rect(1 + inset, y, 30 - inset * 2, 1, y % 2 ? rf : rd); }
   P.rect(2, 13, 28, 1, rd);
@@ -141,7 +153,7 @@ function shop(id, lit, season = 'spring', night = false) {
   P.rect(5, 20, 10, 7, '#6b3f1d'); P.rect(6, 21, 8, 5, glass); P.rect(9, 21, 2, 5, '#6b3f1d'); P.set(7, 22, glow); P.set(12, 22, glow); if (lit && night) { P.rect(6, 25, 8, 1, '#ffe9a0'); }
   P.rect(4, 27, 12, 1, '#8a5a33'); // window box
   P.rect(18, 20, 8, 10, '#6b3f1d'); P.rect(19, 21, 6, 9, '#8a5a33'); P.rect(20, 22, 4, 2, glass); P.set(24, 26, '#f5c542'); P.rect(19, 25, 6, 1, '#7a4a25');
-  const fl = (PALS[season] || PALS.spring).fl;
+  const fl = ((STYLE === 'ranch' ? RPALS : PALS)[season] || PALS.spring).fl;
   [[4, fl[0]], [7, fl[1]], [10, fl[2]], [13, fl[0]]].forEach(([x, c]) => { P.set(x, 26, W ? '#fff' : c); P.set(x + 1, 26, W ? '#2f6a3a' : '#3f8f2b'); });
   P.rect(27, 26, 3, 4, '#c0603a'); P.rect(27, 24, 3, 2, W ? '#2f6a3a' : '#3f9a3a'); P.set(28, 23, W ? '#d33a3a' : fl[3]);
   P.outline(OUT);
@@ -208,6 +220,8 @@ function greeting(v, hearts, cafeId, clk = clock()) {
   if (isClosedCafe(cafeId)) { const L = CLOSED_LINES[tier]; return L[(R() * L.length) | 0].replace('{n}', v.name).replace(/\{sig\}/g, sigName(cafeId)).replace('{s}', clk.zh + '季的'); }
   const L = LINES[tier], sig = (window.menuFor ? (window.menuFor(cafeId)[0] || {}).name : '') || 'Flat White';
   const pre = clk.phase === 'night' ? '这么晚还来，夜猫子呀！' : clk.h < 11 ? '早上好！' : '';
+  const fl = clk.fest && clk.fest.length && window.Fests ? window.Fests.line(clk.fest[0], hash(v.id) + clk.day) : '';
+  if (fl) return pre + fl + (tier ? '' : `我是${v.name}，推荐你试试 ${sig}。`);
   return pre + L[(R() * L.length) | 0].replace('{n}', v.name).replace('{sig}', sig).replace('{s}', clk.zh + '季的');
 }
 function heartsHtml(n, max = 10) { return `<span class="vh-row" aria-label="好感 ${n}/${max}">${Array.from({length: max}, (_, i) => `<i class="vh ${i < n ? 'on' : ''}"></i>`).join('')}</span>`; }
@@ -301,7 +315,7 @@ function critter(type, frame) {
 // ---------- map kit used by PixelMap (skin) ----------
 function kit(clk = clock()) {
   const season = clk.season, night = clk.lit, T = tiles(season, night);
-  return {name: 'valley', season, phase: clk.phase, tiles: T, cafeSize: 32,
+  return {name: STYLE, season, phase: clk.phase, tiles: T, cafeSize: 32,
     cafeSprite: (id, lit) => shop(id, lit, season, night), drawHero,
     decorate: ctx => decorate(ctx, T, clk)};
 }
@@ -322,10 +336,13 @@ function decorate({world, M, W, H, sprites, getS, visited, TS, walk}, T, clk) {
   }
   // weather / ambient particles
   const fx = document.createElement('div'); fx.className = 'vl-fx'; world.appendChild(fx);
-  const kinds = night ? (season === 'winter' ? ['snow'] : ['firefly']) : {spring: ['petal', 'butterfly'], summer: ['butterfly', 'butterfly'], autumn: ['leaf'], winter: ['snow']}[season];
+  const RN = STYLE === 'ranch', rain = RN && clk.wx && clk.wx.id === 'rain';
+  const kinds = rain ? ['rain'] : night ? (season === 'winter' && !RN ? ['snow'] : ['firefly']) : {spring: ['petal', 'butterfly'], summer: ['butterfly', 'butterfly'], autumn: ['leaf'], winter: [RN ? 'leaf' : 'snow']}[season];
+  if (RN) world.classList.add('rn-world', 'rn-wx-' + (clk.wx ? clk.wx.id : 'sun'));
+  if (clk.fest && clk.fest.length) { const bt = document.createElement('div'); bt.className = 'vl-bunting'; bt.dataset.fest = clk.fest[0].id; bt.innerHTML = '<i></i>'.repeat(24); world.appendChild(bt); }
   const n = kinds[0] === 'butterfly' ? 6 : kinds[0] === 'firefly' ? 14 : 26;
   for (let i = 0; i < n; i++) { const k = kinds[i % kinds.length], p = document.createElement('i'); p.className = 'vl-p ' + k;
-    p.style.left = (R() * 100).toFixed(1) + '%'; p.style.top = (R() * 100).toFixed(1) + '%'; p.style.animationDelay = (-R() * 12).toFixed(2) + 's'; p.style.animationDuration = (k === 'snow' ? 7 + R() * 6 : k === 'butterfly' ? 6 + R() * 5 : k === 'firefly' ? 3 + R() * 3 : 8 + R() * 6).toFixed(2) + 's';
+    p.style.left = (R() * 100).toFixed(1) + '%'; p.style.top = (R() * 100).toFixed(1) + '%'; p.style.animationDelay = (-R() * 12).toFixed(2) + 's'; p.style.animationDuration = (k === 'rain' ? .7 + R() * .5 : k === 'snow' ? 7 + R() * 6 : k === 'butterfly' ? 6 + R() * 5 : k === 'firefly' ? 3 + R() * 3 : 8 + R() * 6).toFixed(2) + 's';
     if (k === 'butterfly') p.style.setProperty('--bc', pick(R, ['#ffffff', '#ffd23f', '#ff9ec4', '#8fd0ff', '#f0a030']));
     if (k === 'leaf') p.style.setProperty('--bc', pick(R, ['#e0742a', '#c9501e', '#f0a030', '#a5431a']));
     fx.appendChild(p); }
@@ -421,5 +438,5 @@ function daySummary(el, info, onClose) {
   el.querySelector('#lvOk').onclick = () => { J.SFX.play('confirm'); onClose(); };
 }
 
-window.Valley = {clock, seasonOf, SEASON, tiles, shop, villager, greeting, heartsHtml, itemSprite, itemZh, kindOf, isFood, quality, coinIcon, coinImg, heroSheet, drawHero, critter, kit, say, portraitEl, harvest, daySummary, seedPacket, Pix};
+window.Valley = {clock, seasonOf, SEASON, setStyle, get style() { return STYLE; }, tiles, shop, villager, greeting, heartsHtml, itemSprite, itemZh, kindOf, isFood, quality, coinIcon, coinImg, heroSheet, drawHero, critter, kit, say, portraitEl, harvest, daySummary, seedPacket, Pix};
 })();

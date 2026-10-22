@@ -7,6 +7,11 @@ const {Pix} = V, OUT = '#3a2414';
 const cache = {};
 // ---------- icons ----------
 const ICONS = {
+  cal() { const P = Pix(16, 16); // 📅 calendar page with a red header and rings
+    P.rect(2, 3, 12, 11, '#fdf7ec'); P.rect(2, 3, 12, 3, '#e8503c'); P.rect(4, 1, 1, 4, '#5a5a6a'); P.rect(11, 1, 1, 4, '#5a5a6a');
+    [[4, 8], [7, 8], [10, 8], [4, 11], [7, 11]].forEach(([x, y]) => P.rect(x, y, 2, 2, '#b77a45')); P.rect(10, 11, 2, 2, '#e8503c'); P.outline(OUT); return P; },
+  flag() { const P = Pix(16, 16); // 🎌 festival pennant
+    P.rect(3, 1, 1, 14, '#7a5232'); P.rect(4, 2, 9, 2, '#e8503c'); P.rect(4, 4, 7, 2, '#ffd23f'); P.rect(4, 6, 5, 2, '#3f8fd0'); P.rect(4, 8, 3, 1, '#4fae5a'); P.outline(OUT); return P; },
   cup() { const P = Pix(16, 16);
     P.rect(2, 6, 10, 8, '#fdf7ec'); P.rect(3, 14, 8, 1, '#fdf7ec'); P.rect(2, 6, 10, 2, '#b77a45'); P.rect(4, 6, 2, 1, '#e8c08a'); P.rect(9, 8, 3, 6, '#e0d4bf');
     P.rect(12, 8, 2, 1, '#fdf7ec'); P.rect(13, 9, 1, 3, '#fdf7ec'); P.rect(12, 11, 1, 1, '#fdf7ec'); P.rect(4, 10, 3, 2, '#e85a5a'); P.set(5, 12, '#e85a5a');
@@ -120,15 +125,16 @@ function mountScene(el, id, opts) { if (!el) return; const cv = scene(id, opts);
 }
 
 // ---------- 🎬 title / loading screen (once per session; skipped under automation unless ?splash) ----------
-function splash(force) {
+function splash(force, style) {
+  const RN = style === 'ranch';
   try { if (!force && (sessionStorage.getItem('mcc.splash') || navigator.webdriver)) return; sessionStorage.setItem('mcc.splash', '1'); } catch (e) { if (!force) return; }
-  const el = document.createElement('div'); el.id = 'vlSplash'; el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = `<div class="sp-sky"></div><div class="sp-logo"><div class="sp-t1">墨尔本咖啡</div><div class="sp-t2">打卡物语</div><div class="sp-en">MELBOURNE CAFE VALLEY</div></div>
-    <div class="sp-stage"></div><div class="sp-load"><div class="sp-bar"><i></i></div><div class="sp-tip">正在烘焙咖啡豆…</div></div>`;
+  const el = document.createElement('div'); el.id = 'vlSplash'; if (RN) el.classList.add('rn-splash'); el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = `<div class="sp-sky"></div><div class="sp-logo"><div class="sp-t1">墨尔本咖啡</div><div class="sp-t2">${RN ? '牧场日记' : '打卡物语'}</div><div class="sp-en">${RN ? 'MELBOURNE CAFE RANCH' : 'MELBOURNE CAFE VALLEY'}</div>${RN ? '<div class="sp-press">— 轻触开始新的一天 —</div>' : ''}</div>
+    <div class="sp-stage"></div><div class="sp-load"><div class="sp-bar"><i></i></div><div class="sp-tip">${RN ? '正在喂小鸡…' : '正在烘焙咖啡豆…'}</div></div>`;
   const st = el.querySelector('.sp-stage'), clk = V.clock();
-  const sc = scene('splash-town', {visited: true, clk: {...clk, phase: 'day', lit: false}}); sc.className = 'sp-scene'; st.appendChild(sc);
+  const sc = scene(RN ? 'splash-ranch' : 'splash-town', {visited: true, clk: {...clk, phase: 'day', lit: false}}); sc.className = 'sp-scene'; st.appendChild(sc);
   const hc = document.createElement('canvas'); hc.width = hc.height = 16; hc.className = 'sp-hero'; st.appendChild(hc); let f = 0;
-  const tips = ['正在烘焙咖啡豆…', '正在给小镇浇花…', '咖啡师正在打奶泡…'];
+  const tips = RN ? ['正在喂小鸡…', '正在给牧场浇水…', '咖啡师正在打奶泡…'] : ['正在烘焙咖啡豆…', '正在给小镇浇花…', '咖啡师正在打奶泡…'];
   const t = setInterval(() => { V.drawHero(hc, 'right', [0, 1, 0, 2][f++ % 4]); }, 140); V.drawHero(hc, 'right', 0);
   setTimeout(() => { const tip = el.querySelector('.sp-tip'); if (tip) tip.textContent = tips[1 + ((Math.random() * 2) | 0)]; }, 700);
   document.body.appendChild(el);
