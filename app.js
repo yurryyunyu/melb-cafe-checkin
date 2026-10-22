@@ -699,7 +699,7 @@ function cafeCard(c) {
   return `<a class="card${isClosed(c) ? ' closed' : ''}${PXI() ? ' vl-card' : ''}" href="#/cafe/${c.id}">
     ${PXI() ? `<span class="vl-shopic${cis.length ? ' lit' : ''}"><img src="${PixUI.shopUrl(c.id, cis.length > 0, isClosed(c))}" alt="">${ro.no ? num : ''}</span>` : isF() && window.FD ? `<span class="fd-bic${cis.length ? ' built' : ''}"><img src="${FD.url(c.id, cis.length > 0 && !isClosed(c))}" alt="">${ro.no ? num : ''}</span>` : num}
     ${last ? `<img class="thumb" src="${last.photo}" alt="">` : ''}
-    <div class="meta"><div class="name">${esc(c.name)}</div><div class="sub">${esc(ro.r.name)} · ${esc(c.suburb)}${d} · ${esc(c.address)}</div>${sigLine(c)}${window.GReviews ? `<div class="gr-line">${GReviews.chipHtml(c)}</div>` : ''}</div>
+    <div class="meta"><div class="name">${esc(c.name)}</div><div class="sub">${esc(ro.r.name)} · ${esc(c.suburb)}${d} · ${esc(c.address)}</div>${sigLine(c)}${window.GReviews || window.Websites ? `<div class="gr-line">${window.GReviews ? GReviews.chipHtml(c) : ''}${window.Websites ? Websites.chipHtml(c) : ''}</div>` : ''}</div>
     ${isClosed(c) ? closedBadge : cis.length ? `<span class="badge-done">⭐ ${cis.length}次</span>` : '<span class="badge-new">🔒 未解锁</span>'}</a>`;
 }
 
@@ -1022,7 +1022,7 @@ const views = {
       ${isClosed(c) ? `<div class="closed-note">🚪 这家店已永久关闭，以前的打卡记录都还在。</div>` : ''}${sigBox(c)}
       ${FDd ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="fd-panel fd-barista"><div class="fdb-ava">${esc([...vg.name][0] || '咖')}</div><div class="fdb-main"><div class="fdb-name">${esc(vg.title)} <b>${esc(vg.name)}</b> <small>好感 ${h}/10</small></div>${Valley.heartsHtml(h)}<div class="fdb-say" id="fdbSay">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="fdb-talk" id="talkBtn" aria-label="聊天">💬</button></div>`; })() : ''}
       ${isV() ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="jwin vl-barista"><div class="vb-face" id="vbFace"></div><div class="vb-main"><div class="vb-name">${esc(vg.title)} <b>${esc(vg.name)}</b></div>${Valley.heartsHtml(h)}<div class="vb-h">好感 ${h}/10${h >= 10 ? ' · 挚友' : h >= 5 ? ' · 好朋友' : h ? ' · 熟客' : ' · 初次见面'}</div><div class="vb-say">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="vb-talk" id="talkBtn">💬</button></div>`; })() : ''}
-      <div class="gr-box">${window.GReviews ? GReviews.btnHtml(c, 'btn ghost', '在 Google 地图看评价', 'gmLink') : `<a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图看评价</a>`}<div id="grPanelBox"></div></div>
+      ${window.Websites && Websites.of(c) ? `<div class="web-box">${Websites.btnHtml(c)}</div>` : ''}<div class="gr-box">${window.GReviews ? GReviews.btnHtml(c, 'btn ghost', '在 Google 地图看评价', 'gmLink') : `<a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图看评价</a>`}<div id="grPanelBox"></div></div>
       <button class="btn${isClosed(c) ? ' ghost' : ''}" id="ciBtn">${isClosed(c) ? ic('quill', '📝') + ' 补记一次以前的打卡' : ic('cup', '☕') + ' 在这里打卡'}</button>
       <button class="btn ghost" id="mapBtn">${ic('map', '🗺️')} 地图上看</button>
       <div class="section-title">我的打卡（${cis.length}）</div>

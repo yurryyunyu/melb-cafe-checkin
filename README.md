@@ -45,6 +45,9 @@ This is a main storyline in 8 chapters, taught by the mentor villager 老焙. It
 - Rewards are coins and XP through the existing quest ledger, plus cosmetics in the pixel shop: 手摇磨豆机 (ch 3), 杯测白袍 (ch 7) and 咖啡学士帽 (ch 8). Progress is saved in `localStorage['mcc.edu']`.
 - The lessons are original Simplified Chinese, checked against SCA (cupping protocol, Golden Cup, flavor wheel), World Coffee Research, roaster and barista education pages, and Melbourne history sources. Tests: `/workspace/pwtest/testedu.mjs`.
 
+## 🌐 官网 / Instagram links (websites.js)
+Each cafe page has a **官网** button, or **Instagram** when the cafe has no official site, and each card shows a small globe or Instagram icon. Links open in a new tab with `rel=noopener`. The links come from `research/websites.json`, where every URL was fetched and checked to name the venue. Multi-venue brands link to the location page where one exists. There are 99 links: 89 websites and 10 Instagram accounts. Two cafes have no verified link, so no button is shown: Hash Specialty Coffee (closed) and Reunion and Co (the site doesn't load). Tests: `/workspace/pwtest/testweb.mjs`.
+
 ## ⭐ Google 评价 / Google reviews (greviews.js)
 **Without a key (default):** every cafe card and detail page has a **看 Google 评价** button. It opens Google Maps for that cafe using the official Maps URLs format: `https://www.google.com/maps/search/?api=1&query=<name, address>`, plus `&query_place_id=<id>` when a place id is known. No API key is needed, and no Google API is contacted. It works in every theme.
 
