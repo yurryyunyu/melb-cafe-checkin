@@ -101,5 +101,6 @@ window.SIGNATURES = {
   "rudimentary": {"s":[["甜酱厚吐司 (shokupan)","Time Out 推荐"],["泡菜炒蛋"],["越南咖啡","店里的咖啡师推荐"]],"src":"https://www.timeout.com/melbourne/restaurants/the-best-cafes-in-melbourne","c":"high"},
   "coracle": {"s":[["日式早餐 (asagohan)","烤时令鱼、米饭、腌菜、汤和茶"],["越南滴滤咖啡加椰奶","老板跟父亲学的做法，配红茶清口"],["无汤拉面"]],"src":"https://www.timeout.com/melbourne/restaurants/the-best-cafes-in-melbourne","c":"high"},
   "bawa": {"s":[["咖啡汤力加青柠","Time Out 推荐的冷饮"],["加州超级食物沙拉"]],"src":"https://www.bawacafe.com.au/","c":"high"},
-  "arlo": {"s":[["土耳其蛋配香料 labneh 和漆树粉","Time Out 推荐"],["牛小排配南瓜枫糖泥"]],"src":"https://www.timeout.com/melbourne/restaurants/the-best-cafes-in-melbourne","c":"medium"}
+  "arlo": {"s":[["土耳其蛋配香料 labneh 和漆树粉","Time Out 推荐"],["牛小排配南瓜枫糖泥"]],"src":"https://www.timeout.com/melbourne/restaurants/the-best-cafes-in-melbourne","c":"medium"},
+  "homebody": {"s":[["两种风格的 espresso","传统 9-bar 与现代高流量纸滤（Decent 咖啡机）可选"],["Filter 手冲","烘焙分 Familiar / Vibrant / Expressive 三类，如 Alo Village White Honey Ethiopia"],["Milk Coffee","奶咖只有牛奶或燕麦奶；不做抹茶、热巧和特调"]],"src":"https://homebodyunion.com/","c":"high"}
 };

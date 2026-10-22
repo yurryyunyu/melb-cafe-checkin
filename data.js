@@ -100,7 +100,11 @@ window.SEED_CAFES = [
   {id:"rudimentary", short:"Rudimentary", name:"Rudimentary", suburb:"Footscray", address:"16-20 Leeds Street, Footscray VIC 3011", lat:-37.79817, lng:144.90109, tags:["集装箱咖啡馆", "花园"]},
   {id:"coracle", short:"Coracle", name:"Coracle", suburb:"Yarraville", address:"63-65 Anderson Street, Yarraville VIC 3013", lat:-37.81663, lng:144.88941, tags:["日越港风", "日式早餐"]},
   {id:"bawa", short:"Bawa", name:"Bawa", suburb:"Hawthorn", address:"248 Burwood Road, Hawthorn VIC 3122", lat:-37.82258, lng:145.03197, tags:["热带现代风", "早午餐"]},
-  {id:"arlo", short:"Arlo Elwood", name:"Arlo Elwood", suburb:"Elwood", address:"133 Ormond Road, Elwood VIC 3184", lat:-37.88583, lng:144.98866, tags:["绿植墙", "早午餐"]}
+  {id:"arlo", short:"Arlo Elwood", name:"Arlo Elwood", suburb:"Elwood", address:"133 Ormond Road, Elwood VIC 3184", lat:-37.88583, lng:144.98866, tags:["绿植墙", "早午餐"]},
+  // ---- #101 (2026-10-22, user-approved). Sources: homebodyunion.com + Sep 2026 podcast / Barista Magazine. Coords: OSM Nominatim (way 1078410754, "320, George Street, Fitzroy"). ----
+  // NEW venue: opening late Oct 2026 after an invite-only soft opening, so it may still be soft-opening (NOT closed). Self-described "coffee experience bar", not a cafe.
+  {id:"homebody", short:"Homebody Union", name:"Homebody Union", suburb:"Fitzroy", address:"320 George Street, Fitzroy VIC 3065", lat:-37.79982, lng:144.98202, tags:["新店·可能试营业", "世界咖啡师冠军"],
+   status:"soft-opening", note:"2026-10 下旬正式开业，此前为邀请制试营业；创始人 Anthony Douglas（2022 世界咖啡师冠军）与 Sooyeon Shin；40 座的 coffee experience bar"}
 ];
 
 // ---- SAMPLE menus (NOT verified against the cafes' current real menus; for prototype recognition/quick-pick only) ----
@@ -172,11 +176,16 @@ window.SAMPLE_MENU_EXTRA = {
   rudimentary: [{name:"Sweet Spread Shokupan", type:"food"}, {name:"Kimchi Scramble", type:"food"}, {name:"Vietnamese Coffee", type:"drink"}],
   coracle: [{name:"Japanese Breakfast", type:"food"}, {name:"Vietnamese Phin Coffee", type:"drink"}, {name:"Brothless Ramen", type:"food"}, {name:"Kaisen Don", type:"food"}],
   bawa: [{name:"Coffee Tonic with Lime", type:"drink"}, {name:"Superfood Salad", type:"food"}],
-  arlo: [{name:"Turkish Eggs", type:"food"}, {name:"Beef Short Rib", type:"food"}]
+  arlo: [{name:"Turkish Eggs", type:"food"}, {name:"Beef Short Rib", type:"food"}],
+  // Homebody Union serves ONLY these four formats (homebodyunion.com): no matcha / hot chocolate / signature drinks; oat is the only milk alternative. No prices (not sourced).
+  homebody: [{name:"Espresso", type:"drink"}, {name:"Long Black", type:"drink"}, {name:"Filter", type:"drink"}, {name:"Milk Coffee", type:"drink"}]
 };
+// cafes whose menu is ONLY their SAMPLE_MENU_EXTRA list (the generic default menu is not appended)
+window.MENU_EXCLUSIVE = {homebody: true};
 window.menuFor = cafeId => {
   const extra = (window.SAMPLE_MENU_EXTRA[cafeId] || []);
   const seen = new Set(extra.map(i => i.name));
+  if (window.MENU_EXCLUSIVE && window.MENU_EXCLUSIVE[cafeId]) return extra.slice();
   return [...extra, ...window.SAMPLE_MENU_DEFAULT.filter(i => !seen.has(i.name))];
 };
 
