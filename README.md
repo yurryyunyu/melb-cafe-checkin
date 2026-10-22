@@ -57,6 +57,18 @@ The codex (图鉴) shows unmet characters as `?` silhouettes with vague hints. C
 
 Progress is stored in localStorage under `mcc.npc`. Tests: `/workspace/pwtest/testnpc.mjs`. Under automation, encounters stay off unless `?npc` or `mcc.npcTest` is set.
 
+## 🎓 SCA 问答 / SCA quiz (sca.js, `#/sca`)
+
+首页和「咖啡课」页都有入口 `#/sca`。题目按 SCA 咖啡技能课程（Coffee Skills Program）分为初级 Foundation 和中级 Intermediate：
+
+- **题量：** 共 182 道原创练习题，每个模块 16–17 题。Introduction to Coffee 只有初级，SCA 没有设中级。
+- **练习：** 答完马上看解析和出处，答错的题自动进错题本。
+- **模考：** 随机抽 10 题（或整个模块），可以选择计时，每题 60 秒，时间到自动交卷。也有本级综合模考（20 / 30 题）。
+- **奖励：** 某个模块的模考（至少 10 题）第一次达到 80%，就算「已掌握」，奖励 🪙40（初级）或 🪙60（中级），外加一半的 XP。每个模块只发一次，总共最多 🪙540。
+- **存储：** 进度存在 `localStorage` 的 `mcc.sca` 里。
+
+> **非 SCA 官方题库，仅供练习。** 题目依据 SCA 公开的课纲、Coffee Standards、Protocols & Best Practices，以及 World Coffee Research、ISO 4120 和同行评审文献的综述写成，不是考试真题，也不代表 SCA 认可。SCA 在 2024 年改用 CVA 杯测标准，所以涉及 2004 版杯测表的题都标明了版本。题库在 `sca.js`。
+
 ## 🌐 官网 / Instagram links (websites.js)
 Each cafe page has a **官网** button, or **Instagram** when the cafe has no official site, and each card shows a small globe or Instagram icon. Links open in a new tab with `rel=noopener`. The links come from `research/websites.json`, where every URL was fetched and checked to name the venue. Multi-venue brands link to the location page where one exists. There are 99 links: 89 websites and 10 Instagram accounts. Two cafes have no verified link, so no button is shown: Hash Specialty Coffee (closed) and Reunion and Co (the site doesn't load). Tests: `/workspace/pwtest/testweb.mjs`.
 

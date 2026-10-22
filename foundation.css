@@ -155,3 +155,13 @@ html[data-theme=foundation] :is(.npc-entry .ne-t b,.npc-head b,.npc-card .nc-t b
 html[data-theme=foundation] .npc-card.unknown{background:linear-gradient(180deg,#efe4cc,#e2d3b2);border-style:dashed}
 html[data-theme=foundation] .npc-ava{border-color:var(--fd-gold);background:#efe0c0}html[data-theme=foundation] .npc-ava.sil{background:#b8a88c}
 html[data-theme=foundation] .npc-visitor{background:linear-gradient(180deg,#fbf3df,#efdfba);border-color:var(--fd-wood);font-family:var(--serif)}
+/* 🎓 SCA 问答 — 城镇 (foundation) */
+html[data-theme=foundation] :is(.sca-link,.sca-mentor,.sca-mod,.sca-qh,.sca-setup,.sca-mockhead){background:var(--fd-panel);border:1px solid var(--fd-edge);box-shadow:var(--fd-shadow);color:var(--ink)}
+html[data-theme=foundation] .sca-disc{background:linear-gradient(180deg,#fbf3df,#f3e4bf);border:1px dashed var(--fd-wood);color:var(--ink)}
+html[data-theme=foundation] :is(.sca-disc b,.sca-mod .sm-t b,.sca-link b,.sca-mentor b,.sca-setup>b,.sca-res>b){font-family:var(--serif)}
+html[data-theme=foundation] .sca-entry{border-left-color:#3f6f95}
+html[data-theme=foundation] :is(.sm-bar i,.sca-entry .ee-bar i){background:linear-gradient(90deg,#c98a2a,var(--fd-gold))}
+html[data-theme=foundation] .sca-tag{background:var(--fd-wood)}
+html[data-theme=foundation] .sca-mod.mastered{box-shadow:0 0 0 2px var(--fd-gold) inset,var(--fd-shadow)}
+html[data-theme=foundation] .sca-q.done .sca-why{background:rgba(120,80,30,.07)}
+html[data-theme=foundation] .sr-ring span{background:var(--fd-panel)}

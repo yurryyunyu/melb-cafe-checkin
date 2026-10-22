@@ -73,3 +73,12 @@ html[data-ranch] .edu-rankup .er-title{color:#e8503c;text-shadow:2px 2px 0 #ffd2
 html[data-ranch] .edu-entry .ee-bar i,html[data-ranch] .edu-ladder i.on{background:#38b030}
 html[data-ranch] .eq-o{border:3px solid var(--woodX);border-radius:6px;background:#fffbe8}
 html[data-ranch] .eq-o.pick{background:#ffd23f}
+/* 🎓 SCA 问答 — 牧场 */
+html[data-ranch] :is(.sca-link,.sca-mentor,.sca-mod,.sca-qh,.sca-setup,.sca-mockhead,.sca-disc){background:#fff6d6;border:3px solid var(--woodX);border-radius:8px;box-shadow:0 3px 0 var(--woodX)}
+html[data-ranch] .sca-disc{background:#fffbe8;border-style:dashed}
+html[data-ranch] :is(.sm-bar i,.sca-entry .ee-bar i){background:#38b030}
+html[data-ranch] .sca-tag{background:#e07a2a;border:2px solid var(--woodX);border-radius:4px}
+html[data-ranch] .sca-mod.mastered .sm-badge{background:#38b030;color:#fff;border:2px solid var(--woodX)}
+html[data-ranch] .sca-mod .sm-badge{background:#ffd23f;border:2px solid var(--woodX)}
+html[data-ranch] .sr-ring span{background:#fff6d6}
+html[data-ranch] .sca-q.done .eq-o.ans{background:#bfe8a8;border-color:var(--woodX);color:#1f4a17}html[data-ranch] .sca-q.done .eq-o.pick:not(.ans){background:#ffb3a8}

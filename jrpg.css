@@ -254,3 +254,9 @@ html[data-theme=jrpg]:not([data-skin]) .eq-o.pick{background:rgba(255,210,63,.25
 html[data-theme=jrpg]:not([data-skin]) .eq-o.ans{background:rgba(80,200,80,.3);border-color:#7fe07f}
 html[data-theme=jrpg]:not([data-skin]) .eq.wrong .eq-o.pick{background:rgba(220,60,60,.3);border-color:#ff8a8a}
 html[data-theme=jrpg]:not([data-skin]) :is(.eq.right .eq-why,.eq.wrong .eq-why){color:#fff}
+/* 🎓 SCA 问答 — JRPG window readability */
+html[data-theme=jrpg]:not([data-skin]) :is(.sca-disc,.sca-q.done .sca-why){background:rgba(255,255,255,.08);color:#fff}
+html[data-theme=jrpg]:not([data-skin]) .sca-src a{color:#9fd0ff}
+html[data-theme=jrpg]:not([data-skin]) .sr-ring span{background:#0b0f2a;color:#fff}
+html[data-theme=jrpg]:not([data-skin]) :is(.sca-q.right .sw-h,.sca-q.wrong .sw-h){color:#fff}
+html[data-theme=jrpg]:not([data-skin]) .sca-q.done .eq-o.ans{background:rgba(80,200,80,.3);border-color:#7fe07f;color:#fff}html[data-theme=jrpg]:not([data-skin]) .sca-q.done .eq-o.pick:not(.ans){background:rgba(220,60,60,.3);border-color:#ff8a8a;color:#fff}

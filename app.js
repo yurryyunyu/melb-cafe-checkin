@@ -759,6 +759,7 @@ function eduJournal() { const x = eduCtx(), r = Edu.rank(), N = Edu.CH.length;
     <div class="section-title">📖 章节</div><div class="edu-list" id="eduList">${Edu.CH.map(ch => { const st = Edu.chapterState(ch, x), req = st.tasks.filter(t => !t.opt);
       const state = st.passed ? 'passed' : st.unlocked ? 'open' : 'locked';
       return `<${state === 'locked' ? 'div' : 'a'} class="edu-ch vwin jwin ${state}" data-ch="${ch.n}"${state === 'locked' ? '' : ` href="#/edu/${ch.n}"`}><span class="ec-n">${state === 'locked' ? '🔒' : ch.icon}</span><span class="ec-t"><b>第 ${ch.n} 章 · ${esc(ch.title)}</b><small>${esc(ch.topic)} · ${state === 'passed' ? `✔ 已通过 → ${esc(Edu.RANKS[ch.n])}` : state === 'locked' ? '完成上一章后解锁' : `${st.read ? '已听课' : '未听课'} · 任务 ${req.filter(t => t.done).length}/${req.length}`}</small></span><span class="ec-r">${Edu.ITEM_AT[ch.n] ? '🎁' : ''}🪙${Edu.REWARD(ch.n)}</span></${state === 'locked' ? 'div' : 'a'}>`; }).join('')}</div>
+    <a class="sca-link vwin jwin" id="eduScaLink" href="#/sca"><span>🎓</span><span><b>SCA 问答 · 初级 / 中级练习题</b><small>按模块练习、模考、错题本 · 非 SCA 官方题库，仅供练习</small></span><span class="ee-go">›</span></a>
     <div class="hint edu-foot">每章：听老焙讲课 → 完成任务（用平常的打卡、拍豆子、评分、心得就能完成，以前的记录也算）→ 小测验答对 ${Edu.PASS}/4 题升级，可以无限次重考。奖励金币和 XP${owned.length ? `；已获得：${owned.map(esc).join('、')}` : '；第 3、7、8 章还送装扮（在像素主题的商店里装备）'}。课程内容参考 SCA、World Coffee Research 等公开资料。</div>`;
   paintMentor(app); }
 function eduChapter(n) { const ch = Edu.CH[n - 1]; if (!ch) return eduJournal(); const st = Edu.chapterState(ch, eduCtx());
@@ -872,8 +873,121 @@ function npcVisitor() { const o = $('#npcVisitor'); if (o) o.remove(); const n =
 let npcTaps = [];
 document.addEventListener('click', e => { if (!window.Npc || Npc.met('tap') || !e.target.closest('#title, .fs-title, .fs-card, .sp-logo')) return; const t = Date.now(); npcTaps = [...npcTaps.filter(x => t - x < 4000), t];
   if (npcTaps.length >= 5) { npcTaps = []; Npc.flag('tap', today()); SFXplay('coin'); npcSchedule(200); } }, true);
+// ---------- 🎓 SCA 问答 (sca.js): level → module picker, practice (instant feedback), mock test (random N, optional timer), wrong-answer notebook ----------
+// 非 SCA 官方题库，仅供练习 — original questions from SCA's public curricula/standards + reputable sources; each has an explanation and a source.
+let scaLv = 'f', scaP = null, scaTimer = null;
+const scaM = m => (window.SCAQ && SCAQ.MODULES.find(x => x.id === m)) || {id: 'all', zh: '综合', en: 'All modules', icon: '🧩'};
+const scaL = l => SCAQ.LEVELS.find(x => x.id === l) || SCAQ.LEVELS[0];
+const scaAllMods = () => SCAQ.LEVELS.flatMap(L => SCAQ.mods(L.id).map(m => [L.id, m.id]));
+const scaSrcHtml = q => q.s.map(k => SCAQ.SRC[k]).filter(Boolean).map(s => `<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.t)}</a>`).join('<br>');
+const scaLetter = (q, ord, orig) => q.tf ? q.o[orig] : 'ABCD'[ord.indexOf(orig)] + '. ' + q.o[orig];
+function scaEntry() { if (!window.SCAQ) return ''; const all = scaAllMods(), k = all.filter(([l, m]) => SCAQ.progress(l, m).mastered).length, w = SCAQ.state.wrong.length;
+  return `<a class="edu-entry sca-entry vwin jwin" href="#/sca" id="scaEntry"><span class="ee-ic">🎓</span><span class="ee-t"><b>SCA 问答 · 初级 / 中级</b><small>${SCAQ.Q.length} 道练习题 · 已掌握 ${k}/${all.length} 个模块${w ? ` · 错题 ${w}` : ''} · 非官方</small></span><span class="ee-bar"><i style="width:${Math.round(k / all.length * 100)}%"></i></span><span class="ee-go">›</span></a>`; }
+const SCA_INTRO = ['我是老焙。除了主线咖啡课，这里还有一套练习题，按 SCA 咖啡技能课程（Coffee Skills Program）的初级（Foundation）和中级（Intermediate）来分。',
+  '先说清楚：这不是 SCA 官方题库，也不是考试真题。题目是我根据 SCA 公开的课纲、咖啡标准和可靠资料自己出的，每题都附解析和出处，可以点开核对。',
+  'Introduction to Coffee 只有初级；咖啡师技能、冲煮、生豆、烘焙和感官技能都分初级和中级。练习模式答完马上看解析；模考随机抽题，可以计时。',
+  '答错的题会自动进错题本。每个模块第一次模考拿到 80% 以上，我送你一点金币和 XP，每个模块只送一次。慢慢来，喝杯咖啡再做题。'];
+function scaTalk(done) { let i = 0, d = $('#eduDlg'); if (d) d.remove();
+  d = document.createElement('div'); d.id = 'eduDlg'; d.className = 'edu-dlg sca-dlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', '老焙介绍 SCA 问答');
+  d.innerHTML = `<div class="ed-box">${eduAva()}<div class="ed-body"><div class="ed-name">${esc(window.Edu ? Edu.MENTOR.name : '老焙')} <small>SCA 问答</small></div><div class="ed-text" id="edText"></div><div class="ed-foot"><span id="edPage"></span><button class="ed-skip" id="edSkip">跳过</button><button class="ed-next" id="edNext">▼ 继续</button></div></div></div>`;
+  document.body.appendChild(d); if (window.Edu) paintMentor(d);
+  const show = () => { $('#edText').textContent = SCA_INTRO[i]; $('#edPage').textContent = `${i + 1}/${SCA_INTRO.length}`; $('#edNext').textContent = i === SCA_INTRO.length - 1 ? '✔ 开始练习' : '▼ 继续'; };
+  const end = () => { d.remove(); SCAQ.state.seen = 1; SCAQ.save(); SFXplay('harvest'); done && done(); };
+  $('#edNext').onclick = e => { e.stopPropagation(); SFXplay('blip'); if (++i >= SCA_INTRO.length) return end(); show(); };
+  $('#edSkip').onclick = e => { e.stopPropagation(); end(); };
+  requestAnimationFrame(() => d.classList.add('show')); show(); }
+function scaHub(l) { scaP = null; if (l) scaLv = l; const L = scaL(scaLv), mods = SCAQ.mods(scaLv), w = SCAQ.state.wrong.length;
+  setTop('🎓 SCA 问答', '', true);
+  app.innerHTML = `<div class="sca-disc vwin jwin" id="scaDisc"><b>⚠️ ${esc(SCAQ.DISCLAIMER)}</b><small>题目为原创，依据 SCA 公开课纲、咖啡标准和可靠的二手资料编写，每题附解析和出处；不是考试真题，也不代表 SCA 认可。SCA 不同版本的数字可能不同，题目里会注明版本。</small></div>
+    <div class="sca-mentor vwin jwin">${window.Edu ? eduAva() : '<span class="edu-ava">焙</span>'}<div><small>老焙 · 练习题</small><b>按级别和模块练习</b><button class="btn ghost" id="scaIntro">🗣️ 听老焙介绍</button></div></div>
+    <div class="sca-lv" id="scaLv">${SCAQ.LEVELS.map(x => `<button class="chip${x.id === scaLv ? ' on' : ''}" data-lv="${x.id}">${x.zh} ${x.en}</button>`).join('')}</div>
+    <div class="sca-mods" id="scaMods">${mods.map(m => { const p = SCAQ.progress(scaLv, m.id);
+      return `<div class="sca-mod vwin jwin${p.mastered ? ' mastered' : ''}" data-m="${m.id}"><div class="sm-h"><span class="sm-ic">${m.icon}</span><span class="sm-t"><b>${esc(m.zh)}</b><small>${esc(m.en)} · ${L.zh}</small></span><span class="sm-badge">${p.mastered ? '✔ 已掌握' : `🪙${SCAQ.REWARD[scaLv]}`}</span></div>
+        <div class="sm-bar"><i style="width:${Math.round(p.done / p.n * 100)}%"></i></div><small class="sm-st">练过 ${p.done}/${p.n} 题 · 最近答对 ${p.right} · 模考最佳 ${Math.round(p.best * 100)}%</small>
+        <div class="sm-go"><a class="btn ghost" href="#/sca/p-${scaLv}-${m.id}" data-go="p">📖 练习</a><a class="btn" href="#/sca/t-${scaLv}-${m.id}" data-go="t">📝 模考</a></div></div>`; }).join('')}
+      ${scaLv === 'i' ? `<div class="sca-mod sca-na vwin jwin" data-m="intro"><div class="sm-h"><span class="sm-ic">🌱</span><span class="sm-t"><b>咖啡入门</b><small>Introduction to Coffee</small></span><span class="sm-badge">只有初级</span></div><small class="sm-st">SCA 的 Introduction to Coffee 只设一个级别，没有中级。请到「初级」里练习。</small></div>` : ''}</div>
+    <div class="sca-more"><a class="btn ghost" id="scaMix" href="#/sca/t-${scaLv}-all">🧩 ${L.zh}综合模考（随机 20 题）</a><a class="btn ghost" id="scaWrongGo" href="#/sca/w">📕 错题本 ${w ? `(${w})` : ''}</a></div>
+    <div class="hint sca-foot">规则：练习模式每题答完马上看解析；模考随机抽题、可选计时，交卷后看分数和错题。单个模块的模考（至少 10 题）第一次达到 80%，就算「已掌握」，奖励 🪙 初级 ${SCAQ.REWARD.f} / 中级 ${SCAQ.REWARD.i} 和一半的 XP，每个模块只发一次。进度只存在这台设备上。</div>`;
+  if (window.Edu) paintMentor(app);
+  $('#scaLv').onclick = e => { const b = e.target.closest('[data-lv]'); if (!b) return; SFXplay('blip'); scaHub(b.dataset.lv); };
+  $('#scaIntro').onclick = () => scaTalk();
+  if (!SCAQ.state.seen && (!navigator.webdriver || /[?&]scaintro\b/.test(location.search))) setTimeout(() => { if (app.dataset.view === 'sca' && !$('#eduDlg')) scaTalk(); }, 300); }
+function scaQCard(q, i, ord, cls = '') { return `<div class="eq sca-q vwin jwin ${cls}" data-q="${i}" data-id="${q.id}"><div class="eq-q"><span class="sca-tag">${q.tf ? '判断' : '单选'}</span> ${esc(q.q)}</div>${ord.map((o, j) => `<button class="eq-o" data-o="${o}">${q.tf ? '' : 'ABCD'[j] + '. '}${esc(q.o[o])}</button>`).join('')}<div class="eq-why sca-why"></div></div>`; }
+function scaReveal(el, q, ord, pick) { const ok = pick === q.a; el.classList.add(ok ? 'right' : 'wrong'); el.classList.add('done');
+  el.querySelectorAll('.eq-o').forEach(o => { const v = +o.dataset.o; o.disabled = true; o.classList.toggle('pick', v === pick); if (v === q.a) o.classList.add('ans'); });
+  el.querySelector('.sca-why').innerHTML = `<b class="sw-h">${ok ? '✔ 答对了' : pick < 0 ? `⌛ 没作答 · 正确答案：${esc(scaLetter(q, ord, q.a))}` : `✘ 正确答案：${esc(scaLetter(q, ord, q.a))}`}</b><div class="sw-x">${esc(q.x)}</div><div class="sca-src">📚 出处：<br>${scaSrcHtml(q)}</div>`; }
+function scaPractice(l, m) { const wrongMode = l === 'w', M = scaM(m);
+  if (!scaP || scaP.key !== (wrongMode ? 'w' : l + '-' + m)) { const ids = wrongMode ? SCAQ.state.wrong.slice() : SCAQ.bank(l, m).map(q => q.id);
+    let i = wrongMode ? 0 : ids.findIndex(id => !(SCAQ.state.ans[id] && SCAQ.state.ans[id].last)); if (i < 0) i = 0;
+    scaP = {key: wrongMode ? 'w' : l + '-' + m, ids, i, got: {}, seed: Date.now() % 997}; }
+  const P = scaP, N = P.ids.length;
+  setTop(wrongMode ? '📕 错题练习' : `${M.icon} ${scaL(l).zh} · ${M.zh}`, '', true);
+  if (!N) { app.innerHTML = `<div class="card vwin jwin sca-empty"><b>${wrongMode ? '错题本是空的 🎉' : '这个模块没有题目'}</b><a class="btn" href="#/sca">回到 SCA 问答</a></div>`; return; }
+  if (P.i >= N) { const got = Object.entries(P.got), r = got.filter(([id, p]) => SCAQ.byId(id).a === p).length;
+    app.innerHTML = `<div class="eq-res sca-res vwin jwin pass" id="scaPDone"><b>📖 这一轮练完了</b><small>本轮作答 ${got.length} 题，答对 ${r} 题。${wrongMode ? '答对的题已从错题本移出。' : '想拿奖励的话，去做一次模考吧。'}</small>
+      <a class="btn" href="${wrongMode ? '#/sca/w' : `#/sca/t-${l}-${m}`}">${wrongMode ? '📕 回到错题本' : '📝 去模考'}</a><button class="btn ghost" id="scaAgain">🔁 从头再练</button><a class="btn ghost" href="#/sca">返回</a></div>`;
+    $('#scaAgain').onclick = () => { P.i = 0; P.got = {}; scaPractice(l, m); }; return; }
+  const q = SCAQ.byId(P.ids[P.i]), ord = SCAQ.order(q, P.seed), M2 = scaM(q.m);
+  app.innerHTML = `<div class="sca-qh vwin jwin"><span>${wrongMode ? `${M2.icon} ${scaL(q.l).zh} · ${esc(M2.zh)}` : `${M.icon} ${esc(M.en)}`}</span><b id="scaPos">${P.i + 1} / ${N}</b><div class="sm-bar"><i style="width:${Math.round(P.i / N * 100)}%"></i></div></div>
+    ${scaQCard(q, P.i, ord)}<div class="sca-nav"><button class="btn ghost" id="scaPrev"${P.i ? '' : ' disabled'}>‹ 上一题</button><button class="btn" id="scaNext">${P.i === N - 1 ? '完成 ✔' : '下一题 ›'}</button></div>
+    <div class="hint sca-foot">${esc(SCAQ.DISCLAIMER)} · 题目原创，出处见解析</div>`;
+  const el = app.querySelector('.sca-q'); if (q.id in P.got) scaReveal(el, q, ord, P.got[q.id]);
+  el.onclick = e => { const b = e.target.closest('.eq-o'); if (!b || el.classList.contains('done')) return; const pick = +b.dataset.o; P.got[q.id] = pick; const ok = SCAQ.record(q.id, pick);
+    SFXplay(ok ? 'coin' : 'hit'); scaReveal(el, q, ord, pick); };
+  $('#scaPrev').onclick = () => { SFXplay('blip'); P.i--; scaPractice(l, m); window.scrollTo(0, 0); };
+  $('#scaNext').onclick = () => { SFXplay('blip'); P.i++; scaPractice(l, m); window.scrollTo(0, 0); }; }
+function scaMockSetup(l, m) { const M = scaM(m), n = SCAQ.bank(l, m).length, mix = m === 'all', p = mix ? null : SCAQ.progress(l, m);
+  const sizes = mix ? [20, 30] : [Math.min(SCAQ.MOCK_N, n), n].filter((x, i, a) => a.indexOf(x) === i);
+  setTop(`📝 模考 · ${scaL(l).zh} · ${M.zh}`, '', true);
+  app.innerHTML = `<div class="sca-setup vwin jwin" id="scaSetup"><b>${M.icon} ${scaL(l).zh}${esc(M.zh)} 模拟测试</b><small>${mix ? `从${scaL(l).zh}所有模块的 ${n} 题里随机抽题。综合模考不计入单个模块的「已掌握」。` : `从本模块 ${n} 题里随机抽题。至少 10 题、第一次达到 80% 即「已掌握」${p.mastered ? '（已获得）' : `，奖励 🪙${SCAQ.REWARD[l]} + ${Math.round(SCAQ.REWARD[l] / 2)} XP`}。`}</small>
+    <div class="ss-row"><span>题数</span>${sizes.map((s, i) => `<button class="chip${i ? '' : ' on'}" data-n="${s}">${s === n ? `全部 ${s}` : s} 题</button>`).join('')}</div>
+    <label class="ss-row ss-timer"><input type="checkbox" id="scaTimed"> ⏱️ 计时（每题 60 秒，时间到自动交卷）</label>
+    <button class="btn" id="scaStart">开始模考</button></div><div class="hint sca-foot">${esc(SCAQ.DISCLAIMER)}</div>`;
+  let N = sizes[0]; $('#scaSetup').onclick = e => { const b = e.target.closest('[data-n]'); if (!b) return; N = +b.dataset.n; app.querySelectorAll('[data-n]').forEach(x => x.classList.toggle('on', x === b)); };
+  $('#scaStart').onclick = () => { SFXplay('blip'); scaMock(l, m, N, $('#scaTimed').checked); window.scrollTo(0, 0); }; }
+function scaMock(l, m, N, timed, seed) { const M = scaM(m), qs = SCAQ.pick(l, m, N, seed), picks = qs.map(() => -1), sd = (seed || Date.now()) % 997, ords = qs.map(q => SCAQ.order(q, sd));
+  setTop(`📝 模考 · ${scaL(l).zh} · ${M.zh}`, '', true);
+  app.innerHTML = `<div class="sca-mockhead vwin jwin" id="scaMockHead"><b>${M.icon} ${qs.length} 题 · 答完再交卷</b><span id="scaClock">${timed ? '' : '不计时'}</span><span id="scaCnt">0/${qs.length}</span></div>
+    <div id="scaQuiz">${qs.map((q, i) => scaQCard(q, i, ords[i])).join('')}</div><button class="btn" id="scaSubmit" disabled>交卷</button><div id="scaResAt"></div>`;
+  let left = qs.length * 60; const tick = () => { const c = $('#scaClock'); if (!c) { clearInterval(scaTimer); scaTimer = null; return; } c.textContent = `⏱️ ${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}`; c.classList.toggle('low', left <= 30); if (left-- <= 0) submit(true); };
+  const submit = timeUp => { if (scaTimer) { clearInterval(scaTimer); scaTimer = null; } if ($('#scaQuiz').classList.contains('graded')) return;
+    const L0 = levelInfo(), before = totalCoins(), R = SCAQ.grade(l, m, qs.map(q => q.id), picks, today()); $('#scaQuiz').classList.add('graded'); $('#scaSubmit').remove(); { const h = $('#scaMockHead b'); if (h) h.textContent = `${M.icon} 已交卷 · ${R.right}/${R.n}`; }
+    app.querySelectorAll('.sca-q').forEach((el, i) => scaReveal(el, qs[i], ords[i], picks[i]));
+    let rw = false; if (R.newMastery && !questLog.claims.some(x => x.id === R.rewardId)) { questLog.claims.push({d: today(), id: R.rewardId, c: R.reward}); save(QK, questLog); rw = true; }
+    const pct = Math.round(R.pct * 100), wrongN = R.n - R.right;
+    $('#scaResAt').innerHTML = ''; const res = document.createElement('div'); res.id = 'scaRes'; res.className = `eq-res sca-res vwin jwin ${R.passed ? 'pass' : 'fail'}`;
+    res.innerHTML = `<b>${timeUp ? '⌛ 时间到！' : ''}${R.right}/${R.n} · ${pct}%</b><div class="sr-ring" style="--p:${pct}"><span>${pct}%</span></div>
+      <small>${R.passed ? (m === 'all' ? '综合模考达到 80%，很稳！' : rw ? `🎓 第一次达到 80%：${esc(M.zh)}（${scaL(l).zh}）已掌握！` : '达到 80%。') : `还差一点，80% 才算掌握。错的 ${wrongN} 题已放进错题本。`}</small>
+      ${rw ? `<div class="er-rw sca-rw" id="scaReward"><span>🪙 +${R.reward}</span><span>⭐ +${Math.round(R.reward / 2)} XP</span></div>` : ''}
+      <div class="sr-btns">${wrongN ? '<button class="btn ghost" id="scaOnlyWrong">只看错题</button>' : ''}<button class="btn ghost" id="scaRetry">🔁 再考一次</button><a class="btn ghost" href="#/sca/w">📕 错题本</a><a class="btn" href="#/sca">返回</a></div>`;
+    app.insertBefore(res, app.firstChild);
+    const ow = $('#scaOnlyWrong'); if (ow) ow.onclick = () => { const on = $('#scaQuiz').classList.toggle('only-wrong'); ow.textContent = on ? '显示全部' : '只看错题'; };
+    $('#scaRetry').onclick = () => { SFXplay('blip'); scaMockSetup(l, m); window.scrollTo(0, 0); };
+    window.scrollTo(0, 0); SFXplay(R.passed ? 'harvest' : 'hit'); drawHud();
+    if (rw) { coinBurst(res, R.reward, before); xpPop(res, Math.round(R.reward / 2), L0); const L1 = levelInfo(); if (L1.lv > L0.lv) setTimeout(() => toast(`⬆️ 升级！Lv.${L1.lv} ${L1.title}`, 2600), 1200); } };
+  $('#scaQuiz').onclick = e => { const b = e.target.closest('.eq-o'); if (!b || $('#scaQuiz').classList.contains('graded')) return; const card = b.closest('.sca-q'), qi = +card.dataset.q; picks[qi] = +b.dataset.o; SFXplay('blip');
+    card.querySelectorAll('.eq-o').forEach(x => x.classList.toggle('pick', x === b)); const n = picks.filter(p => p >= 0).length; $('#scaCnt').textContent = `${n}/${qs.length}`; $('#scaSubmit').disabled = n < qs.length; };
+  $('#scaSubmit').onclick = () => submit(false);
+  if (timed) { tick(); scaTimer = setInterval(tick, 1000); }
+  window.__scaMock = {qs: qs.map(q => q.id), answer: () => qs.map(q => q.a), submit}; }
+function scaWrong() { scaP = null; const ids = SCAQ.state.wrong.filter(id => SCAQ.byId(id));
+  setTop('📕 错题本', '', true);
+  const groups = []; ids.forEach(id => { const q = SCAQ.byId(id), k = q.l + '-' + q.m; let g = groups.find(x => x.k === k); if (!g) groups.push(g = {k, q, ids: []}); g.ids.push(id); });
+  app.innerHTML = `<div class="sca-disc vwin jwin"><b>📕 错题本 · ${ids.length} 题</b><small>${ids.length ? '最近答错的题会排在前面。在练习或模考里答对后会自动移出，也可以手动移出。' : '目前没有错题 🎉 去练习或模考吧。'}</small>${ids.length ? '<a class="btn" id="scaPW" href="#/sca/pw">🔁 练习全部错题</a>' : '<a class="btn" href="#/sca">回到 SCA 问答</a>'}</div>
+    <div id="scaWrongList">${groups.map(g => { const M = scaM(g.q.m); return `<div class="section-title">${M.icon} ${scaL(g.q.l).zh} · ${esc(M.zh)} <small>${g.ids.length}</small></div>${g.ids.map(id => { const q = SCAQ.byId(id), a = SCAQ.state.ans[id] || {}, ord = q.o.map((_, i) => i);
+      return `<div class="eq sca-q sca-wq vwin jwin wrong done" data-id="${id}"><div class="eq-q"><span class="sca-tag">${q.tf ? '判断' : '单选'}</span> ${esc(q.q)}</div>
+        <div class="sw-ans">✘ 你上次选：${a.pick >= 0 ? esc(scaLetter(q, ord, a.pick)) : '没作答'}<br>✔ 正确答案：${esc(scaLetter(q, ord, q.a))}</div><div class="eq-why sca-why"><div class="sw-x">${esc(q.x)}</div><div class="sca-src">📚 出处：<br>${scaSrcHtml(q)}</div></div>
+        <button class="btn ghost sca-rm" data-rm="${id}">✔ 我会了，移出</button></div>`; }).join('')}`; }).join('')}</div>
+    <div class="hint sca-foot">${esc(SCAQ.DISCLAIMER)}</div>`;
+  $('#scaWrongList').onclick = e => { const b = e.target.closest('[data-rm]'); if (!b) return; SFXplay('blip'); SCAQ.unwrong(b.dataset.rm); scaWrong(); }; }
+function scaView(arg) { if (!window.SCAQ) { location.hash = '#/list'; return; } const a = arg || '';
+  if (a === 'w') return scaWrong(); if (a === 'pw') return scaPractice('w', 'all');
+  const mt = /^([pt])-([fi])-(\w+)$/.exec(a);
+  if (mt && (mt[3] === 'all' ? mt[1] === 't' : SCAQ.mods(mt[2]).some(x => x.id === mt[3]))) return mt[1] === 'p' ? scaPractice(mt[2], mt[3]) : scaMockSetup(mt[2], mt[3]);
+  return scaHub(/^[fi]$/.test(a) ? a : null); }
 const views = {
   calendar(arg) { return calendarV(arg); },
+  sca(arg) { return scaView(arg); },
   npc() { if (!window.Npc) { location.hash = '#/list'; return; } return npcCodex(); },
   edu(arg) { if (!window.Edu) { location.hash = '#/list'; return; } const q = /^q(\d)$/.exec(arg || ''); if (q) return eduQuiz(+q[1]); if (/^\d$/.test(arg || '')) return eduChapter(+arg); return eduJournal(); },
   list() {
@@ -881,7 +995,7 @@ const views = {
     $('#addCafeBtn').onclick = () => location.hash = '#/add';
     const subs = [...new Set(allCafes().map(c => c.suburb))].sort();
     const v = visitedIds();
-    app.innerHTML = `${festBanner()}${eduEntry()}${npcEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
+    app.innerHTML = `${festBanner()}${eduEntry()}${scaEntry()}${npcEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
       <select id="sub"><option value="">全部区域</option>${[...REGIONS, REGION_MORE].map(r => `<option value="${r.id}" ${r.id === listState.suburb ? 'selected' : ''}>${esc(r.name)}${r.zh && r.id !== 'more' ? ' ' + r.zh : ''}</option>`).join('')}</select></div>
       <div class="chips">${[['all', '全部'], ['todo', '未解锁'], ['done', '已解锁'], ['near', '离我最近']].map(([k, t]) => `<button class="chip ${listState.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
       <div class="hint">已解锁 ${v.size} / ${allCafes().length} 家</div><div id="cards"></div>`;
@@ -1302,6 +1416,7 @@ $('#backBtn').onclick = () => history.length > 1 ? history.back() : (location.ha
 
 function render() {
   mapToken++; if (mapRef) { mapRef.remove(); mapRef = null; }
+  if (scaTimer) { clearInterval(scaTimer); scaTimer = null; }
   app.classList.remove('full'); app.onclick = null;
   const [, name = 'list', arg] = (location.hash || '#/list').split('/');
   const v = views[name] ? name : 'list';
