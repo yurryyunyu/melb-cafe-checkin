@@ -13,16 +13,19 @@ const ITEMS = [
   {id: 'chef', kind: 'hat', name: '厨师帽', price: 650, desc: '自己也能烤可颂了'},
   {id: 'cowboy', kind: 'hat', name: '牛仔帽', price: 800, desc: '走遍墨尔本的冒险家'},
   {id: 'crown', kind: 'hat', name: '咖啡王冠', price: 1500, desc: '墨尔本咖啡之王'},
+  {id: 'mortar', kind: 'hat', name: '咖啡学士帽', price: 0, edu: 8, desc: '咖啡课主线毕业礼物'},
   {id: 'classic', kind: 'outfit', name: '蓝色背带裤', price: 0, desc: '默认工作服', free: true, cols: null},
   {id: 'forest', kind: 'outfit', name: '森林绿', price: 300, desc: '和草地一个颜色', cols: [[95, 158, 74], [63, 110, 50]]},
   {id: 'berry', kind: 'outfit', name: '莓果红', price: 400, desc: '像一杯莓果奶昔', cols: [[208, 82, 112], [140, 50, 80]]},
   {id: 'barista', kind: 'outfit', name: '咖啡师围裙', price: 550, desc: '深焙色，耐脏', cols: [[140, 92, 52], [92, 58, 30]]},
   {id: 'lavender', kind: 'outfit', name: '薰衣草紫', price: 600, desc: '傍晚散步专用', cols: [[150, 112, 204], [100, 70, 150]]},
+  {id: 'cupcoat', kind: 'outfit', name: '杯测白袍', price: 0, edu: 7, desc: '咖啡课第 7 章奖励', cols: [[236, 236, 228], [176, 176, 168]]},
   {id: 'gold', kind: 'outfit', name: '金色礼服', price: 1200, desc: '全镇最闪亮的人', cols: [[240, 192, 64], [190, 132, 24]]},
   {id: 'bench', kind: 'decor', name: '木长椅', price: 80, desc: '坐下来喝完这杯', w: 16, h: 16},
   {id: 'flowerbed', kind: 'decor', name: '花坛', price: 120, desc: '一年四季都开花', w: 16, h: 16},
   {id: 'lantern', kind: 'decor', name: '小路灯', price: 250, desc: '晚上会亮起来', w: 16, h: 16, glow: true},
   {id: 'scarecrow', kind: 'decor', name: '稻草人', price: 350, desc: '守护咖啡豆田', w: 16, h: 16},
+  {id: 'grinder', kind: 'decor', name: '手摇磨豆机', price: 0, edu: 3, desc: '咖啡课第 3 章奖励', w: 16, h: 16},
   {id: 'dog', kind: 'decor', name: '小狗 Latte', price: 900, desc: '会在小镇里跑来跑去', w: 14, h: 12, pet: true},
   {id: 'fountain', kind: 'decor', name: '许愿喷泉', price: 1200, desc: '小镇广场的中心', w: 32, h: 32, frames: 2},
 ];
@@ -32,10 +35,11 @@ function load() { let s; try { s = JSON.parse(localStorage.getItem(SK)); } catch
   return {owned: Array.isArray(s.owned) ? s.owned.filter(byId) : [], hat: byId(s.hat) ? s.hat : 'straw', outfit: byId(s.outfit) ? s.outfit : 'classic', decor: Array.isArray(s.decor) ? s.decor.filter(byId) : []}; }
 let S = load();
 const save = () => { try { localStorage.setItem(SK, JSON.stringify(S)); } catch (e) {} applyLook(); };
-const owns = id => { const it = byId(id); return !!it && (it.free || S.owned.includes(id)); };
-const spent = () => S.owned.reduce((t, id) => t + ((byId(id) || {}).price || 0), 0);
+const eduOk = it => !!(it.edu && window.Edu && Edu.rank() >= it.edu); // coffee-course rewards: owned once the chapter is passed
+const owns = id => { const it = byId(id); return !!it && (it.free || eduOk(it) || S.owned.includes(id)); };
+const spent = () => S.owned.filter(id => !(byId(id) || {}).edu).reduce((t, id) => t + ((byId(id) || {}).price || 0), 0);
 const equipped = id => { const it = byId(id); return !!it && (it.kind === 'hat' ? S.hat === id : it.kind === 'outfit' ? S.outfit === id : S.decor.includes(id)); };
-function buy(id) { const it = byId(id); if (!it || owns(id)) return false; S.owned.push(id); if (it.kind === 'decor') { if (!S.decor.includes(id)) S.decor.push(id); } else S[it.kind] = id; save(); return true; }
+function buy(id) { const it = byId(id); if (!it || owns(id) || it.edu) return false; S.owned.push(id); if (it.kind === 'decor') { if (!S.decor.includes(id)) S.decor.push(id); } else S[it.kind] = id; save(); return true; }
 function toggle(id) { const it = byId(id); if (!it || !owns(id)) return;
   if (it.kind === 'decor') S.decor = S.decor.includes(id) ? S.decor.filter(x => x !== id) : [...S.decor, id];
   else S[it.kind] = S[it.kind] === id ? (it.kind === 'hat' ? 'straw' : 'classic') : id; save(); }
@@ -51,6 +55,7 @@ function hatCanvas(id) { if (hatCache[id]) return hatCache[id]; const P = Pix(16
     flower() { P.rect(4, 2, 8, 4, '#7a4a25'); P.rect(5, 1, 6, 1, '#7a4a25'); P.rect(3, 4, 10, 2, '#3f8f2b'); [[3, 4, '#ff9ec4'], [6, 3, '#fff3a0'], [9, 3, '#ff9ec4'], [12, 4, '#b58bff'], [8, 5, '#ffffff']].forEach(([x, y, c]) => { P.set(x, y, c); P.set(x + 1, y, c); P.set(x, y + 1, c); }); },
     chef() { P.rect(4, 3, 8, 3, '#ffffff'); P.ell(5, 2, 2.6, 2.2, '#ffffff'); P.ell(8, 1.6, 2.8, 2, '#ffffff'); P.ell(11, 2, 2.6, 2.2, '#ffffff'); P.rect(4, 5, 8, 1, '#e0dcd0'); P.set(6, 1, '#f0ece4'); },
     cowboy() { P.rect(5, 1, 6, 4, '#a8693a'); P.rect(6, 0, 4, 1, '#a8693a'); P.rect(5, 3, 6, 1, '#5e3519'); P.rect(1, 5, 14, 1, '#8a5528'); P.rect(1, 4, 2, 1, '#8a5528'); P.rect(13, 4, 2, 1, '#8a5528'); P.set(7, 1, '#c98f55'); },
+    mortar() { P.rect(5, 3, 6, 3, '#2a2a34'); P.rect(1, 2, 14, 2, '#3a3a48'); P.rect(2, 1, 12, 1, '#4a4a5a'); P.rect(7, 1, 2, 1, '#f5c542'); P.rect(12, 3, 1, 3, '#f5c542'); P.set(6, 4, '#4a4a5a'); },
     crown() { P.rect(4, 3, 8, 3, '#f5c542'); [[4, 1], [6, 2], [8, 0], [10, 2], [11, 1]].forEach(([x, y]) => P.rect(x, y, 1, 3 - y + 1, '#f5c542')); P.set(8, 0, '#fff2a0'); P.set(6, 4, '#e8403a'); P.set(8, 4, '#3f7fbf'); P.set(10, 4, '#4f9a2e'); P.rect(4, 5, 8, 1, '#c98a1a'); },
   }[id]; if (!H) return null; H(); P.outline(OUT);
   const c = P.canvas(), o = document.createElement('canvas'); o.width = 16; o.height = 6; o.getContext('2d').drawImage(c, 0, 0, 16, 6, 0, 0, 16, 6); return (hatCache[id] = o); }
@@ -67,6 +72,7 @@ function decoFrames(id, season = 'spring', night = false) { const k = id + seaso
     else if (id === 'fountain') { P.ell(16, 24, 15, 7, '#bdae94'); P.ell(16, 23, 13, 5.5, f ? '#5fb0e0' : '#4fa2d8'); P.rect(14, 10, 4, 12, '#cdbfa6'); P.ell(16, 11, 6, 2.4, '#bdae94'); P.ell(16, 10.5, 4.8, 1.6, '#5fb0e0');
       const sp = f ? [[15, 4], [17, 5], [13, 7], [19, 7], [12, 9], [20, 10]] : [[16, 3], [14, 5], [18, 6], [12, 8], [20, 8], [11, 10]]; sp.forEach(([x, y]) => { P.set(x, y, '#bfe8ff'); P.set(x, y + 1, '#8fd2f2'); });
       [[8, 22], [20, 25], [24, 21], [12, 26]].forEach(([x, y], i) => P.set(x + (f ? 1 : 0), y, i % 2 ? '#ffffff' : '#bfe8ff')); P.rect(4, 27, 24, 1, '#a39279'); }
+    else if (id === 'grinder') { P.rect(4, 8, 8, 7, '#a8693a'); P.rect(4, 8, 8, 1, '#c98f55'); P.rect(6, 11, 4, 2, '#7a4a25'); P.set(8, 12, '#f5c542'); P.rect(5, 5, 6, 3, '#b8b8c0'); P.rect(6, 4, 4, 1, '#d8d8e0'); P.rect(7, 2, 2, 2, '#8a8a94'); P.rect(9, 1, 4, 1, '#8a8a94'); P.rect(12, 0, 2, 2, '#7a4a25'); P.rect(4, 15, 8, 1, '#7a4a25'); }
     else if (id === 'dog') { const fur = '#e8c08a', dk = '#b88850'; P.ell(6.5, 8, 4.5, 2.6, fur); P.ell(10.5, 5.5, 2.8, 2.6, fur); P.rect(8, 3, 2, 3, dk); P.rect(12, 3, 1, 3, dk); P.set(11, 5, OUT); P.set(13, 6, OUT); P.set(12, 7, '#e87a8a');
       P.rect(4, 6, 3, 1, '#ffffff'); P.rect(3, 9, 1, 2, fur); P.rect(9, 9, 1, 2, fur); P.set(f ? 5 : 4, 11, fur); P.set(f ? 8 : 9, 11, fur); if (f) { P.rect(1, 5, 1, 3, fur); } else { P.rect(0, 7, 2, 1, fur); } P.rect(9, 7, 3, 1, '#e8403a'); }
     P.outline(OUT); return P.canvas(); };

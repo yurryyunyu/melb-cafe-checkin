@@ -62,3 +62,14 @@ html[data-ranch] #hud .hud-main{flex:1 1 110px;min-width:110px}
 html[data-ranch] #hud .rn-fest{writing-mode:horizontal-tb;white-space:nowrap;font-size:13px}
 html[data-ranch] .rk-bar{width:100%;box-sizing:border-box}
 html[data-ranch] .rk-slot{min-width:0}
+/* 📖 coffee course — bright farm-life dialogue box */
+html[data-ranch] .edu-dlg .ed-box{background:#fff6d6;border:4px solid var(--woodX);border-radius:12px;box-shadow:inset 0 0 0 4px #ffb04a,inset 0 0 0 7px #e07a2a,0 5px 0 var(--woodX);padding:18px 14px 14px}
+html[data-ranch] .edu-dlg .ed-name{display:inline-block;background:#38b030;color:#fff;border:3px solid var(--woodX);border-radius:6px;padding:0 8px;margin:-30px 0 6px;text-shadow:1px 1px 0 var(--woodX)}
+html[data-ranch] .edu-dlg .ed-name small{color:#fff}
+html[data-ranch] .edu-dlg .ed-next{background:#38b030;border:3px solid var(--woodX);color:#fff;border-radius:6px}
+html[data-ranch] .edu-dlg .ed-skip{border:3px solid var(--woodX);border-radius:6px}
+html[data-ranch] .edu-rankup .er-card{background:#fff6d6;border:4px solid var(--woodX);box-shadow:inset 0 0 0 4px #ffb04a,inset 0 0 0 7px #e07a2a,0 6px 0 var(--woodX)}
+html[data-ranch] .edu-rankup .er-title{color:#e8503c;text-shadow:2px 2px 0 #ffd23f}
+html[data-ranch] .edu-entry .ee-bar i,html[data-ranch] .edu-ladder i.on{background:#38b030}
+html[data-ranch] .eq-o{border:3px solid var(--woodX);border-radius:6px;background:#fffbe8}
+html[data-ranch] .eq-o.pick{background:#ffd23f}

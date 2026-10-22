@@ -1,6 +1,6 @@
 # 墨尔本咖啡打卡 · Melbourne Cafe Check-in
 
-A cozy town-building game for checking in to 101 real Melbourne cafes: photo check-ins, a 3D village map, villager baristas, quests, a coin shop, a bean collection, an Australian festival calendar and Google review links. Five themes: 🏰 城镇 (default), 🐄 牧场, pixel valley, JRPG and hand-drawn sketch.
+A cozy town-building game for checking in to 101 real Melbourne cafes: photo check-ins, a 3D village map, villager baristas, quests, a coin shop, a bean collection, an Australian festival calendar, a coffee-education main story and Google review links. Five themes: 🏰 城镇 (default), 🐄 牧场, pixel valley, JRPG and hand-drawn sketch.
 
 **Play it:** https://yurryyunyu.github.io/melb-cafe-checkin/
 
@@ -37,6 +37,13 @@ Victorian public holidays are computed from the rules in the Public Holidays Act
 New Year's Day (1 Jan, plus the next Monday if it falls on a weekend) · Australia Day (26 Jan, moved to the next Monday if it falls on a weekend) · Labour Day (2nd Monday of March) · Good Friday, Easter Saturday, Sunday and Monday (Meeus/Jones/Butcher Easter algorithm) · ANZAC Day (25 Apr, no substitute) · King's Birthday (2nd Monday of June) · Friday before the AFL Grand Final (announced dates for 2022–2026; other years show the last Friday of September marked 约) · Melbourne Cup Day (1st Tuesday of November; some regional councils substitute a local holiday) · Christmas and Boxing Day with the VIC substitute days.
 Events (not public holidays): Lunar New Year (published dates for 2021–2031 only), Moomba (2026: 5–9 Mar per City of Melbourne; other years approximated as the Labour Day long weekend, marked 约), and Melbourne International Coffee Expo (2027: 4–6 Mar, MCEC). Events without verified dates are left out.
 Tests: `/workspace/pwtest/testfest.mjs` (dates + calendar UI) and `testthemes.mjs` (both themes, 3D→2D fallback, progress kept).
+
+## 📖 咖啡课主线 / Coffee-education main story (edu.js, `#/edu`)
+This is a main storyline in 8 chapters, taught by the mentor villager 老焙. It takes you from 咖啡小白 through 识豆学徒 → 处理法见习生 → 烘焙观察员 → 萃取学徒 → 奶咖手艺人 → 手冲练习生 → 杯测品鉴师 to 咖啡大师. The chapters cover origins & varieties, processing, roasting, espresso extraction, milk & latte-art basics, filter/pour-over, tasting & cupping, and Melbourne coffee culture.
+- Each chapter has a short dialogue lesson with class notes, then 2–3 tasks, then a 4-question quiz. Pass with 3/4 to rank up, and retry as often as you like (the options reshuffle each time).
+- Tasks are checked only against data the app already stores: check-in drink names (Long Black / Flat White / Filter …), ratings, photos and notes, bean fields (origin, process, roast), cafe tags (烘焙商, 手冲) and the researched signatures. Homebody Union and the other filter cafes are suggested as targets. Past check-ins count.
+- Rewards are coins and XP through the existing quest ledger, plus cosmetics in the pixel shop: 手摇磨豆机 (ch 3), 杯测白袍 (ch 7) and 咖啡学士帽 (ch 8). Progress is saved in `localStorage['mcc.edu']`.
+- The lessons are original Simplified Chinese, checked against SCA (cupping protocol, Golden Cup, flavor wheel), World Coffee Research, roaster and barista education pages, and Melbourne history sources. Tests: `/workspace/pwtest/testedu.mjs`.
 
 ## ⭐ Google 评价 / Google reviews (greviews.js)
 **Without a key (default):** every cafe card and detail page has a **看 Google 评价** button. It opens Google Maps for that cafe using the official Maps URLs format: `https://www.google.com/maps/search/?api=1&query=<name, address>`, plus `&query_place_id=<id>` when a place id is known. No API key is needed, and no Google API is contacted. It works in every theme.

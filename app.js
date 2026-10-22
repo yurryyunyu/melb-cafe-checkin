@@ -735,14 +735,91 @@ function calendarV(arg) {
   app.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { SFXplay('blip'); calSel = b.dataset.pick || null; location.hash = '#/calendar/' + b.dataset.go; });
   app.querySelectorAll('[data-day]').forEach(b => b.onclick = () => { SFXplay('blip'); calSel = b.dataset.day; calendarV(key); });
 }
+// ---------- 📖 咖啡教育主线 (edu.js): journal, chapters, mentor lessons, quizzes, rank-ups ----------
+const eduCtx = () => ({checkins, beans, cafe: cafeById, sig: sigOf, sigMatch, region: id => regionOf(id).r.id});
+const eduRankTitle = () => window.Edu ? Edu.RANKS[Edu.rank()] : '';
+const eduItemName = id => { const it = window.PixShop && PixShop.byId(id); return it ? it.name : ({grinder: '手摇磨豆机', cupcoat: '杯测白袍', mortar: '咖啡学士帽'})[id] || id; };
+function eduEntry() { if (!window.Edu) return ''; const r = Edu.rank(), N = Edu.CH.length, x = eduCtx();
+  if (r >= N) return `<a class="edu-entry vwin jwin done" href="#/edu" id="eduEntry"><span class="ee-ic">🎓</span><span class="ee-t"><b>主线 · 咖啡课 全部完成</b><small>称号：${esc(Edu.RANKS[r])} · 随时回来复习</small></span><span class="ee-go">›</span></a>`;
+  const ch = Edu.CH[r], st = Edu.chapterState(ch, x), req = st.tasks.filter(t => !t.opt), dn = req.filter(t => t.done).length;
+  const nxt = !st.read ? '听老焙讲课' : !st.tasksDone ? `任务 ${dn}/${req.length}` : '可以参加小测验了！';
+  return `<a class="edu-entry vwin jwin${st.ready ? ' ready' : ''}" href="#/edu/${ch.n}" id="eduEntry" data-ch="${ch.n}"><span class="ee-ic">${ch.icon}</span><span class="ee-t"><b>主线 · 第 ${ch.n} 章 ${esc(ch.title)}</b><small>${esc(Edu.RANKS[r])} · ${esc(ch.topic)} · ${nxt}</small></span><span class="ee-bar"><i style="width:${Math.round(r / N * 100)}%"></i></span><span class="ee-go">›</span></a>`; }
+function eduAva(cls = 'edu-ava') { return `<span class="${cls}" data-mentor>焙</span>`; }
+function paintMentor(root) { if (!isV() || !window.Valley) return; root.querySelectorAll('[data-mentor]').forEach(el => { try { el.textContent = ''; el.classList.add('px'); el.appendChild(Valley.portraitEl(Valley.villager(Edu.MENTOR.id, 7), 2)); } catch (e) { el.textContent = '焙'; } }); }
+function eduTargets(kind) { const v = visitedIds(), L = allCafes().filter(c => !isClosed(c) && (kind === 'roaster' ? Edu.isRoaster(c) : Edu.hasFilter(c, sigOf(c.id))));
+  L.sort((a, b) => v.has(a.id) - v.has(b.id) || (b.id === 'homebody') - (a.id === 'homebody')); const show = L.slice(0, 6);
+  return `<div class="edu-tg"><small>${kind === 'roaster' ? '标着「烘焙商」的店' : '招牌或标签里有手冲 / filter / batch brew 的店'}（共 ${L.length} 家）：</small>${show.map(c => `<a class="chip${v.has(c.id) ? ' on' : ''}" href="#/cafe/${c.id}">${v.has(c.id) ? '✔ ' : ''}${esc(c.short || c.name)}</a>`).join('')}</div>`; }
+function eduTaskRow(t) { const tg = t.go === 'roaster' || t.go === 'filter';
+  return `<div class="edu-task${t.done ? ' done' : ''}${t.opt ? ' opt' : ''}" data-task="${t.id}"><span class="et-ck">${t.done ? '✔' : '○'}</span><span class="et-t">${esc(t.t)}${t.need > 1 ? ` <b>${t.have}/${t.need}</b>` : ''}</span>${!t.done && !tg && t.go ? `<a class="et-go" href="${t.go}">去做 ›</a>` : ''}${!t.done && tg ? eduTargets(t.go) : ''}</div>`; }
+function eduJournal() { const x = eduCtx(), r = Edu.rank(), N = Edu.CH.length;
+  setTop(isR() ? '咖啡课 · 学习日记' : isF() ? '咖啡课 · 编年史' : '咖啡课 · 主线');
+  const owned = Object.entries(Edu.ITEM_AT).filter(([n]) => r >= +n).map(([, id]) => eduItemName(id));
+  app.innerHTML = `<div class="edu-head vwin jwin">${eduAva('edu-ava big')}<div><small>${esc(Edu.MENTOR.name)} · ${esc(Edu.MENTOR.role)}</small><b class="edu-rank" id="eduRank">${esc(Edu.RANKS[r])}</b>
+      <div class="edu-ladder">${Edu.RANKS.map((t, i) => `<i class="${i <= r ? 'on' : ''}${i === r ? ' cur' : ''}" title="${esc(t)}"></i>`).join('')}</div><small>主线进度 ${r}/${N} 章${r < N ? ` · 下一个称号：${esc(Edu.RANKS[r + 1])}` : ' · 已经是咖啡大师！'}</small></div></div>
+    <div class="section-title">📖 章节</div><div class="edu-list" id="eduList">${Edu.CH.map(ch => { const st = Edu.chapterState(ch, x), req = st.tasks.filter(t => !t.opt);
+      const state = st.passed ? 'passed' : st.unlocked ? 'open' : 'locked';
+      return `<${state === 'locked' ? 'div' : 'a'} class="edu-ch vwin jwin ${state}" data-ch="${ch.n}"${state === 'locked' ? '' : ` href="#/edu/${ch.n}"`}><span class="ec-n">${state === 'locked' ? '🔒' : ch.icon}</span><span class="ec-t"><b>第 ${ch.n} 章 · ${esc(ch.title)}</b><small>${esc(ch.topic)} · ${state === 'passed' ? `✔ 已通过 → ${esc(Edu.RANKS[ch.n])}` : state === 'locked' ? '完成上一章后解锁' : `${st.read ? '已听课' : '未听课'} · 任务 ${req.filter(t => t.done).length}/${req.length}`}</small></span><span class="ec-r">${Edu.ITEM_AT[ch.n] ? '🎁' : ''}🪙${Edu.REWARD(ch.n)}</span></${state === 'locked' ? 'div' : 'a'}>`; }).join('')}</div>
+    <div class="hint edu-foot">每章：听老焙讲课 → 完成任务（用平常的打卡、拍豆子、评分、心得就能完成，以前的记录也算）→ 小测验答对 ${Edu.PASS}/4 题升级，可以无限次重考。奖励金币和 XP${owned.length ? `；已获得：${owned.map(esc).join('、')}` : '；第 3、7、8 章还送装扮（在像素主题的商店里装备）'}。课程内容参考 SCA、World Coffee Research 等公开资料。</div>`;
+  paintMentor(app); }
+function eduChapter(n) { const ch = Edu.CH[n - 1]; if (!ch) return eduJournal(); const st = Edu.chapterState(ch, eduCtx());
+  setTop(`第 ${n} 章 · ${ch.title}`, '', true);
+  if (!st.unlocked) { app.innerHTML = `<div class="card vwin jwin edu-locked"><b>🔒 第 ${n} 章还没解锁</b><div class="hint">先通过第 ${n - 1} 章的小测验吧。</div><a class="btn" href="#/edu/${n - 1}">去第 ${n - 1} 章</a></div>`; return; }
+  const req = st.tasks.filter(t => !t.opt);
+  app.innerHTML = `<div class="edu-chhead vwin jwin" data-ch="${n}">${eduAva()}<div><small>${esc(ch.topic)}${st.passed ? ' · ✔ 已通过' : ''}</small><b>${ch.icon} ${esc(ch.title)}</b><button class="btn edu-listen" id="eduListen">${st.read ? '🔁 再听一遍' : '🗣️ 听老焙讲课'}</button></div></div>
+    ${st.read ? `<div class="edu-notes vwin jwin" id="eduNotes"><div class="en-h">📝 课堂笔记</div>${ch.notes.map(t => `<div class="en-l">· ${esc(t)}</div>`).join('')}</div>` : ''}
+    <div class="section-title">🎯 本章任务 <small>${req.filter(t => t.done).length}/${req.length}</small></div><div class="edu-tasks" id="eduTasks">${st.tasks.map(eduTaskRow).join('')}</div>
+    <div class="edu-quizbox vwin jwin">${st.passed ? `<b>✔ 小测验已通过</b><small>最高 ${st.best}/4 · 共考 ${st.tries} 次</small><a class="btn ghost" href="#/edu/q${n}">再考一次（复习）</a>${n < Edu.CH.length ? `<a class="btn" href="#/edu/${n + 1}">下一章 ›</a>` : ''}`
+      : st.ready ? `<b>📝 小测验 · 4 题答对 ${Edu.PASS} 题就能升级</b><small>升级后：${esc(Edu.RANKS[n])} · 🪙${Edu.REWARD(n)} · +${Math.round(Edu.REWARD(n) / 2)} XP${Edu.ITEM_AT[n] ? ` · 🎁 ${esc(eduItemName(Edu.ITEM_AT[n]))}` : ''}</small><a class="btn" id="eduQuizGo" href="#/edu/q${n}">开始小测验</a>`
+      : `<b>📝 小测验</b><small>${!st.read ? '先听老焙讲完这一课' : '先完成上面的必做任务'}，就可以参加。</small><button class="btn" disabled id="eduQuizGo">还不能考</button>`}</div>`;
+  paintMentor(app);
+  $('#eduListen').onclick = () => eduTalk(n, () => eduChapter(n)); }
+let eduDlgT = null;
+function eduTalk(n, done) { const ch = Edu.CH[n - 1]; let i = 0, d = $('#eduDlg'); if (d) d.remove();
+  d = document.createElement('div'); d.id = 'eduDlg'; d.className = 'edu-dlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', '老焙讲课');
+  d.innerHTML = `<div class="ed-box">${eduAva()}<div class="ed-body"><div class="ed-name">${esc(Edu.MENTOR.name)} <small>第 ${n} 章 · ${esc(ch.topic)}</small></div><div class="ed-text" id="edText"></div><div class="ed-foot"><span id="edPage"></span><button class="ed-skip" id="edSkip">跳过</button><button class="ed-next" id="edNext">▼ 继续</button></div></div></div>`;
+  document.body.appendChild(d); paintMentor(d);
+  const show = () => { $('#edText').textContent = ch.lesson[i]; $('#edPage').textContent = `${i + 1}/${ch.lesson.length}`; $('#edNext').textContent = i === ch.lesson.length - 1 ? '✔ 听完了' : '▼ 继续'; };
+  const end = () => { d.remove(); Edu.markRead(n); SFXplay('harvest'); done && done(); };
+  $('#edNext').onclick = e => { e.stopPropagation(); SFXplay('blip'); if (++i >= ch.lesson.length) return end(); show(); };
+  $('#edSkip').onclick = e => { e.stopPropagation(); end(); };
+  requestAnimationFrame(() => d.classList.add('show')); show(); }
+function eduQuiz(n) { const ch = Edu.CH[n - 1]; if (!ch) return eduJournal(); const st = Edu.chapterState(ch, eduCtx());
+  setTop(`第 ${n} 章 · 小测验`, '', true);
+  if (!st.ready && !st.passed) { app.innerHTML = `<div class="card vwin jwin"><b>还不能考哦</b><div class="hint">${!st.read ? '先听老焙讲课' : '先完成本章必做任务'}。</div><a class="btn" href="#/edu/${n}">回到第 ${n} 章</a></div>`; return; }
+  const qs = Edu.shuffled(n, Edu.attempt(n)), picks = qs.map(() => -1);
+  app.innerHTML = `<div class="edu-qhead vwin jwin">${eduAva()}<div><b>${ch.icon} ${esc(ch.topic)} 小测验</b><small>第 ${Edu.attempt(n) + 1} 次 · 答对 ${Edu.PASS}/${qs.length} 题通过 · 可以随时重考</small></div></div>
+    <div id="eduQuiz">${qs.map((q, i) => `<div class="eq vwin jwin" data-q="${i}"><div class="eq-q"><b>Q${i + 1}</b> ${esc(q.q)}</div>${q.opts.map((o, j) => `<button class="eq-o" data-o="${j}">${'ABC'[j]}. ${esc(o.t)}</button>`).join('')}<div class="eq-why"></div></div>`).join('')}</div>
+    <button class="btn" id="eqSubmit" disabled>交卷</button><div id="eqRes"></div>`;
+  paintMentor(app);
+  $('#eduQuiz').onclick = e => { const b = e.target.closest('.eq-o'); if (!b || $('#eduQuiz').classList.contains('graded')) return; const qi = +b.closest('.eq').dataset.q; picks[qi] = +b.dataset.o; SFXplay('blip');
+    b.parentElement.querySelectorAll('.eq-o').forEach(x => x.classList.toggle('pick', x === b)); $('#eqSubmit').disabled = picks.some(p => p < 0); };
+  $('#eqSubmit').onclick = () => { const L0 = levelInfo(), before = totalCoins(), R = Edu.grade(n, picks, today()); $('#eduQuiz').classList.add('graded'); $('#eqSubmit').remove();
+    app.querySelectorAll('.eq').forEach((el, i) => { el.classList.add(R.right[i] ? 'right' : 'wrong'); el.querySelectorAll('.eq-o').forEach((o, j) => { o.disabled = true; if (R.qs[i].opts[j].ok) o.classList.add('ans'); }); el.querySelector('.eq-why').textContent = (R.right[i] ? '✔ ' : '✘ ') + R.qs[i].why; });
+    let reward = ''; if (R.newRank) { const id = 'edu' + n; if (!questLog.claims.some(x => x.id === id)) { questLog.claims.push({d: today(), id, c: Edu.REWARD(n)}); save(QK, questLog); } reward = 'ok'; }
+    $('#eqRes').innerHTML = `<div class="eq-res vwin jwin ${R.pass ? 'pass' : 'fail'}" id="eqResult" data-score="${R.score}"><b>${R.pass ? '🎉 通过！' : '再试一次吧'}　${R.score}/${R.total}</b><small>${R.pass ? (R.newRank ? '老焙点点头：「不错，你出师了这一课。」' : '复习得很好！') : `答对 ${Edu.PASS} 题才能通过。看看上面的解释，再考一次（选项顺序会变）。`}</small>
+      ${R.pass ? `<a class="btn" href="#/edu/${n}">回到本章</a>` : `<button class="btn" id="eqRetry">🔁 重考</button>`}</div>`;
+    const rt = $('#eqRetry'); if (rt) rt.onclick = () => { SFXplay('blip'); eduQuiz(n); window.scrollTo(0, 0); };
+    SFXplay(R.pass ? 'harvest' : 'hit'); drawHud();
+    if (reward) setTimeout(() => eduRankUp(n, before, L0), 500); };
+}
+function eduRankUp(n, before, L0) { let m = $('#eduRankUp'); if (m) m.remove(); const item = Edu.ITEM_AT[n], c = Edu.REWARD(n);
+  m = document.createElement('div'); m.id = 'eduRankUp'; m.className = 'edu-rankup'; m.setAttribute('role', 'dialog');
+  m.innerHTML = `<div class="er-card vwin jwin"><div class="er-burst">✨</div><small>第 ${n} 章 · ${esc(Edu.CH[n - 1].topic)} 通过</small><div class="er-from">${esc(Edu.RANKS[n - 1])}</div><div class="er-arrow">⬇</div><b class="er-title" id="erTitle">${esc(Edu.RANKS[n])}</b>
+    <div class="er-rw"><span>🪙 +${c}</span><span>⭐ +${Math.round(c / 2)} XP</span>${item ? `<span>🎁 ${esc(eduItemName(item))}</span>` : ''}</div>
+    ${item ? `<small class="er-note">${isV() ? '装扮已放进杂货店，可以免费装备。' : '装扮会出现在像素主题（田园 / 牧场）的杂货店里。'}</small>` : ''}${n === Edu.CH.length ? '<small class="er-note">🎓 主线完成！你已经是小镇的咖啡大师。</small>' : ''}
+    <button class="btn" id="erOk">${n < Edu.CH.length ? `继续第 ${n + 1} 章` : '太好了'}</button></div>`;
+  document.body.appendChild(m); requestAnimationFrame(() => m.classList.add('show'));
+  const L1 = levelInfo(); if (L1.lv > L0.lv) setTimeout(() => toast(`⬆️ 升级！Lv.${L1.lv} ${L1.title}`, 2600), 900);
+  $('#erOk').onclick = () => { m.remove(); location.hash = n < Edu.CH.length ? '#/edu/' + (n + 1) : '#/edu'; }; }
 const views = {
   calendar(arg) { return calendarV(arg); },
+  edu(arg) { if (!window.Edu) { location.hash = '#/list'; return; } const q = /^q(\d)$/.exec(arg || ''); if (q) return eduQuiz(+q[1]); if (/^\d$/.test(arg || '')) return eduChapter(+arg); return eduJournal(); },
   list() {
     setTop('墨尔本咖啡打卡', '<button id="addCafeBtn">＋ 添加</button>');
     $('#addCafeBtn').onclick = () => location.hash = '#/add';
     const subs = [...new Set(allCafes().map(c => c.suburb))].sort();
     const v = visitedIds();
-    app.innerHTML = `${festBanner()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
+    app.innerHTML = `${festBanner()}${eduEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
       <select id="sub"><option value="">全部区域</option>${[...REGIONS, REGION_MORE].map(r => `<option value="${r.id}" ${r.id === listState.suburb ? 'selected' : ''}>${esc(r.name)}${r.zh && r.id !== 'more' ? ' ' + r.zh : ''}</option>`).join('')}</select></div>
       <div class="chips">${[['all', '全部'], ['todo', '未解锁'], ['done', '已解锁'], ['near', '离我最近']].map(([k, t]) => `<button class="chip ${listState.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
       <div class="hint">已解锁 ${v.size} / ${allCafes().length} 家</div><div id="cards"></div>`;
@@ -1012,12 +1089,13 @@ function shopV() {
   const kp = $('#shKeeper'); try { kp.appendChild(V.portraitEl(V.villager('general-store-pip', 3), 2)); } catch (e) { kp.textContent = '🧺'; }
   const draw = () => {
     const coins = totalCoins();
-    $('#shGrid').innerHTML = PixShop.ITEMS.filter(i => i.kind === shopCat).map(i => { const own = PixShop.owns(i.id), eq = PixShop.equipped(i.id), poor = !own && coins < i.price;
-      const btn = !own ? `<button class="sh-buy${poor ? ' poor' : ''}" data-buy="${i.id}">${V.coinImg()}${fmtN(i.price)}</button>`
+    $('#shGrid').innerHTML = PixShop.ITEMS.filter(i => i.kind === shopCat).map(i => { const own = PixShop.owns(i.id), eq = PixShop.equipped(i.id); let poor = !own && coins < i.price;
+      const eduLock = !own && i.edu; if (eduLock) poor = false;
+      const btn = eduLock ? `<a class="sh-buy edu-lock" href="#/edu">📖 咖啡课第 ${i.edu} 章</a>` : !own ? `<button class="sh-buy${poor ? ' poor' : ''}" data-buy="${i.id}">${V.coinImg()}${fmtN(i.price)}</button>`
         : i.kind === 'decor' ? `<button class="sh-eq${eq ? ' on' : ''}" data-eq="${i.id}">${eq ? '✔ 已摆放' : '摆放'}</button>`
         : `<button class="sh-eq${eq ? ' on' : ''}" data-eq="${i.id}"${eq && i.free ? ' disabled' : ''}>${eq ? '✔ 装备中' : '装备'}</button>`;
       return `<div class="vwin sh-item${own ? ' owned' : ''}${eq ? ' equipped' : ''}${poor ? ' poor' : ''}" data-item="${i.id}"><div class="sh-prev" data-prev="${i.id}"></div><b>${esc(i.name)}</b><small>${esc(i.desc)}</small>
-        <div class="sh-state">${own ? (i.free ? '默认' : '已拥有') : poor ? `还差 ${fmtN(i.price - coins)}` : '可购买'}</div>${btn}</div>`; }).join('');
+        <div class="sh-state">${own ? (i.free ? '默认' : i.edu ? '课程奖励' : '已拥有') : eduLock ? '主线奖励' : poor ? `还差 ${fmtN(i.price - coins)}` : '可购买'}</div>${btn}</div>`; }).join('');
     $('#shGrid').querySelectorAll('[data-prev]').forEach(el => { const c = PixShop.preview(el.dataset.prev); if (c) el.appendChild(JRPG.scaled(c, c.width > 16 ? 2 : 3)); });
   };
   const say = t => { const e = $('#shSay'); if (e) e.textContent = t; };
@@ -1173,7 +1251,7 @@ function render() {
   catch (e) { console.error('view render failed', e); app.innerHTML = `<div class="card"><b>页面出了点问题 😵</b><div class="hint">${String(e && e.message || e).replace(/[<>&]/g, '')}</div><a class="btn" href="#/list">回到发现页</a></div>`; }
   if (!['cafe', 'add'].includes(v)) window.scrollTo(0, 0);
 }
-window.addEventListener('hashchange', () => { closeSheet(); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
+window.addEventListener('hashchange', () => { closeSheet(); ['eduDlg', 'eduRankUp'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
 render();
 // quietly fetch location if already permitted (for distances), never prompt on load
 if (navigator.permissions) navigator.permissions.query({name: 'geolocation'}).then(p => { if (p.state === 'granted') locate().then(() => render()); }).catch(() => {});

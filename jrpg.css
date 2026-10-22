@@ -247,3 +247,10 @@ html[data-theme=jrpg] .gr-btn{border-radius:3px;border:2px solid #fff;background
 html[data-theme=jrpg] .gr-btn .gr-star:before{color:#ffcd75}
 html[data-theme=jrpg] .gr-box .gr-btn.btn{border-radius:4px}
 html[data-theme=jrpg] .gr-panel{border-radius:4px}
+/* 📖 coffee course rows in the JRPG skin */
+html[data-theme=jrpg]:not([data-skin]) :is(.edu-task,.edu-notes){background:rgba(10,14,60,.85);border:2px solid #c8d0ff;color:#fff}
+html[data-theme=jrpg]:not([data-skin]) .eq-o{background:rgba(255,255,255,.08);border:2px solid #8f9cff;color:#fff}
+html[data-theme=jrpg]:not([data-skin]) .eq-o.pick{background:rgba(255,210,63,.25);border-color:#ffd23f}
+html[data-theme=jrpg]:not([data-skin]) .eq-o.ans{background:rgba(80,200,80,.3);border-color:#7fe07f}
+html[data-theme=jrpg]:not([data-skin]) .eq.wrong .eq-o.pick{background:rgba(220,60,60,.3);border-color:#ff8a8a}
+html[data-theme=jrpg]:not([data-skin]) :is(.eq.right .eq-why,.eq.wrong .eq-why){color:#fff}

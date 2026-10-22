@@ -136,3 +136,15 @@ html[data-theme=foundation] .m3d-pill{background:rgba(248,239,216,.92);border:1p
 html[data-theme=foundation] .m3d-mk.locked .m3d-name{font-size:11px;opacity:.9}
 @media (max-width:420px){html[data-theme=foundation] .fd-res{gap:4px}html[data-theme=foundation] .fd-r{padding:3px 6px;gap:3px}html[data-theme=foundation] .fd-xp{width:30px}}
 @media (max-width:420px){html[data-theme=foundation] .fd-r.bld small{display:none}html[data-theme=foundation] .fd-r{font-size:12.5px}html[data-theme=foundation] .fd-res{gap:3px}}
+/* 📖 coffee course */
+html[data-theme=foundation] :is(.edu-entry,.edu-head,.edu-chhead,.edu-qhead,.edu-ch,.edu-notes,.edu-task,.edu-quizbox,.eq,.eq-res){background:var(--fd-panel);border:1px solid var(--fd-edge);box-shadow:var(--fd-shadow);color:var(--ink)}
+html[data-theme=foundation] .edu-entry{border-left:5px solid var(--fd-wood)}
+html[data-theme=foundation] .edu-entry .ee-t b,html[data-theme=foundation] .edu-ch .ec-t b,html[data-theme=foundation] .edu-rank,html[data-theme=foundation] .edu-chhead b,html[data-theme=foundation] .edu-qhead b{font-family:var(--serif)}
+html[data-theme=foundation] .edu-entry .ee-bar i,html[data-theme=foundation] .edu-ladder i.on{background:linear-gradient(90deg,#c98a2a,var(--fd-gold))}
+html[data-theme=foundation] .edu-ava{background:radial-gradient(circle at 35% 30%,#a8743e,var(--fd-wood));border:2px solid var(--fd-gold);font-family:var(--serif)}
+html[data-theme=foundation] .edu-dlg .ed-box{background:linear-gradient(180deg,#fbf3df,#efdfba);border:2px solid var(--fd-wood);box-shadow:0 0 0 3px #e9d3a2,0 0 0 5px var(--fd-wood),0 12px 30px rgba(60,35,15,.35)}
+html[data-theme=foundation] .edu-dlg .ed-name{font-family:var(--serif);color:var(--fd-wood)}
+html[data-theme=foundation] .edu-dlg .ed-next{background:var(--fd-wood);border-color:var(--fd-wood);color:#fff3d2}
+html[data-theme=foundation] .edu-rankup .er-card{background:linear-gradient(180deg,#fbf3df,#ead6a6);border:2px solid var(--fd-wood);box-shadow:0 0 0 4px #e9d3a2,0 0 0 6px var(--fd-wood),0 16px 40px rgba(0,0,0,.4)}
+html[data-theme=foundation] .edu-rankup .er-title{font-family:var(--serif);color:#8a4a18}
+html[data-theme=foundation] .eq-o{background:rgba(255,250,236,.8);border-color:var(--fd-edge)}
