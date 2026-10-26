@@ -7,6 +7,7 @@ let PENCIL = '#4a4a4a', SLATE = '#9fb3c4', SLATE_D = '#6f879c', PINK = '#ef6f8f'
 const THEMES = {
   sketch: {PENCIL: '#4a4a4a', SLATE: '#9fb3c4', SLATE_D: '#6f879c', PINK: '#ef6f8f', PINK_D: '#c94a6b', PAPER: '#f7f4ec', LABEL_FONT: '"Josefin Sans", "Avenir Next", Helvetica, sans-serif'},
   foundation: {PENCIL: '#5a3c22', SLATE: '#d8c08c', SLATE_D: '#6e5230', PINK: '#d9644e', PINK_D: '#8a3a24', PAPER: '#a8c47a', LABEL_FONT: '"Avenir Next", "Segoe UI", "PingFang SC", "Hiragino Sans GB", Helvetica, sans-serif'},
+  xuan: {PENCIL: '#1f1a17', SLATE: '#cfc3a5', SLATE_D: '#3b332c', PINK: '#b3342b', PINK_D: '#7e1f1a', PAPER: '#e8dcc0', LABEL_FONT: '"Kaiti SC", "STKaiti", "KaiTi", "Songti SC", "Noto Serif CJK SC", serif'},
   jrpg: {PENCIL: '#1a1c2c', SLATE: '#ffffff', SLATE_D: '#1a1c2c', PINK: '#ffcd75', PINK_D: '#b07a1e', PAPER: '#5fb547', LABEL_FONT: '"FusionPixel", monospace'},
 };
 const ROOF3 = ['#b13e53', '#3b5dc9', '#38b764', '#a05b2c', '#5d275d', '#ef7d57'];
@@ -90,7 +91,8 @@ function streetLabelTex(text, fsPx) {
 export async function create(el, region, opt) {
   const {visited, cafeById, me, rangeM = 250, onOpen = () => {}, pop = new Set(), fitAffine} = opt;
   const J = opt.theme === 'jrpg' && window.JRPG, TT = J ? window.JRPG.tiles() : null, FDN = opt.theme === 'foundation';
-  ({PENCIL, SLATE, SLATE_D, PINK, PINK_D, PAPER, LABEL_FONT} = THEMES[J ? 'jrpg' : FDN ? 'foundation' : 'sketch']);
+  const XU = !!(J && opt.xuan && window.Xuan); // ⚔️ 古风: ink-wash paper ground, stone paths, tiled-roof pavilions, misty mountains
+  ({PENCIL, SLATE, SLATE_D, PINK, PINK_D, PAPER, LABEL_FONT} = THEMES[XU ? 'xuan' : J ? 'jrpg' : FDN ? 'foundation' : 'sketch']);
   const SEA = opt.season || 'spring', FG = {spring: ['#9cc46a', '#b7d47e', '#86b05a', '#e9d98e'], summer: ['#b5c46a', '#cfd182', '#9aac58', '#e8c879'], autumn: ['#c2b25e', '#d6a24e', '#a99a4c', '#e3b469'], winter: ['#8fae78', '#a6bf8c', '#7b9a68', '#d9d6b0']}[SEA] || ['#9cc46a', '#b7d47e', '#86b05a', '#e9d98e'];
   await fontsReady();
   const [vx, vy, vw, vh] = region.vb, cx = vx + vw / 2, cy = vy + vh / 2;
@@ -109,6 +111,7 @@ export async function create(el, region, opt) {
   if (FDN) { // warm golden-hour light + soft haze for depth
     scene.add(new THREE.HemisphereLight(0xfff0cc, 0x6e8a48, 1.45)); const sun = new THREE.DirectionalLight(0xffd59a, 2.3); sun.position.set(-7, 8, 3); scene.add(sun);
     scene.fog = new THREE.FogExp2(0xf1dcae, 0.011); }
+  else if (XU) { scene.add(new THREE.HemisphereLight(0xfff6e4, 0x9a8a6a, 1.5)); const sun = new THREE.DirectionalLight(0xffe8c0, 1.9); sun.position.set(-5, 9, 4); scene.add(sun); scene.fog = new THREE.FogExp2(0xeee4cc, 0.018); }
   else { scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d2c0, 1.6));
     const sun = new THREE.DirectionalLight(0xffffff, 1.9); sun.position.set(-4, 9, 5); scene.add(sun); }
   const ramp = track(toonRamp());
@@ -117,18 +120,25 @@ export async function create(el, region, opt) {
   const meadowTex = () => canvasTex(512, 512, (g, w, h) => { g.fillStyle = FG[0]; g.fillRect(0, 0, w, h); const R2 = rng(7);
     for (let i = 0; i < 260; i++) { const x = R2() * w, y = R2() * h, r = 8 + R2() * 46, gr = g.createRadialGradient(x, y, 0, x, y, r); const c = FG[1 + ((R2() * 3) | 0)]; gr.addColorStop(0, c + 'aa'); gr.addColorStop(1, c + '00'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
     for (let i = 0; i < 1800; i++) { g.fillStyle = `rgba(${R2() < .5 ? '60,80,30' : '255,240,190'},${R2() * .12})`; g.fillRect(R2() * w, R2() * h, 1 + R2() * 2, 1 + R2() * 3); } }, true);
-  const GW = vw * S + 1.2, GD = vh * S + 1.2, pt = track(J ? pixelTex(TT.grass[0], [GW / 0.32, GD / 0.32]) : FDN ? meadowTex() : paperTex()); if (!J) pt.repeat.set(GW / (FDN ? 6 : 4), GD / (FDN ? 6 : 4));
+  const xuTex = () => canvasTex(512, 512, (g, w, h) => { window.Xuan.paperTex(g, w, h, 11); const R2 = rng(13); for (let i = 0; i < 70; i++) { const x = R2() * w, y = R2() * h, r = 20 + R2() * 70, gr = g.createRadialGradient(x, y, 0, x, y, r); const c = R2() < .75 ? '147,180,160' : '185,138,76'; gr.addColorStop(0, `rgba(${c},.28)`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); } }, true);
+  const GW = vw * S + 1.2, GD = vh * S + 1.2, pt = track(XU ? xuTex() : J ? pixelTex(TT.grass[0], [GW / 0.32, GD / 0.32]) : FDN ? meadowTex() : paperTex()); if (!J || XU) pt.repeat.set(GW / (FDN ? 6 : XU ? 7 : 4), GD / (FDN ? 6 : XU ? 7 : 4));
   const ground = new THREE.Mesh(track(new THREE.PlaneGeometry(GW, GD)), track(new THREE.MeshBasicMaterial({map: pt})));
   ground.rotation.x = -Math.PI / 2; scene.add(ground);
   const bpts = [[-GW / 2, -GD / 2], [GW / 2, -GD / 2], [GW / 2, GD / 2], [-GW / 2, GD / 2], [-GW / 2, -GD / 2]];
   if (!FDN) [0, 0.03].forEach((j, i) => { const g = track(new THREE.BufferGeometry().setFromPoints(bpts.map(([x, z]) => new THREE.Vector3(x + j, 0.004, z - j)))); scene.add(new THREE.Line(g, track(new THREE.LineBasicMaterial({color: PENCIL, transparent: true, opacity: i ? .4 : .9})))); });
   // soft "slab" under the paper so the diorama has thickness
-  const base = new THREE.Mesh(track(new THREE.BoxGeometry(GW, 0.25, GD)), track(FDN ? new THREE.MeshLambertMaterial({color: '#8a6a44'}) : new THREE.MeshToonMaterial({color: J ? '#8a5a32' : '#e9e2d0', gradientMap: ramp})));
+  const base = new THREE.Mesh(track(new THREE.BoxGeometry(GW, 0.25, GD)), track(FDN ? new THREE.MeshLambertMaterial({color: '#8a6a44'}) : new THREE.MeshToonMaterial({color: XU ? '#4a2e1e' : J ? '#8a5a32' : '#e9e2d0', gradientMap: ramp})));
   base.position.y = -0.126; scene.add(base);
+  if (XU) { // 山水: misty celadon/indigo peaks ringing the far side of the diorama
+    const RM = rng(hash(region.id) ^ 0x51), mg = new Batch(1), cone = new THREE.ConeGeometry(1, 1, 7, 1);
+    for (let i = 0; i < 16; i++) { const t = i / 15, side = i % 3, hgt = 1.4 + RM() * 2.4, r = 0.9 + RM() * 1.3;
+      const x = side === 2 ? (RM() < .5 ? -1 : 1) * (GW / 2 + 1 + RM() * 1.5) : (t - .5) * (GW + 3), z = side === 2 ? (RM() - .7) * GD : -GD / 2 - 1.2 - RM() * 2.2;
+      mg.geo(cone, x, hgt / 2 - 0.2, z, RM() * 3, ['#93b4a0', '#7f9bb0', '#5f8775', '#bcd2bd'][(RM() * 4) | 0], r, hgt, r * (.7 + RM() * .4)); }
+    scene.add(mg.build(track(new THREE.MeshLambertMaterial({vertexColors: true, flatShading: true})), PENCIL)); cone.dispose(); }
   if (!FDN) { const be = new THREE.LineSegments(track(new THREE.EdgesGeometry(base.geometry)), track(new THREE.LineBasicMaterial({color: PENCIL}))); be.position.copy(base.position); scene.add(be); }
 
   // streets: raised slate slabs on a pencil casing
-  const sb = new Batch(J ? 1 / 0.32 : 1.6, !!J);
+  const sb = new Batch(J && !XU ? 1 / 0.32 : 1.6, !!J && !XU);
   const wind = pts => { if (!FDN) return pts; const out = [pts[0]]; // organic: gently meander between the real street points
     for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i], L = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.round(L / 40)), nx = -(by - ay) / (L || 1), ny = (bx - ax) / (L || 1), amp = Math.min(9, L / 30);
       for (let k = 1; k <= n; k++) { const t = k / n, o = k === n ? 0 : Math.sin(t * Math.PI * 2 + i) * amp; out.push([ax + (bx - ax) * t + nx * o, ay + (by - ay) * t + ny * o]); } } return out; };
@@ -137,8 +147,8 @@ export async function create(el, region, opt) {
     for (let i = 1; i < SP.length; i++) {
       const [x0, z0] = W(...SP[i - 1]), [x1, z1] = W(...SP[i]), L = Math.hypot(x1 - x0, z1 - z0), ry = -Math.atan2(z1 - z0, x1 - x0);
       if (FDN) { sb.box(L + ws * .6, h * .6, ws + 0.06, (x0 + x1) / 2, h * .3, (z0 + z1) / 2, ry, '#a98c5c', {edges: false}); sb.box(L + ws * .5, h, ws, (x0 + x1) / 2, h / 2 + 0.002, (z0 + z1) / 2, ry, st.w >= 28 ? '#d9c497' : '#e2cd9c', {edges: false}); continue; }
-      sb.box(L + ws + 0.07, h - 0.02, ws + 0.07, (x0 + x1) / 2, (h - 0.02) / 2, (z0 + z1) / 2, ry, J ? '#5e584c' : PENCIL, {edges: false});
-      sb.box(L + ws, h, ws, (x0 + x1) / 2, h / 2 + 0.002, (z0 + z1) / 2, ry, J ? (st.w >= 28 ? '#ffffff' : '#f2c98a') : SLATE, {seed: si * 7 + i});
+      sb.box(L + ws + 0.07, h - 0.02, ws + 0.07, (x0 + x1) / 2, (h - 0.02) / 2, (z0 + z1) / 2, ry, XU ? '#5a5246' : J ? '#5e584c' : PENCIL, {edges: false});
+      sb.box(L + ws, h, ws, (x0 + x1) / 2, h / 2 + 0.002, (z0 + z1) / 2, ry, XU ? (st.w >= 28 ? '#cfc6ae' : '#d9c79e') : J ? (st.w >= 28 ? '#ffffff' : '#f2c98a') : SLATE, {seed: si * 7 + i});
     }
     if (st.label) {
       const fs = st.w * 0.6 * S, {tex, aspect} = streetLabelTex(st.label, 64); track(tex);
@@ -147,7 +157,7 @@ export async function create(el, region, opt) {
       const g = new THREE.Group(); const [lx, lz] = W(...st.at); g.position.set(lx, h + (FDN ? 0.03 : 0.012), lz); g.rotation.y = st.v ? Math.PI / 2 : 0; g.add(plane); scene.add(g);
     }
   });
-  scene.add(sb.build(track(FDN ? new THREE.MeshLambertMaterial({vertexColors: true}) : new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, map: track(J ? pixelTex(TT.stone) : stripeTex(.33, 9))})), PENCIL));
+  scene.add(sb.build(track(FDN ? new THREE.MeshLambertMaterial({vertexColors: true}) : new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, map: track(XU ? stripeTex(.12, 7) : J ? pixelTex(TT.stone) : stripeTex(.33, 9))})), PENCIL));
 
   // low-poly blocks between streets (seeded per region, avoid streets / markers / pill)
   const R = rng(hash(region.id)), bb = new Batch(1.9), tb = new Batch(1), pts = Object.values(region.cafes), pl = region.pill;
@@ -170,6 +180,13 @@ export async function create(el, region, opt) {
       tb.geo(prismGeo, wx, hh + 0.09, wz, ry, ['#c8643c', '#d9a441', '#a85a48', '#8c97a3'][(R() * 4) | 0], w1 * 1.12, 0.2, d1 * 1.25);
       continue;
     }
+    if (XU) { // 古风 village: 粉墙黛瓦 houses with hip roofs, ink-green pines and round trees
+      if (R() < 0.45) { for (let t = 0; t < 2; t++) { const ox = (R() - .5) * sz * S * .6, oz = (R() - .5) * sz2 * S * .6; tb.geo(trunkGeo, wx + ox, 0.11, wz + oz, 0, '#3b2a1e'); if (R() < .55) tb.geo(crownGeo, wx + ox, 0.42, wz + oz, R(), R() < .5 ? '#3f5e4a' : '#2f4a3c'); else tb.geo(ballGeo, wx + ox, 0.36, wz + oz, R(), R() < .12 ? '#c4574d' : '#6f8f73'); } continue; }
+      const hh = 0.14 + R() * 0.2, ry = (R() - .5) * 0.1, w1 = sz * S * .8, d1 = sz2 * S * .7;
+      bb.box(w1, hh, d1, wx, hh / 2, wz, ry, '#f2ecdc', {seed: (x * 31 + y) | 0});
+      tb.geo(roofGeo, wx, hh + 0.1, wz, ry + Math.PI / 4, R() < .8 ? '#3d4852' : '#4a3a2e', w1 * 1.3, 0.2, d1 * 1.3);
+      continue;
+    }
     if (J) { // toy JRPG overworld: cottages with pyramid roofs, or little trees
       if (R() < 0.42) { for (let t = 0; t < 2; t++) { const ox = (R() - .5) * sz * S * .6, oz = (R() - .5) * sz2 * S * .6; tb.geo(trunkGeo, wx + ox, 0.11, wz + oz, 0, '#6b4423'); if (R() < .5) tb.geo(crownGeo, wx + ox, 0.42, wz + oz, R(), '#2f8a3a'); else tb.geo(ballGeo, wx + ox, 0.36, wz + oz, R(), '#49b04f'); } continue; }
       const hh = 0.16 + R() * 0.28, ry = (R() - .5) * 0.1, w1 = sz * S * .85, d1 = sz2 * S * .85;
@@ -180,7 +197,7 @@ export async function create(el, region, opt) {
     bb.box(sz * S, hgt, sz2 * S, wx, hgt / 2, wz, (R() - .5) * 0.12, tones[(R() * tones.length) | 0], {seed: (x * 31 + y) | 0});
     if (R() < 0.18) bb.box(sz * S * 0.45, 0.12, sz2 * S * 0.45, wx, hgt + 0.06, wz, 0, '#f3efe4', {seed: (x + y * 17) | 0}); // little roof box
   }
-  scene.add(bb.build(track(FDN ? new THREE.MeshLambertMaterial({vertexColors: true}) : new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, map: track(stripeTex(J ? .06 : .16, 8))})), PENCIL));
+  scene.add(bb.build(track(FDN ? new THREE.MeshLambertMaterial({vertexColors: true}) : new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, map: track(stripeTex(XU ? .1 : J ? .06 : .16, 8))})), PENCIL));
   if (tb.pos.length) { const tm = tb.build(track(FDN ? new THREE.MeshLambertMaterial({vertexColors: true, flatShading: true}) : new THREE.MeshToonMaterial({vertexColors: true, gradientMap: ramp, flatShading: true})), PENCIL); scene.add(tm); }
   [roofGeo, trunkGeo, crownGeo, ballGeo].forEach(g => g.dispose());
 
@@ -207,13 +224,34 @@ export async function create(el, region, opt) {
     fChim: track(new THREE.MeshLambertMaterial({color: '#9a7a62'})), fSign: track(new THREE.MeshLambertMaterial({color: '#7a4a28'})),
     ghost: track(new THREE.MeshLambertMaterial({color: '#a9cdee', transparent: true, opacity: .45, depthWrite: false})), ghostR: track(new THREE.MeshLambertMaterial({color: '#c9e0f5', transparent: true, opacity: .45, depthWrite: false})),
     ghostE: track(new THREE.LineDashedMaterial({color: '#3f78b0', dashSize: 0.05, gapSize: 0.035}))});
-  const glowTex = track(canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); const gc = J ? '255,220,120' : FDN ? '255,214,140' : '255,170,195'; gr.addColorStop(0, `rgba(${gc},.95)`); gr.addColorStop(1, `rgba(${gc},0)`); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
+  const glowTex = track(canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); const gc = XU ? '255,180,90' : J ? '255,220,120' : FDN ? '255,214,140' : '255,170,195'; gr.addColorStop(0, `rgba(${gc},.95)`); gr.addColorStop(1, `rgba(${gc},0)`); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
+  const xuPl = track(new THREE.BoxGeometry(0.72, 0.08, 0.56)), xuPi = track(new THREE.CylinderGeometry(0.03, 0.03, 0.46, 6)), xuBody = track(new THREE.BoxGeometry(0.44, 0.36, 0.32)), xuRoof = track(new THREE.ConeGeometry(0.56, 0.3, 4, 1)), xuFin = track(new THREE.ConeGeometry(0.04, 0.14, 6)), xuLan = track(new THREE.SphereGeometry(0.06, 10, 8));
+  if (XU) { const L = c => track(new THREE.MeshLambertMaterial({color: c})), Gh = c => track(new THREE.MeshLambertMaterial({color: c, transparent: true, opacity: .5, depthWrite: false}));
+    M.xu = {stone: L('#b9b19c'), pillar: L('#b3342b'), wall: L('#f3e7c9'), roof: track(new THREE.MeshLambertMaterial({color: '#3d4852', flatShading: true})), gold: L('#c9a45a'), lantern: track(new THREE.MeshBasicMaterial({color: '#e0563a'}))};
+    M.xuG = {stone: L('#bdb7a8'), pillar: L('#8a7f78'), wall: L('#e2dccd'), roof: track(new THREE.MeshLambertMaterial({color: '#7d868c', flatShading: true})), gold: L('#b8ae96')}; } // not yet visited: unpainted ink sketch (greyed)
   const pickables = [], markers = {};
   let n = 0;
   Object.entries(region.cafes).forEach(([id, [sx, sy, side]]) => {
     n++; const c = cafeById(id); if (!c) return;
     const done = visited.has(id), [x, z] = W(sx, sy), g = new THREE.Group(); g.position.set(x, 0, z); g.userData.id = id;
     const ring = new THREE.Mesh(ringGeo, done ? M.ringOn : M.ringOff); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.006; g.add(ring);
+    if (XU) { // 🏯 tiled-roof pavilion with red pillars + lanterns; not yet visited = pale ink ghost
+      const bld = new THREE.Group(); g.add(bld); bld.scale.setScalar(1.55); const ry = ((Math.abs(hash(id)) >> 4) % 4) * 0.15;
+      const mats = done ? M.xu : M.xuG;
+      const plinth = new THREE.Mesh(xuPl, mats.stone); plinth.position.y = 0.04; bld.add(plinth);
+      [[-.24, -.18], [.24, -.18], [-.24, .18], [.24, .18]].forEach(([px, pz]) => { const pi = new THREE.Mesh(xuPi, mats.pillar); pi.position.set(px, 0.3, pz); bld.add(pi); });
+      const body = new THREE.Mesh(xuBody, mats.wall); body.position.y = 0.3; body.userData.id = id; bld.add(body); pickables.push(body);
+      const r1 = new THREE.Mesh(xuRoof, mats.roof); r1.position.y = 0.66; r1.rotation.y = Math.PI / 4; r1.scale.set(1, 1, 1); bld.add(r1);
+      const b2 = new THREE.Mesh(xuBody, mats.wall); b2.scale.set(.6, .5, .6); b2.position.y = 0.86; bld.add(b2);
+      const r2 = new THREE.Mesh(xuRoof, mats.roof); r2.position.y = 1.08; r2.rotation.y = Math.PI / 4; r2.scale.set(.66, .9, .66); bld.add(r2);
+      const fin = new THREE.Mesh(xuFin, mats.gold); fin.position.y = 1.3; bld.add(fin);
+      bld.rotation.y = ry; bld.userData.y0 = 0;
+      if (done) { [[-.34, .26], [.34, .26]].forEach(([lx, lz]) => { const l = new THREE.Mesh(xuLan, M.xu.lantern); l.position.set(lx, 0.5, lz); bld.add(l); });
+        const glow = new THREE.Sprite(track(new THREE.SpriteMaterial({map: glowTex, depthWrite: false, transparent: true, opacity: .6}))); glow.scale.set(1.4, 1.4, 1); glow.position.y = 0.55; g.add(glow); }
+      const lab = document.createElement('div'); lab.className = `m3d-mk ${done ? 'done' : 'locked'} side-${side === 'l' ? 'l' : 'r'} xu`; lab.dataset.id = id;
+      lab.innerHTML = `<span class="m3d-no">${n}</span><span class="m3d-name">${String(c.mapLabel || c.short || c.name).split('\n').map(esc).join('<br>')}</span>`;
+      lab.addEventListener('click', ev => { ev.stopPropagation(); onOpen(id); });
+      const lo = new CSS2DObject(lab); lo.position.y = 1.95; g.add(lo); scene.add(g); markers[id] = {g, cup: bld, lab}; return; }
     if (FDN) { // 🏠 a little medieval cafe house; not yet visited = translucent blueprint (placement ghost)
       const hs = Math.abs(hash(id)), bld = new THREE.Group(); bld.userData.y0 = 0; g.add(bld); bld.scale.setScalar(1.45); const ry = ((hs >> 4) % 8) * 0.2;
       const wallM = done ? M.fWall[hs % M.fWall.length] : M.ghost, roofM = done ? M.fRoof[(hs >> 3) % M.fRoof.length] : M.ghostR;
@@ -349,7 +387,7 @@ export async function create(el, region, opt) {
   if (opt.onSlow) for (let i = 0; i < 14 && !slowTold; i++) draw(); // quick CPU-side probe: very slow devices fall back to 2D
   el.dataset.ready = '1';
   const api = {
-    kind: '3d', style: FDN ? 'foundation' : J ? 'jrpg' : 'sketch', avatarIn, markerCount: Object.keys(markers).length,
+    kind: '3d', style: FDN ? 'foundation' : XU ? 'xuan' : J ? 'jrpg' : 'sketch', avatarIn, markerCount: Object.keys(markers).length,
     renderMs() { return slowT.slice(); },
     get frames() { return frames; },
     view() { return {az: controls.getAzimuthalAngle(), polar: controls.getPolarAngle(), dist: camera.position.distanceTo(controls.target)}; },

@@ -19,6 +19,9 @@ const MOODS = {
   'r-winter': {bpm: 80, root: 55, scale: [0, 2, 3, 7, 9], chords: [0, 8, 3, 10, 0, 5, 8, 7], seed: 0x3170, lead: 'triangle', rest: .38, vol: .9},
   // 🏰 Foundation-style default: slow plucked "lute" over soft drones
   'f-day': {bpm: 76, root: 57, scale: [0, 2, 4, 7, 9], chords: [0, 7, 5, 0, 9, 5, 7, 0], seed: 0xf0dd, lead: 'triangle', rest: .34, vol: 1, pluck: true},
+  // ⚔️ 古风: original pentatonic (宫调式 D) zither-like loop with grace-note slides; night = 羽调式, slower
+  'x-day': {bpm: 70, root: 62, scale: [0, 2, 4, 7, 9], chords: [0, 9, 7, 0, 5, 9, 7, 0], seed: 0x9e1f, lead: 'triangle', rest: .36, vol: 1, pluck: true, zheng: true},
+  'x-night': {bpm: 56, root: 57, scale: [0, 3, 5, 7, 10], chords: [0, 7, 5, 0, 10, 5, 7, 0], seed: 0x3a1e, lead: 'triangle', rest: .5, vol: .85, pluck: true, zheng: true},
   'f-night': {bpm: 62, root: 55, scale: [0, 2, 3, 7, 10], chords: [0, 5, 3, 7, 0, 8, 5, 7], seed: 0xf0a7, lead: 'triangle', rest: .5, vol: .85, pluck: true}};
 function compose(m) { const M = MOODS[m], R = rng(M.seed), bars = M.chords.length, mel = [], bass = [], hat = [];
   let deg = 2; // random walk over the scale, landing on chord tones on beat 1
@@ -38,7 +41,7 @@ function tick(t, vol) { if (!noiseBuf) { noiseBuf = ctx.createBuffer(1, ctx.samp
   const s = ctx.createBufferSource(), g = ctx.createGain(), hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 6000; s.buffer = noiseBuf; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + .04); s.connect(hp); hp.connect(g); g.connect(master); s.start(t); s.stop(t + .05); }
 function schedule() { if (!ctx || !song) return; const spb = 60 / song.M.bpm / 2; // eighth notes
   while (nextT < ctx.currentTime + .25) { const i = step % song.len, v = song.M.vol, m = song.mel[i], b = song.bass[i];
-    if (m) { if (song.M.pluck) { tone(nextT, mtof(m.n), spb * 1.6, 'triangle', .2 * v); tone(nextT + .004, mtof(m.n) * 2.003, spb * .7, 'sine', .05 * v); } else tone(nextT, mtof(m.n), spb * m.len * .95, song.M.lead, .16 * v); }
+    if (m) { if (song.M.pluck) { if (song.M.zheng && (step % 8 === 0 || m.len > 1)) tone(nextT - .045, mtof(m.n + 2), .07, 'triangle', .07 * v); tone(nextT, mtof(m.n), spb * (song.M.zheng ? 2.4 : 1.6), 'triangle', .2 * v); tone(nextT + .004, mtof(m.n) * 2.003, spb * .7, 'sine', .05 * v); } else tone(nextT, mtof(m.n), spb * m.len * .95, song.M.lead, .16 * v); }
     if (b != null) tone(nextT, mtof(b), spb * 3.6, 'triangle', .3 * v);
     if (song.hat[i]) tick(nextT, .05 * v);
     nextT += spb; step++; } }

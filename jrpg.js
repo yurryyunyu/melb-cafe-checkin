@@ -4,6 +4,7 @@
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const hash = s => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
+const XU = () => !!(window.Xuan && window.Xuan.on()); // ⚔️ 古风 skin active
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
@@ -92,6 +93,8 @@ const SFX = {
   set(v) { this.on = !!v; lsSet('mcc.sound', this.on); if (this.on) { this.ensure(); this.play('confirm'); } document.querySelectorAll('[data-snd]').forEach(b => { b.textContent = this.on ? '🔊' : '🔇'; b.setAttribute('aria-pressed', this.on); }); },
   ensure() { try { if (!this.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) this.ctx = new AC(); } if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); } catch (e) { this.ctx = null; } return this.ctx; },
   tone(f, t, d, type = 'square', v = 0.05) { const c = this.ctx, o = c.createOscillator(), a = c.createGain(); o.type = type; o.frequency.value = f; a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(a).connect(c.destination); o.start(t); o.stop(t + d + 0.02); },
+  pluck(f, t, d, v) { const c = this.ctx, o = c.createOscillator(), o2 = c.createOscillator(), a = c.createGain(); o.type = 'triangle'; o2.type = 'sine'; o.frequency.setValueAtTime(f * 1.012, t); o.frequency.exponentialRampToValueAtTime(f, t + .05); o2.frequency.value = f * 2.004;
+    a.gain.setValueAtTime(0, t); a.gain.linearRampToValueAtTime(v, t + .006); a.gain.exponentialRampToValueAtTime(0.0001, t + d); const a2 = c.createGain(); a2.gain.value = .3; o.connect(a); o2.connect(a2).connect(a); a.connect(c.destination); o.start(t); o2.start(t); o.stop(t + d + .02); o2.stop(t + d + .02); },
   play(name) {
     if (!this.on || !this.ensure()) return; const t = this.ctx.currentTime + 0.01;
     const seq = {blip: [[988, .04]], confirm: [[659, .06], [988, .09]], step: [[180, .03, 'triangle', .03]],
@@ -101,6 +104,7 @@ const SFX = {
       coin: [[988, .05], [1319, .14]], hit: [[220, .05, 'square', .06], [147, .12, 'square', .05]], harvest: [[523, .08], [784, .08], [1047, .16]], heart: [[659, .1], [880, .18]],
       sleep: [[523, .25], [440, .25], [392, .25], [330, .5], [392, .6]]}[name] || [];
     const soft = document.documentElement.dataset.skin === 'valley'; // cozy theme: gentle triangle/sine chimes
+    if (XU()) { let at = t; seq.forEach(([f, d, ty, v]) => { this.pluck(f, at, Math.max(.18, d * 2.2), (v || 0.05) * 1.3); at += d; }); return; } // 古风: plucked-zither tones
     let at = t; seq.forEach(([f, d, ty, v]) => { if (soft) { this.tone(f, at, d * 1.4, ty === 'triangle' ? 'triangle' : 'sine', (v || 0.05) * 1.2); if (ty === undefined) this.tone(f * 2, at, d, 'triangle', 0.012); }
       else { this.tone(f, at, d * 0.95, ty, v); if (ty === undefined) this.tone(f / 2, at, d * 0.95, 'triangle', 0.035); } at += d; });
   },
@@ -113,7 +117,7 @@ function say(msg, ms = 2600, name = '咖啡师 小豆', face = null, faceBg = ''
   if (!d) { d = document.createElement('div'); d.id = 'dlg'; d.className = 'jwin'; d.innerHTML = '<canvas class="dlg-face" width="16" height="16"></canvas><div class="dlg-body"><div class="dlg-name"></div><div class="dlg-text"></div></div><span class="dlg-next">▼</span>';
     document.body.appendChild(d);
     d.addEventListener('click', () => { if (d._full && d.querySelector('.dlg-text').textContent !== d._full) { clearInterval(dlgTimer); d.querySelector('.dlg-text').textContent = d._full; d.classList.add('done'); } else d.classList.remove('show'); }); }
-  const fc = d.querySelector('.dlg-face'), src = face || fromRows(BARISTA); fc.width = src.width; fc.height = src.height; const fg = fc.getContext('2d'); fg.imageSmoothingEnabled = false; fg.clearRect(0, 0, fc.width, fc.height); fg.drawImage(src, 0, 0); fc.style.background = faceBg || '';
+  const fc = d.querySelector('.dlg-face'), src = face || (XU() ? window.Xuan.portrait() : fromRows(BARISTA)); fc.width = src.width; fc.height = src.height; const fg = fc.getContext('2d'); fg.imageSmoothingEnabled = false; fg.clearRect(0, 0, fc.width, fc.height); fg.drawImage(src, 0, 0); fc.style.background = faceBg || '';
   const txt = d.querySelector('.dlg-text'); d.querySelector('.dlg-name').textContent = name;
   clearInterval(dlgTimer); clearTimeout(dlgHide); d._at = Date.now(); d._full = String(msg); txt.textContent = ''; d.classList.remove('done'); d.classList.add('show');
   const chars = [...d._full]; let i = 0;
@@ -132,7 +136,7 @@ function encounter(cafe, lit) {
     const o = overlay(); o.className = 'enc';
     o.innerHTML = `<div class="enc-flash"></div><div class="enc-stage"><div class="enc-ground"></div></div>
       <div class="jwin enc-box"><div class="enc-text"></div><div class="jmenu enc-menu"><button class="jmenu-item on" id="encGo">${cafe.closed ? '回忆' : '品尝'}</button><button class="jmenu-item" id="encRun">稍后</button></div></div>`;
-    o.querySelector('.enc-stage').appendChild(scaled(cafeSprite(cafe.id, lit), 6));
+    o.querySelector('.enc-stage').appendChild(XU() ? window.Xuan.pavilion(cafe.id, lit, !!cafe.closed, 3) : scaled(cafeSprite(cafe.id, lit), 6));
     SFX.play('encounter');
     const text = o.querySelector('.enc-text');
     setTimeout(() => typeInto(text, cafe.closed ? `${cafe.name} 的旧址……往日的回忆浮现了！` : `发现了 ${cafe.name}！`), 450);
@@ -154,7 +158,7 @@ function chest(el, data, onClose) {
     <div class="chest-stage"></div><div class="chest-text"></div><div class="cel-xp hidden">+${data.gain} XP</div>
     <div class="chest-lines">${data.lines.join('')}</div>
     <div class="jmenu"><button class="jmenu-item on" id="celOk">收下</button></div></div>`;
-  const stage = el.querySelector('.chest-stage'), closed = scaled(fromRows(CHEST), 5), opened = scaled(fromRows(CHEST_OPEN), 5);
+  const stage = el.querySelector('.chest-stage'), closed = XU() ? window.Xuan.box(false, 2) : scaled(fromRows(CHEST), 5), opened = XU() ? window.Xuan.box(true, 2) : scaled(fromRows(CHEST_OPEN), 5);
   stage.appendChild(closed); stage.classList.add('shake');
   el.classList.remove('hidden');
   setTimeout(() => {
@@ -171,7 +175,7 @@ function levelUp(el, info, onClose) {
     <div class="lv-row">Lv.${info.from} ▶ <b>Lv.${info.to}</b></div><div class="lv-row">称号：${esc(info.title)}</div>
     <div class="lv-row small">好奇心 +1　品味 +2　(HP 每晚 0 点回满)</div>
     <div class="jmenu"><button class="jmenu-item on" id="lvOk">继续冒险</button></div></div>`;
-  const hc = document.createElement('canvas'); hc.width = 16; hc.height = 16; drawHero(hc, 'down', 0); el.querySelector('.lv-hero').appendChild(scaled(hc, 5));
+  const hc = document.createElement('canvas'); hc.width = hc.height = XU() ? 160 : 16; (XU() ? window.Xuan : {drawHero}).drawHero(hc, 'down', 0); el.querySelector('.lv-hero').appendChild(XU() ? hc : scaled(hc, 5));
   el.classList.remove('hidden'); SFX.play('fanfare');
   el.querySelector('#lvOk').onclick = () => { SFX.play('confirm'); onClose(); };
 }

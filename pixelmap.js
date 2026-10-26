@@ -107,10 +107,10 @@ function nearestWalk(M, c, r) {
 function create(wrap, region, opt) {
   const J = window.JRPG; if (!J) throw new Error('JRPG kit missing');
   const {visited, cafeById, me, fitAffine, focusId, onOpen = () => {}, heroAt, onHeroMove = () => {}, rangeM = 250, kit = null, tired = false} = opt;
-  const M = build(region, !!kit), W = M.cols * TS, H = M.rows * TS;
+  const M = build(region, !!kit && kit.cozy !== false), W = M.cols * TS, H = M.rows * TS;
   const CS = kit ? kit.cafeSize : 24, cafeSprite = kit ? kit.cafeSprite : J.cafeSprite, drawHero0 = kit ? kit.drawHero : J.drawHero;
   const world = document.createElement('div'); world.className = 'px-world';
-  const ground = paintMap(M, kit ? kit.tiles : undefined); world.appendChild(ground);
+  const ground = kit && kit.paintGround ? kit.paintGround(M, TS) : paintMap(M, kit ? kit.tiles : undefined); world.appendChild(ground); // 古风 kit paints its own ink-wash ground
   const sprites = [];
   // cafes
   let n = 0;
@@ -119,7 +119,7 @@ function create(wrap, region, opt) {
     const done = visited.has(id), x = (sx - M.vx) / U * TS, y = (sy - M.vy) / U * TS;
     const el = document.createElement('div'); el.className = `px-mk ${done ? 'done' : 'locked'}`; el.dataset.id = id;
     el.innerHTML = `<span class="px-no">${n}</span><span class="px-name side-${side === 'l' ? 'l' : 'r'}">${esc(String(c.mapLabel || c.short || c.name).replace(/\n/g, ' '))}</span>${done ? '<i class="px-spark s1"></i><i class="px-spark s2"></i><i class="px-spark s3"></i>' : '<i class="px-fog"></i>'}`;
-    const spr = cafeSprite(id, done); const cv = document.createElement('canvas'); cv.width = CS; cv.height = CS; cv.getContext('2d').drawImage(spr, 0, 0); cv.className = 'px-cafe'; el.prepend(cv);
+    const spr = cafeSprite(id, done); const cv = document.createElement('canvas'); cv.width = spr.width || CS; cv.height = spr.height || CS; cv.getContext('2d').drawImage(spr, 0, 0); cv.className = 'px-cafe'; el.prepend(cv);
     world.appendChild(el); sprites.push({el, x, y, w: CS, h: CS, ax: CS / 2, ay: CS - 4, id, tile: {c: Math.floor(x / TS), r: Math.floor(y / TS)}});
   });
   // street signs (spaced uppercase, like the sketch map)
@@ -127,7 +127,7 @@ function create(wrap, region, opt) {
   // hero
   const heroEl = document.createElement('div'); heroEl.className = 'px-hero' + (tired ? ' tired' : '');
   const drawHero = (c, d, f) => { drawHero0(c, d, f); if (tired && !f && !heroEl.classList.contains('walking')) J.tire(c); }; // exhausted: slumps whenever standing still
-  const hc = document.createElement('canvas'); hc.width = 16; hc.height = 16; heroEl.appendChild(hc); drawHero(hc, 'down', 0);
+  const hc = document.createElement('canvas'); hc.width = hc.height = (kit && kit.heroRes) || 16; heroEl.appendChild(hc); drawHero(hc, 'down', 0);
   let ring = null, meIn = false, start = null;
   if (me && fitAffine) { const f = fitAffine(region, cafeById); if (f) { const [mx, my] = f(me[1], me[0]), [nx, ny] = f(me[1], me[0] + rangeM / 111320); const [vx, vy, vw, vh] = region.vb;
     if (mx > vx - 20 && mx < vx + vw + 20 && my > vy - 20 && my < vy + vh + 20) { meIn = true; start = nearestWalk(M, Math.floor((mx - vx) / U), Math.floor((my - vy) / U));

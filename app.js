@@ -60,13 +60,15 @@ const isJ = () => (THEME === 'jrpg' || THEME === 'valley' || THEME === 'ranch') 
 const isV = () => (THEME === 'valley' || THEME === 'ranch') && isJ() && !!window.Valley;
 const isR = () => THEME === 'ranch' && isV();
 const isF = () => THEME === 'foundation';
+const isXuan = () => THEME === 'jrpg' && isJ() && !!window.Xuan; // ⚔️ 古风 ink-wash skin of the JRPG theme
 const SFXplay = n => { try { if (window.JRPG) JRPG.SFX.play(n); } catch (e) {} };
 function applyTheme() {
   const t = isJ() ? 'jrpg' : isF() ? 'foundation' : 'sketch', h = document.documentElement; h.dataset.theme = t;
   if (isV()) h.dataset.skin = 'valley'; else delete h.dataset.skin;
   if (isR()) h.dataset.ranch = '1'; else delete h.dataset.ranch;
+  if (isXuan()) h.dataset.xuan = '1'; else delete h.dataset.xuan;
   if (window.Valley && Valley.setStyle) Valley.setStyle(isR() ? 'ranch' : 'valley');
-  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = isR() ? '#e07a2a' : isV() ? '#7a4a25' : isF() ? '#3e2c1e' : t === 'jrpg' ? '#0b0f2a' : '#f7f4ec';
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = isR() ? '#e07a2a' : isV() ? '#7a4a25' : isF() ? '#3e2c1e' : isXuan() ? '#2a1910' : t === 'jrpg' ? '#0b0f2a' : '#f7f4ec';
 }
 applyTheme();
 function setTheme(t) { THEME = t; save('mcc.theme', t); if (t === 'sketch' && window.__sketchFonts) window.__sketchFonts(); applyTheme(); const d = $('#dlg'); if (d) d.classList.remove('show'); render(); }
@@ -1076,7 +1078,7 @@ const views = {
         const token = ++mapToken, wrap = $('#m3d');
         const fail = e => { console.warn('3D map failed, falling back', e); if (token !== mapToken) return; map3dFailed = true; if (mapRef && mapRef.kind === '3d') { try { mapRef.remove(); } catch (x) {} mapRef = null; } toast(e && e.slow ? '这台设备上 3D 有点慢，已切换为 2D 地图（可随时点 3D 再试）' : J ? '3D 地图暂不可用，已切换为像素地图' : '3D 地图暂不可用，已切换为 2D 手绘地图'); render(); };
         const seen = new Set(load('mcc.seen3d', [])), pop = new Set([...v].filter(id => R.cafes[id] && !seen.has(id)));
-        loadMap3d().then(mod => mod.create(wrap, R, {theme: J ? 'jrpg' : FDm ? 'foundation' : 'sketch', season: FK ? FK.season : null, onSlow: FDm ? () => fail(Object.assign(new Error('slow'), {slow: true})) : null, visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
+        loadMap3d().then(mod => mod.create(wrap, R, {theme: J ? 'jrpg' : FDm ? 'foundation' : 'sketch', xuan: isXuan(), season: FK ? FK.season : null, onSlow: FDm ? () => fail(Object.assign(new Error('slow'), {slow: true})) : null, visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
           .then(m => {
             if (token !== mapToken) return m.remove();
             mapRef = m; const ld = wrap.querySelector('.m3d-loading'); if (ld) ld.remove();
@@ -1086,7 +1088,7 @@ const views = {
         $('#m3dReset').onclick = () => mapRef && mapRef.reset && mapRef.reset();
       } else if (usePx) {
         try {
-          mapRef = PixelMap.create($('#pxWrap'), R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M, fitAffine: SketchMap.fitAffine, focusId, heroAt: heroAt[R.id], kit: VK ? Valley.kit(VK) : null, tired: stamina() <= 0,
+          mapRef = PixelMap.create($('#pxWrap'), R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M, fitAffine: SketchMap.fitAffine, focusId, heroAt: heroAt[R.id], kit: VK ? Valley.kit(VK) : isXuan() ? Xuan.kit() : null, tired: stamina() <= 0,
             onHeroMove: t => { heroAt[R.id] = t; }, onOpen: id => { location.hash = '#/cafe/' + id; }});
         } catch (e) { console.warn('pixel map failed, falling back to sketch', e); pxFailed = true; mapRef = null; return render(); }
         if (stamina() <= 0 && !stOutTold[today()]) { stOutTold[today()] = 1; setTimeout(() => staminaTalk(null), 600); } // exhausted hero: tell once per day per session
@@ -1300,17 +1302,17 @@ function shopConfirm(it, coins, ok) {
 window.addEventListener('hashchange', () => { const m = $('#shModal'); if (m) m.remove(); });
 // ---------- 🎶 background music toggle (music.js does the synth; off by default, starts only from a tap) ----------
 const musicOn = () => !!(window.Music && Music.enabled);
-function musicMood() { try { if (isF()) return Valley.clock().lit ? 'f-night' : 'f-day'; if (isR()) { const k = Valley.clock(); return k.lit ? 'night' : 'r-' + k.season; } return isV() ? (Valley.clock().lit ? 'night' : 'day') : 'day'; } catch (e) { return 'day'; } }
+function musicMood() { try { if (isXuan()) { const hr = +new Intl.DateTimeFormat('en-AU', {hour: 'numeric', hourCycle: 'h23', timeZone: 'Australia/Melbourne'}).format(new Date()); return hr >= 19 || hr < 6 ? 'x-night' : 'x-day'; } if (isF()) return Valley.clock().lit ? 'f-night' : 'f-day'; if (isR()) { const k = Valley.clock(); return k.lit ? 'night' : 'r-' + k.season; } return isV() ? (Valley.clock().lit ? 'night' : 'day') : 'day'; } catch (e) { return 'day'; } }
 document.addEventListener('click', e => { const b = e.target.closest('[data-music]'); if (!b || !window.Music) return; e.preventDefault(); Music.set(!Music.enabled, musicMood());
   toast(Music.enabled ? '🎶 背景音乐：开（原创 8-bit 小曲）' : '🔕 背景音乐：关', 1600); drawHud(); const t = $('#musT'); if (t) { t.setAttribute('aria-pressed', Music.enabled); t.textContent = Music.enabled ? '开' : '关'; } });
 setInterval(() => { if (window.Music && Music.enabled) Music.mood(musicMood()); }, 60000);
 function settingsHtml() {
   const on = window.JRPG && JRPG.SFX.on;
   return `<div class="section-title">${ic('gear', '⚙️')} 设置</div><div class="settings">
-    <div class="set-row"><span>界面主题</span><span class="dim-toggle theme-sel" id="themeSel"><button data-theme="foundation" class="${THEME === 'foundation' ? 'on' : ''}" ${window.FD ? '' : 'disabled'}>🏰 城镇</button><button data-theme="ranch" class="${THEME === 'ranch' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🐄 牧场</button><button data-theme="valley" class="${THEME === 'valley' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🌾 田园</button><button data-theme="jrpg" class="${THEME === 'jrpg' ? 'on' : ''}" ${window.JRPG ? '' : 'disabled'}>⚔️ JRPG</button><button data-theme="sketch" class="${THEME === 'sketch' ? 'on' : ''}">✏️ 手绘</button></span></div>
+    <div class="set-row"><span>界面主题</span><span class="dim-toggle theme-sel" id="themeSel"><button data-theme="foundation" class="${THEME === 'foundation' ? 'on' : ''}" ${window.FD ? '' : 'disabled'}>🏰 城镇</button><button data-theme="ranch" class="${THEME === 'ranch' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🐄 牧场</button><button data-theme="valley" class="${THEME === 'valley' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🌾 田园</button><button data-theme="jrpg" class="${THEME === 'jrpg' ? 'on' : ''}" ${window.JRPG ? '' : 'disabled'}>⚔️ 古风</button><button data-theme="sketch" class="${THEME === 'sketch' ? 'on' : ''}">✏️ 手绘</button></span></div>
     <div class="set-row"><span>📅 日历与节日</span><a class="btn ghost sm" href="#/calendar">打开日历 ›</a></div>
-    <div class="set-row"><span>${isV() ? '🎵 小音效' : '8-bit 音效'}</span><button class="snd-btn" data-snd id="sndT" aria-pressed="${!!on}">${on ? '🔊' : '🔇'}</button></div>
-    <div class="set-row"><span>${isV() ? '🎶 背景音乐' : '🎶 像素背景音乐'} <small class="hint">${isF() ? '原创拨弦小曲（像鲁特琴），白天温暖、夜晚安静' : isR() ? '原创 8-bit 小曲，春夏秋冬各一首，夜晚安静' : '原创 8-bit 小曲，白天轻快、夜晚安静'}</small></span><button class="snd-btn mus-set" data-music id="musT" aria-pressed="${musicOn()}">${musicOn() ? '开' : '关'}</button></div>
+    <div class="set-row"><span>${isV() ? '🎵 小音效' : isXuan() ? '🎐 古风音效' : '8-bit 音效'}</span><button class="snd-btn" data-snd id="sndT" aria-pressed="${!!on}">${on ? '🔊' : '🔇'}</button></div>
+    <div class="set-row"><span>${isV() ? '🎶 背景音乐' : isXuan() ? '🎶 古风背景音乐' : '🎶 像素背景音乐'} <small class="hint">${isXuan() ? '原创五声音阶拨弦小曲（似古筝），白天宫调、夜晚羽调' : isF() ? '原创拨弦小曲（像鲁特琴），白天温暖、夜晚安静' : isR() ? '原创 8-bit 小曲，春夏秋冬各一首，夜晚安静' : '原创 8-bit 小曲，白天轻快、夜晚安静'}</small></span><button class="snd-btn mus-set" data-music id="musT" aria-pressed="${musicOn()}">${musicOn() ? '开' : '关'}</button></div>
     <div class="set-row gr-set"><span>⭐ Google 评分 <small class="hint">${window.GReviews && GReviews.hasKey ? '已配置 key：咖啡馆详情页会显示 Google 星级和最近评价' : '未配置：在 config.js 填入 GOOGLE_MAPS_API_KEY 后，详情页可显示 Google 星级和评价（见 README）。现在可以点「看 Google 评价」去 Google 地图看。'}</small></span><span class="gr-set-st">${window.GReviews && GReviews.hasKey ? '开' : '未配置'}</span></div>
     ${isV() ? '<div class="set-row"><span>🛒 金币商店</span><a class="btn ghost sm" href="#/shop">去逛逛 ›</a></div>' : ''}</div>`;
 }
@@ -1358,8 +1360,9 @@ function footprintJ() {
     ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : '<div class="hint">还没有照片，去拍一张吧 📷</div>'}
     ${beansSection()}
     ${settingsHtml()}`;
-  app.querySelectorAll('canvas[data-spr]').forEach(cv => { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(JRPG.cafeSprite(cv.dataset.spr, v.has(cv.dataset.spr)), 0, 0); });
-  const hc = document.createElement('canvas'); hc.width = hc.height = 16; JRPG.drawHero(hc, 'down', 0); if (stamina() <= 0) JRPG.tire(hc); $('#stHero').appendChild(JRPG.scaled(hc, 4));
+  const XU = isXuan();
+  app.querySelectorAll('canvas[data-spr]').forEach(cv => { const spr = XU ? Xuan.pavilion(cv.dataset.spr, v.has(cv.dataset.spr), isClosed(cafeById(cv.dataset.spr)), 2) : JRPG.cafeSprite(cv.dataset.spr, v.has(cv.dataset.spr)); cv.width = spr.width; cv.height = spr.height; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(spr, 0, 0); });
+  const hc = document.createElement('canvas'); hc.width = hc.height = XU ? 128 : 16; (XU ? Xuan : JRPG).drawHero(hc, 'down', 0); if (stamina() <= 0) JRPG.tire(hc); $('#stHero').appendChild(XU ? (hc.className = 'pxs', hc) : JRPG.scaled(hc, 4));
   bindSettings();
   app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(c => c.id === ed.dataset.edit), false); };
 }
@@ -1441,5 +1444,6 @@ if ('serviceWorker' in navigator) window.addEventListener('load', () => navigato
 window.__mcc = {stamina, today, xp: () => totalXP(), badges: () => BADGES.filter(b => b.test(stats())).map(b => b.id), get checkins() { return checkins; }, get beans() { return beans; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf, quests: () => dailyQuests(), questXP: () => questXP(), earned: () => earnedCoins(), level: () => levelInfo()}; // for testing
 window.__appBooted = true; document.documentElement.classList.add('booted');
 if (window.PixUI) { try { PixUI.installVars(); if (isV()) PixUI.splash(/[?&]splash\b/.test(location.search), isR() ? 'ranch' : 'valley'); } catch (e) { console.warn('pixui', e); } }
+if (isXuan()) { try { Xuan.splash(/[?&]splash\b/.test(location.search)); } catch (e) { console.warn('xuan splash', e); } }
 if (isF() && window.FD) { try { FD.splash(/[?&]splash\b/.test(location.search)); } catch (e) { console.warn('fd splash', e); } }
 })();
