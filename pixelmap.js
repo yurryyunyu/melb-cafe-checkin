@@ -110,7 +110,7 @@ function create(wrap, region, opt) {
   const M = build(region, !!kit && kit.cozy !== false), W = M.cols * TS, H = M.rows * TS;
   const CS = kit ? kit.cafeSize : 24, cafeSprite = kit ? kit.cafeSprite : J.cafeSprite, drawHero0 = kit ? kit.drawHero : J.drawHero;
   const world = document.createElement('div'); world.className = 'px-world';
-  const ground = kit && kit.paintGround ? kit.paintGround(M, TS) : paintMap(M, kit ? kit.tiles : undefined); world.appendChild(ground); // 古风 kit paints its own ink-wash ground
+  const ground = kit && kit.paintGround ? kit.paintGround(M, TS, region) : paintMap(M, kit ? kit.tiles : undefined); world.appendChild(ground); // 古风 kit paints its own ink-wash ground
   const sprites = [];
   // cafes
   let n = 0;
@@ -119,7 +119,8 @@ function create(wrap, region, opt) {
     const done = visited.has(id), x = (sx - M.vx) / U * TS, y = (sy - M.vy) / U * TS;
     const el = document.createElement('div'); el.className = `px-mk ${done ? 'done' : 'locked'}`; el.dataset.id = id;
     el.innerHTML = `<span class="px-no">${n}</span><span class="px-name side-${side === 'l' ? 'l' : 'r'}">${esc(String(c.mapLabel || c.short || c.name).replace(/\n/g, ' '))}</span>${done ? '<i class="px-spark s1"></i><i class="px-spark s2"></i><i class="px-spark s3"></i>' : '<i class="px-fog"></i>'}`;
-    const spr = cafeSprite(id, done); const cv = document.createElement('canvas'); cv.width = spr.width || CS; cv.height = spr.height || CS; cv.getContext('2d').drawImage(spr, 0, 0); cv.className = 'px-cafe'; el.prepend(cv);
+    if (kit && kit.cafeNode) el.prepend(kit.cafeNode(id, done, n)); // 古风: painted building <img>
+    else { const spr = cafeSprite(id, done); const cv = document.createElement('canvas'); cv.width = spr.width || CS; cv.height = spr.height || CS; cv.getContext('2d').drawImage(spr, 0, 0); cv.className = 'px-cafe'; el.prepend(cv); }
     world.appendChild(el); sprites.push({el, x, y, w: CS, h: CS, ax: CS / 2, ay: CS - 4, id, tile: {c: Math.floor(x / TS), r: Math.floor(y / TS)}});
   });
   // street signs (spaced uppercase, like the sketch map)
@@ -150,8 +151,10 @@ function create(wrap, region, opt) {
     sprites.forEach(o => { const st = o.el.style; st.left = Math.round((o.x - (o.ax || 0)) * s) + 'px'; st.top = Math.round((o.y - (o.ay || 0)) * s) + 'px'; st.zIndex = o.z || (o.label ? 1 : o.hero ? 9999 : Math.round(o.y) + 10);
       if (o.w && !o.label) { st.width = o.w * s + 'px'; st.height = o.h * s + 'px'; } });
     wrap.style.setProperty('--s', s);
+    if (deco && deco.layout) deco.layout(s);
   };
-  const fit = Math.min(2, Math.max(1, (wrap.clientWidth || 360) / W)); // JRPG camera: native pixels, scroll to explore
+  const fit = kit && kit.cover ? Math.min(3, Math.max((wrap.clientWidth || 360) / W, (wrap.clientHeight || 480) / H)) // 古风: painted scene always fills the frame
+    : Math.min(2, Math.max(1, (wrap.clientWidth || 360) / W)); // JRPG camera: native pixels, scroll to explore
   s = fit; layout();
   const centerOn = (x, y, smooth) => { const L = x * s - wrap.clientWidth / 2, T = y * s - wrap.clientHeight / 2; if (smooth && wrap.scrollTo) wrap.scrollTo({left: L, top: T, behavior: 'smooth'}); else { wrap.scrollLeft = L; wrap.scrollTop = T; } };
   centerOn(focusId && focus ? focus.x : hero.x, focusId && focus ? focus.y : hero.y);
@@ -170,7 +173,7 @@ function create(wrap, region, opt) {
       const dx = to.x - from.x, dy = to.y - from.y; hero.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
       const f = ((i * 2 + (k > .5 ? 1 : 0)) % 2) + 1; if (f !== frame) { frame = f; drawHero(hc, hero.dir, f); }
       hero.x = from.x + dx * k; hero.y = from.y + dy * k;
-      heroEl.style.left = Math.round((hero.x - 8) * s) + 'px'; heroEl.style.top = Math.round((hero.y - 13) * s) + 'px';
+      heroEl.style.left = Math.round((hero.x - hero.ax) * s) + 'px'; heroEl.style.top = Math.round((hero.y - hero.ay) * s) + 'px';
       const hx = hero.x * s - wrap.scrollLeft, hy = hero.y * s - wrap.scrollTop; // camera follow
       if (hx < 40 || hx > wrap.clientWidth - 40) wrap.scrollLeft += (hx < 40 ? -1 : 1) * 6; if (hy < 40 || hy > wrap.clientHeight - 40) wrap.scrollTop += (hy < 40 ? -1 : 1) * 6;
       if (k >= 1) { hero.tile = steps[i]; from = to; i++; t0 = now; if (i % 2) J.SFX.play('step'); }

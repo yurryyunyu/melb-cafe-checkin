@@ -73,31 +73,54 @@ html[data-xuan] .rb-name{color:var(--xink);text-shadow:none;font-weight:700;font
 html[data-xuan] .rb-sub{color:var(--xinkd)}html[data-xuan] .rb-sub b{color:var(--xcin);font-weight:700}
 html[data-xuan] .region-head b,html[data-xuan] .rg-count{color:var(--xink)}
 html[data-xuan] .region-banner .rg-count{color:var(--xcin)}
-/* ink-wash overworld */
-html[data-xuan] .px-wrap{background:#e8dcc0;border:1px solid #8a6a3a;border-radius:3px;box-shadow:0 0 0 4px #3a2418,0 0 0 5px #8a6a3a,0 6px 14px rgba(50,30,10,.35);margin:0 10px}
-html[data-xuan] .px-ground,html[data-xuan] .px-cafe{image-rendering:auto}
-html[data-xuan] .px-hero canvas{image-rendering:auto}
-html[data-xuan] .px-mk .px-cafe{filter:drop-shadow(0 1px 1px rgba(40,25,10,.35))}
-html[data-xuan] .px-mk.locked .px-cafe{filter:grayscale(.85) sepia(.35) brightness(1.02) opacity(.72)}
-html[data-xuan] .px-fog{background:radial-gradient(closest-side,rgba(250,246,234,.95),rgba(250,246,234,.55) 60%,transparent);opacity:.6}
-html[data-xuan] .px-no{font-family:var(--px);font-weight:700;font-size:11px;line-height:13px;height:15px;min-width:15px;padding:0 3px;top:-13px;background:var(--xcin);color:#fff3dc;border:1px solid #4a0e0a;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(255,230,200,.45);text-shadow:none}
-html[data-xuan] .px-no:after{background:#3a2418;top:14px}
-html[data-xuan] .px-mk.done .px-no{background:linear-gradient(#f3dc9a,#c9a45a);color:#3a2418;border-color:#6b4426}
-html[data-xuan] .px-name{font-family:var(--px);font-weight:700;font-size:12px;color:var(--xink);text-shadow:0 0 2px #f6eedb,0 0 3px #f6eedb,0 0 4px #f6eedb}
-html[data-xuan] .px-mk.locked .px-name{color:#6b5a44}
-html[data-xuan] .px-mk.sel .px-no{outline:2px solid var(--xgoldL)}
-html[data-xuan] .px-street{font-family:var(--px);font-weight:700;color:rgba(42,32,24,.62);text-shadow:0 0 3px #f1e7cf;letter-spacing:.4em}
-html[data-xuan] .px-spark{background:radial-gradient(#fff4c8,rgba(255,200,110,0) 70%);clip-path:none;border-radius:50%;width:8px;height:8px}
+/* painted overworld */
+html[data-xuan] .px-wrap{background:#cdbf9a;border:1px solid rgba(138,106,58,.9);border-radius:6px;box-shadow:0 0 0 3px #f4ecd8,0 0 0 4px rgba(138,106,58,.7),0 10px 24px rgba(50,32,12,.28);margin:0 12px;scrollbar-width:none}
+html[data-xuan] .px-wrap::-webkit-scrollbar{display:none}
+html[data-xuan] .px-ground,html[data-xuan] .px-cafe,html[data-xuan] .px-hero canvas{image-rendering:auto}
+html[data-xuan] .px-mk{overflow:visible}
+html[data-xuan] .px-mk .px-cafe.xu-b{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 2px rgba(34,22,10,.38));transition:filter .3s,transform .3s;transform-origin:50% 92%}
+html[data-xuan] .px-mk .px-cafe.flip{transform:scaleX(-1)}
+html[data-xuan] .px-mk.locked .px-cafe.xu-b{filter:saturate(.18) sepia(.22) brightness(1.06) contrast(.9) drop-shadow(0 2px 2px rgba(34,22,10,.28))}
+html[data-xuan] .px-mk.done .px-cafe.xu-b{filter:saturate(1.12) brightness(1.04) drop-shadow(0 0 5px rgba(255,190,96,.85)) drop-shadow(0 3px 2px rgba(34,22,10,.35))}
+html[data-xuan] .px-mk:before{content:"";position:absolute;left:12%;right:12%;bottom:2%;height:16%;border-radius:50%;background:radial-gradient(closest-side,rgba(34,24,12,.42),rgba(34,24,12,0));z-index:0}
+html[data-xuan] .xu-glow{display:none}
+html[data-xuan] .px-mk.done .xu-glow{display:block;position:absolute;left:-25%;top:-10%;width:150%;height:120%;z-index:0;pointer-events:none;background:radial-gradient(closest-side,rgba(255,206,120,.55),rgba(255,180,80,.18) 55%,rgba(255,180,80,0));animation:xuglow 3.2s ease-in-out infinite alternate}
+@keyframes xuglow{from{opacity:.65}to{opacity:1}}
+html[data-xuan] .px-fog{display:none}
+html[data-xuan] .px-spark{z-index:2;background:radial-gradient(#fff6d0,rgba(255,200,110,0) 70%);clip-path:none;border-radius:50%;width:7px;height:7px}
+/* name plaque: number seal + name on a silk tag with bronze hairlines */
+html[data-xuan] .xu-plq{position:absolute;left:0;top:100%;z-index:3;display:flex;align-items:center;gap:4px;white-space:nowrap;padding:2px 7px 2px 3px;border-radius:3px;
+  background:linear-gradient(180deg,rgba(252,247,234,.96),rgba(240,229,203,.96));border:1px solid rgba(138,106,58,.75);box-shadow:0 0 0 1px rgba(255,250,238,.6) inset,0 2px 5px rgba(40,26,10,.28);pointer-events:none}
+html[data-xuan] .xu-plq .px-no{position:static;transform:none;display:inline-grid;place-items:center;min-width:15px;height:15px;padding:0 2px;border-radius:50%;font:700 10px/1 Georgia,"Songti SC",serif;background:#8a8072;color:#fbf5e6;border:0;box-shadow:none;text-shadow:none;outline:0;animation:none}
+html[data-xuan] .xu-plq .px-no:after{display:none}
+html[data-xuan] .px-mk.done .xu-plq .px-no{background:radial-gradient(circle at 35% 30%,#d4523f,#a32a20);color:#fff4df}
+html[data-xuan] .xu-plq .px-name{position:static;margin:0;font:600 12px/15px var(--px);letter-spacing:.01em;color:#2a2018;text-shadow:none}
+html[data-xuan] .xu-plq.long .px-name{font-size:11px;letter-spacing:-.01em}
+html[data-xuan] .xu-plq.xlong .px-name{font-size:10px;max-width:118px;overflow:hidden;text-overflow:ellipsis}
+html[data-xuan] .px-mk.locked .xu-plq{background:linear-gradient(180deg,rgba(244,239,228,.86),rgba(228,220,202,.86));border-color:rgba(138,120,92,.55)}
+html[data-xuan] .px-mk.locked .xu-plq .px-name{color:#5d5244;font-weight:500}
+html[data-xuan] .px-mk.done .xu-plq{border-color:rgba(176,128,52,.95);box-shadow:0 0 0 1px rgba(255,246,220,.7) inset,0 0 8px rgba(255,196,96,.45),0 2px 5px rgba(40,26,10,.3)}
+html[data-xuan] .px-mk.sel .xu-plq{outline:1.5px solid #b3342b;outline-offset:1px}
+html[data-xuan] .px-mk.sel .px-no{outline:0}
+html[data-xuan] .px-street{font:italic 500 11px/1 Georgia,"Songti SC",var(--px);letter-spacing:.08em;color:rgba(58,40,22,.72);text-shadow:0 0 3px rgba(248,240,220,.95),0 0 6px rgba(248,240,220,.8);opacity:1}
 html[data-xuan] .px-range{border:1.5px dashed rgba(179,52,43,.7);background:rgba(179,52,43,.06)}
-html[data-xuan] .px-hero.bang:after{font-family:var(--px);background:var(--xcin);border:1px solid var(--xgoldL)}
+html[data-xuan] .px-hero{z-index:9999}
+html[data-xuan] .px-hero canvas{filter:drop-shadow(0 0 2px rgba(255,248,230,.9))}
+html[data-xuan] .px-hero:not(.walking) canvas{animation:xubob 2.4s ease-in-out infinite}
+@keyframes xubob{50%{transform:translateY(-1.5px)}}
+html[data-xuan] .px-hero.bang:after{content:"!";font:700 12px/1 Georgia,serif;top:-12px;padding:2px 5px;color:#fff4df;background:#b3342b;border:1px solid #f0d79a;border-radius:50%}
 .xu-sky{position:absolute;left:0;top:0;pointer-events:none;overflow:hidden;z-index:9000}
-.xu-mist{position:absolute;left:-40%;width:90%;height:12%;border-radius:50%;background:radial-gradient(closest-side,rgba(250,246,234,.75),rgba(250,246,234,0));animation:xumist 38s linear infinite}
-.xu-mist.m1{top:18%}.xu-mist.m2{top:52%;animation-duration:52s;animation-delay:-20s}.xu-mist.m3{top:78%;animation-duration:44s;animation-delay:-8s;opacity:.7}
-@keyframes xumist{from{transform:translateX(0)}to{transform:translateX(170%)}}
-.xu-crane{position:absolute;width:26px;height:10px;opacity:.75;animation:xucrane 30s linear infinite}
-.xu-crane.c1{top:7%;left:-10%}.xu-crane.c2{top:10%;left:-16%;width:20px;animation-delay:-1.4s}
+.xu-rays{position:absolute;inset:0;background:linear-gradient(118deg,rgba(255,236,190,.0) 10%,rgba(255,236,190,.16) 18%,rgba(255,236,190,0) 26%,rgba(255,236,190,0) 34%,rgba(255,236,190,.12) 40%,rgba(255,236,190,0) 48%);mix-blend-mode:screen;animation:xurays 9s ease-in-out infinite alternate}
+@keyframes xurays{to{opacity:.45}}
+.xu-mist{position:absolute;left:-50%;width:110%;height:14%;border-radius:50%;background:radial-gradient(closest-side,rgba(250,246,236,.62),rgba(250,246,236,0));animation:xumist 46s linear infinite}
+.xu-mist.m1{top:6%;height:20%}.xu-mist.m2{top:40%;animation-duration:64s;animation-delay:-26s;opacity:.55}.xu-mist.m3{top:74%;animation-duration:54s;animation-delay:-9s;opacity:.5}
+@keyframes xumist{from{transform:translateX(0)}to{transform:translateX(150%)}}
+.xu-pt{position:absolute;top:-4%;width:7px;height:5px;border-radius:70% 0 70% 0;background:linear-gradient(135deg,#f7d2d0,#e59a9c);opacity:.85;transform:scale(var(--sc,1));animation:xupetal 14s linear infinite}
+@keyframes xupetal{0%{transform:translate(0,0) rotate(0) scale(var(--sc,1));opacity:0}8%{opacity:.85}100%{transform:translate(var(--dx,40px),105vh) rotate(540deg) scale(var(--sc,1));opacity:.2}}
+.xu-crane{position:absolute;width:26px;height:10px;opacity:.7;animation:xucrane 34s linear infinite}
+.xu-crane.c1{top:5%;left:-10%}.xu-crane.c2{top:8%;left:-16%;width:20px;animation-delay:-1.4s}
 @keyframes xucrane{0%{transform:translate(0,0)}50%{transform:translate(70vw,-8px)}100%{transform:translate(140vw,4px)}}
-@media (prefers-reduced-motion:reduce){.xu-mist,.xu-crane{animation:none}}
+@media (prefers-reduced-motion:reduce){.xu-mist,.xu-crane,.xu-pt,.xu-rays,.xu-glow{animation:none!important}.xu-pt{display:none}}
 /* 3D in 古风 */
 html[data-xuan] .m3d-wrap{border:1px solid #8a6a3a;border-radius:3px;box-shadow:0 0 0 4px #3a2418,0 0 0 5px #8a6a3a,0 6px 14px rgba(50,30,10,.35);background:linear-gradient(#efe6cf,#e6d8b8 55%,#dccaa2);margin:0 10px}
 html[data-xuan] .m3d-loading,html[data-xuan] .m3d-hint{color:var(--xink)}
@@ -211,3 +234,133 @@ html[data-xuan] .map-legend{padding:6px 28px}
 html[data-xuan] .map-legend .lg.gold{background:var(--xgoldL);border-color:#6b4426}
 html[data-xuan] .map-legend .lg.grey{background:#8a8278;border-color:#3a2418}
 html[data-xuan] .btn{background-size:15px,15px,15px,15px,auto,auto}
+/* ================= v29 · 丝绢 silk panels: pale silk + bronze hairlines + jade accents; ink text with a clear hierarchy ================= */
+html[data-xuan]{--jt:#2a2018;--jdim:#7d6c55;--gold:#9c6b22;--xbr:#8a6a3a;--xbrL:rgba(138,106,58,.38);--xjadeD:#3f7a63;
+  --win:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath d='M1 9V1h8' fill='none' stroke='%23a07a3e' stroke-width='1.2'/%3E%3Ccircle cx='3.6' cy='3.6' r='1.1' fill='%235f9a80'/%3E%3C/svg%3E") top 3px left 3px/14px no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath d='M13 9V1H5' fill='none' stroke='%23a07a3e' stroke-width='1.2'/%3E%3Ccircle cx='10.4' cy='3.6' r='1.1' fill='%235f9a80'/%3E%3C/svg%3E") top 3px right 3px/14px no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath d='M1 5v8h8' fill='none' stroke='%23a07a3e' stroke-width='1.2'/%3E%3C/svg%3E") bottom 3px left 3px/14px no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath d='M13 5v8H5' fill='none' stroke='%23a07a3e' stroke-width='1.2'/%3E%3C/svg%3E") bottom 3px right 3px/14px no-repeat,linear-gradient(180deg,rgba(255,252,244,.97),rgba(246,238,220,.97));
+  --winb:inset 0 0 0 3px rgba(255,253,247,.85),inset 0 0 0 4px rgba(160,122,62,.28),0 1px 0 rgba(255,255,255,.6),0 6px 16px rgba(74,52,22,.12),0 1px 3px rgba(74,52,22,.14)}
+html[data-xuan],html[data-xuan] body{background-color:#efe6d2;background-image:url("img/xuan/paper.webp"),radial-gradient(ellipse at 15% 0%,rgba(255,252,240,.9),transparent 60%),linear-gradient(180deg,#f3ecdc,#e9dec6);background-size:384px 384px,100% 100%,100% 100%;background-repeat:repeat,no-repeat,no-repeat;background-attachment:scroll;background-blend-mode:multiply,normal,normal}
+html[data-xuan] :is(.jwin,.card,.stat,.bdg,.region,.player,.rec,.hero,.cel-card,#sheet,.map-legend,.settings,.picker-item.near){background:var(--win);border:1px solid rgb(138,106,58);border-color:rgba(138,106,58,.62);border-radius:6px;box-shadow:var(--winb);color:var(--jt);text-shadow:none}
+html[data-xuan] :is(.jwin,.card,.stat,.bdg,.region,.player,.rec,.hero,.cel-card,#sheet,.settings) *{text-shadow:none}
+html[data-xuan] .card .name,html[data-xuan] .rec .cname,html[data-xuan] .hero h2,html[data-xuan] .st-name{color:#231a12;font-weight:700;letter-spacing:0}
+html[data-xuan] .card .name{font-size:16.5px;line-height:1.3}
+html[data-xuan] :is(.jwin,.card,.hero,.region,.stat,.settings,.rec,.player,#sheet,.cel-card) .hint,html[data-xuan] .card .sub,html[data-xuan] .rec .date,html[data-xuan] .hero .addr{color:var(--jdim);text-shadow:none}
+html[data-xuan] .hero{padding-top:16px}
+html[data-xuan] .hero h2{font-size:clamp(20px,6.4vw,25px);line-height:1.18;letter-spacing:-.005em;margin:4px 0 8px;text-wrap:balance}
+html[data-xuan] .hero .addr{font-size:13px;line-height:1.45}
+html[data-xuan] .hero-reg{color:var(--xjadeD);font-size:12px;letter-spacing:.18em;font-weight:700}
+html[data-xuan] #topbar h1{font-size:19px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* top / tab bars: slim ink lacquer with one gold hairline (no heavy carved wood) */
+html[data-xuan] #topbar{background:linear-gradient(180deg,#2e2621,#1f1916);border-bottom:1px solid #b08c4f;box-shadow:0 1px 0 rgba(0,0,0,.5),0 4px 12px rgba(30,20,10,.25);padding-bottom:10px}
+html[data-xuan] #tabbar{background:linear-gradient(180deg,#2a2320,#1b1613);border-top:1px solid #b08c4f;box-shadow:0 -4px 12px rgba(30,20,10,.18)}
+html[data-xuan] #tabbar a{color:#bfae8c;font-weight:600}
+html[data-xuan] #tabbar a.active{color:#f0dba6}
+html[data-xuan] .hud-lv{background:linear-gradient(#c44a3b,#9a2a21);border:1px solid #e3c98e;border-radius:4px}
+/* buttons: silk with bronze hairline; primary = cinnabar lacquer */
+html[data-xuan] .btn,html[data-xuan] .btn.ghost{background:linear-gradient(180deg,#fffaf0,#f1e6cd);color:#3a2a1a;border:1px solid rgba(138,106,58,.7);border-radius:6px;box-shadow:inset 0 0 0 2px rgba(255,253,246,.8),0 2px 6px rgba(74,52,22,.12);text-shadow:none;font-weight:700;font-size:16px;letter-spacing:.08em}
+html[data-xuan] .btn:hover:before,html[data-xuan] .btn:active:before{content:none}
+html[data-xuan] .game-btn,html[data-xuan] .btn.primary{background:linear-gradient(180deg,#c9503f,#a3322a 60%,#8a241d);color:#fff6e6;border:1px solid #6e1a14;box-shadow:inset 0 0 0 1px rgba(255,214,170,.55),inset 0 0 0 3px rgba(150,40,30,.6),0 4px 10px rgba(120,30,20,.22);text-shadow:0 1px 0 rgba(80,10,5,.5)}
+html[data-xuan] .btn.danger{background:linear-gradient(#fbf1ee,#f0dcd6);color:#8a241d;border-color:#c87a6a}
+html[data-xuan] .web-chip,html[data-xuan] .gr-btn{background:linear-gradient(180deg,#fffaf0,#f1e6cd);border:1px solid rgba(138,106,58,.7);color:#3a2a1a;border-radius:6px;box-shadow:0 1px 3px rgba(74,52,22,.12)}
+html[data-xuan] .gr-btn .gr-star:before{color:#b8862e}
+html[data-xuan] .chip{background:rgba(255,251,242,.92);color:#3a2a1a;border:1px solid rgba(138,106,58,.6);border-radius:999px;font-weight:600}
+html[data-xuan] .chip.on{background:linear-gradient(#c44a3b,#9a2a21);color:#fff6e6;border-color:#7e1f1a;box-shadow:inset 0 0 0 1px rgba(255,214,170,.5)}
+html[data-xuan] .chip.on:before{color:#f0dba6}
+html[data-xuan] .tag,html[data-xuan] .tags .tag{background:rgba(95,154,128,.1);color:#2f5e4c;border:1px solid rgba(63,122,99,.45);border-radius:999px;text-shadow:none}
+html[data-xuan] .stars{color:#c08a2a}
+html[data-xuan] .badge-done{color:#6b4a16;background:linear-gradient(#fbecc0,#ecd08a);border:1px solid #b08c4f}
+html[data-xuan] .badge-new{color:var(--jdim);border:1px dashed rgba(138,106,58,.6)}
+html[data-xuan] .num{border:0;border-radius:50%;background:#9a9080;color:#fffaf0;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35);font-family:Georgia,"Songti SC",serif}
+html[data-xuan] .num.done{background:radial-gradient(circle at 35% 30%,#d4523f,#a32a20);color:#fff4df}
+html[data-xuan] .rec .edit,html[data-xuan] .warn{color:#a3322a}
+html[data-xuan] .jmenu-item{color:#2a2018;text-shadow:none}
+html[data-xuan] .jmenu-item.on,html[data-xuan] .jmenu-item:hover,html[data-xuan] .jmenu-item:focus-visible{background:linear-gradient(90deg,rgba(95,154,128,.2),rgba(95,154,128,0))}
+html[data-xuan] .jmenu-item.on:before,html[data-xuan] .jmenu-item:hover:before{color:#3f7a63}
+html[data-xuan] .section-title{font-size:16px;letter-spacing:.06em;color:#2a2018}
+/* region banner: light silk scroll with thin rollers */
+html[data-xuan] .region-banner{margin:4px 26px 10px;padding:8px 16px 7px;background:linear-gradient(180deg,#fffaf0,#f2e8d2);border-top:2px solid #6b4a2e;border-bottom:2px solid #6b4a2e;box-shadow:inset 0 0 0 1px rgba(160,122,62,.3),0 4px 10px rgba(60,40,20,.14)}
+html[data-xuan] .region-banner:before,html[data-xuan] .region-banner:after{width:8px;top:-6px;bottom:-6px;background:linear-gradient(90deg,#3a2818,#7a5536 50%,#3a2818)}
+html[data-xuan] .region-banner:before{left:-8px}html[data-xuan] .region-banner:after{right:-8px}
+html[data-xuan] .rb-name{font-size:19px;letter-spacing:.16em}
+html[data-xuan] .rb-sub{font-size:12.5px}
+html[data-xuan] .region-tabs .chip{letter-spacing:.04em}
+/* dialogue: silk box, portrait in a round jade-rimmed medallion */
+html[data-xuan] #dlg{background:linear-gradient(180deg,rgba(255,251,242,.98),rgba(244,235,215,.98));border:1px solid rgba(138,106,58,.7);border-radius:8px;box-shadow:inset 0 0 0 3px rgba(255,253,247,.85),inset 0 0 0 4px rgba(160,122,62,.28),0 10px 28px rgba(40,26,10,.3);color:#2a2018}
+html[data-xuan] .dlg-face{width:72px;height:72px;border-radius:50%;border:2px solid #c9a45a;box-shadow:0 0 0 2px #fffaf0,0 0 0 3px rgba(63,122,99,.65),0 3px 8px rgba(40,26,10,.25);background:#efe4cc;object-fit:cover}
+html[data-xuan] .dlg-name{background:none;color:#a3322a;padding:0;box-shadow:none;font-size:13px;letter-spacing:.14em;border-bottom:1px solid rgba(163,50,42,.35);border-radius:0;margin-bottom:6px}
+html[data-xuan] .dlg-text{color:#2a2018;font-size:16px;line-height:1.6;text-shadow:none}
+html[data-xuan] .dlg-next{color:#a3322a}
+/* misc panels on silk */
+html[data-xuan] :is(.npc-card,.npc-head,.npc-entry){background:var(--win);border:1px solid rgba(138,106,58,.62);box-shadow:var(--winb);color:#2a2018}
+html[data-xuan] .npc-dlg .ed-box,html[data-xuan] .npc-visitor{background:#fffaf0;color:#2a2018;border-color:rgba(138,106,58,.6)}
+html[data-xuan] .npc-dlg button{background:linear-gradient(#fffaf0,#f1e6cd);color:#3a2a1a;border-color:rgba(138,106,58,.7)}
+html[data-xuan] .sig-tag{color:#9c6b22;text-shadow:none}
+html[data-xuan] .sig-line{color:#2a2018}
+html[data-xuan] .sig-line b{background:#a3322a;color:#fff6e6}
+html[data-xuan] .sig-list li{border-top:1px dashed rgba(138,106,58,.35);color:#3a2a1a}
+html[data-xuan] .sig-list li b{color:#2a2018}
+html[data-xuan] :is(.edu-task,.edu-notes){background:rgba(255,251,242,.9);border:1px solid rgba(138,106,58,.5);color:#2a2018}
+html[data-xuan] .eq-o{background:#fffaf0;border:1px solid rgba(138,106,58,.5);color:#2a2018}
+html[data-xuan] .eq-o.pick{background:rgba(95,154,128,.18);border-color:#3f7a63}
+html[data-xuan] .sca-src a{color:#3f7a63}
+html[data-xuan] .sr-ring span{background:#fffaf0;color:#2a2018}
+html[data-xuan] .st-name{color:#231a12}html[data-xuan] .st-title{color:#a3322a}
+html[data-xuan] .st-stats b{color:#231a12}
+html[data-xuan] .st-hero canvas{background:radial-gradient(circle at 50% 40%,#fffaf0,#eadfc6);border:1px solid #c9a45a;border-radius:50%}
+html[data-xuan] .quest{border-bottom:1px dashed rgba(138,106,58,.4)}
+html[data-xuan] .quest:not(.clear) .q-st{color:#2a2018}
+html[data-xuan] .q-kind,html[data-xuan] .quest small{color:var(--jdim);border-color:rgba(138,106,58,.5)}
+html[data-xuan] .dex-item{background:linear-gradient(#fffaf0,#f1e7d1);border:1px solid rgba(138,106,58,.5);color:#2a2018}
+html[data-xuan] .dex-item.seen{background:linear-gradient(#fffdf6,#f6ecd4);border-color:#b08c4f;box-shadow:0 0 0 1px rgba(255,214,140,.5) inset,0 2px 6px rgba(160,110,40,.15)}
+html[data-xuan] .inv-item .ii{background:#fffaf0;border:1px solid rgba(138,106,58,.5)}
+html[data-xuan] .stats .stat b{color:#a3322a}
+html[data-xuan] #sheet h3{color:#2a2018}
+html[data-xuan] #sheet:before{border-color:#b08c4f}
+html[data-xuan] .rate-menu{background:#fffaf0;border:1px solid rgba(138,106,58,.6)}
+html[data-xuan] .cam-menu button{border:1px solid rgba(138,106,58,.6);background:#fffaf0;color:#2a2018}
+html[data-xuan] .settings .dim-toggle button{color:#2a2018}
+html[data-xuan] .sk-tools button,html[data-xuan] .sk-tools .dim-toggle{background:linear-gradient(180deg,#fffaf0,#f1e6cd);color:#3a2a1a;border:1px solid rgba(138,106,58,.7);border-radius:6px;box-shadow:0 2px 5px rgba(74,52,22,.14)}
+html[data-xuan] .sk-tools .dim-toggle button{color:#3a2a1a}
+html[data-xuan] .sk-tools .dim-toggle button.on,html[data-xuan] .settings .dim-toggle button.on{background:linear-gradient(#c44a3b,#9a2a21);color:#fff6e6}
+html[data-xuan] .map-legend{color:#3a2a1a}
+html[data-xuan] .closed-note{background:#fffaf0;color:var(--jdim);border:1px dashed rgba(138,106,58,.6)}
+html[data-xuan] .region-head b,html[data-xuan] .rg-count{color:#2a2018}
+html[data-xuan] .player-name{color:#231a12}
+html[data-xuan] .fab-add,html[data-xuan] .top-right button,html[data-xuan] .snd-btn{background:rgba(255,255,255,.06);color:#f0dba6;border:1px solid rgba(208,176,110,.75);border-radius:5px}
+html[data-xuan] .settings .snd-btn{background:linear-gradient(180deg,#fffaf0,#f1e6cd);color:#3a2a1a;border-color:rgba(138,106,58,.7)}
+/* 3D painted diorama */
+html[data-xuan] .m3d-wrap{background:linear-gradient(180deg,#f3ecdc 0%,#e8dcc2 45%,#d9caa6 100%);border:1px solid rgba(138,106,58,.9);border-radius:6px;box-shadow:0 0 0 3px #f4ecd8,0 0 0 4px rgba(138,106,58,.7),0 10px 24px rgba(50,32,12,.28);margin:0 12px}
+html[data-xuan] .m3d-mk.xu2{top:6px;width:auto;height:auto;display:flex;align-items:center;gap:3px;padding:1px 6px 1px 2px;white-space:nowrap;border-radius:3px;background:linear-gradient(180deg,rgba(252,247,234,.95),rgba(240,229,203,.95));border:1px solid rgba(138,106,58,.7);box-shadow:0 2px 5px rgba(40,26,10,.25);animation:none}
+html[data-xuan] .m3d-mk.xu2::after{content:none}
+html[data-xuan] .m3d-mk.xu2 .m3d-no{position:static;inset:auto;width:14px;height:14px;min-width:0;padding:0;display:inline-grid;place-items:center;border-radius:50%;font:700 9.5px/1 Georgia,serif;background:#8a8072;color:#fbf5e6;border:0;box-shadow:none}
+html[data-xuan] .m3d-mk.xu2.done .m3d-no{background:radial-gradient(circle at 35% 30%,#d4523f,#a32a20);border:0}
+html[data-xuan] .m3d-mk.xu2 .m3d-name{position:static;transform:none;font:600 11px/14px var(--px);color:#2a2018;text-shadow:none}
+html[data-xuan] .m3d-mk.xu2.locked{opacity:.86}html[data-xuan] .m3d-mk.xu2.locked .m3d-name{color:#5d5244;opacity:1}
+html[data-xuan] .m3d-mk.xu2.done{border-color:#b08c4f;box-shadow:0 0 8px rgba(255,196,96,.5),0 2px 5px rgba(40,26,10,.25)}
+html[data-xuan] .m3d-pill{background:linear-gradient(180deg,#fffaf0,#f1e6cd);color:#2a2018;border:1px solid rgba(138,106,58,.7);border-radius:3px;letter-spacing:.16em}
+/* real map pins: painted buildings */
+.rmk.px .rmk-shop.xu{left:-12px;top:-38px;width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 3px 2px rgba(40,24,10,.4))}
+.rmk.px .rmk-shop.xu.off{filter:saturate(.15) sepia(.2) brightness(1.05) opacity(.88) drop-shadow(0 2px 2px rgba(40,24,10,.3))}
+/* 📜 title */
+#xuSplash{background:#d9cfb8}
+#xuSplash .xs-paint{position:absolute;inset:0;left:0;top:0;width:100%;height:100%;max-width:none;transform:none;object-fit:cover;object-position:50% 50%;animation:xspan 14s ease-out both}
+@keyframes xspan{from{transform:scale(1.08)}to{transform:scale(1)}}
+#xuSplash .xs-veil{position:absolute;inset:auto 0 0 0;height:30%;background:linear-gradient(180deg,rgba(20,16,12,0),rgba(20,16,12,.62))}
+#xuSplash .xs-mist{position:absolute;left:-30%;bottom:22%;width:160%;height:18%;background:radial-gradient(closest-side,rgba(250,247,240,.55),rgba(250,247,240,0));animation:xumist 30s linear infinite;pointer-events:none}
+#xuSplash .xs-scroll{right:9%;top:8%;padding:20px 12px 18px;background:linear-gradient(90deg,#fbf6ea,#f1e7cf);border-top:6px solid #3a2818;border-bottom:6px solid #3a2818;box-shadow:0 10px 26px rgba(40,26,10,.35),inset 0 0 0 1px rgba(160,122,62,.4)}
+#xuSplash .xs-title{font-size:46px;letter-spacing:.16em}
+#xuSplash .xs-foot{position:absolute;left:0;right:0;bottom:6%;text-align:center}
+#xuSplash .xs-en{position:static;font:500 10.5px/1.4 Georgia,serif;letter-spacing:.34em;color:rgba(250,240,220,.85)}
+#xuSplash .xs-press{position:static;margin-top:10px;font-size:17px;letter-spacing:.5em;color:#fbf2dc;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+html[data-xuan] .status .hud-bar span{color:#9c6b22}html[data-xuan] .status .hud-bar em{color:#3a2a1a}
+html[data-xuan] .status .xpbar{background:#e6dcc6;border-color:rgba(138,106,58,.6);box-shadow:inset 0 1px 2px rgba(80,50,20,.25)}
+/* reward / level-up cards on silk */
+html[data-xuan] .chest-box .cel-title,html[data-xuan] .lv-title{color:#a3322a;text-shadow:0 1px 0 #fffaf0,0 0 16px rgba(255,200,120,.55);letter-spacing:.14em}
+html[data-xuan] .chest-box .cel-cafe,html[data-xuan] .chest-text,html[data-xuan] .lv-row{color:#2a2018;text-shadow:none}
+html[data-xuan] .lv-row b{color:#a3322a}html[data-xuan] .lv-row.small{color:var(--jdim)}
+html[data-xuan] .chest-lines .cel-reg,html[data-xuan] .chest-lines .cel-badge{border:1px solid rgba(138,106,58,.6);background:#fffaf0;color:#2a2018}
+html[data-xuan] #celebrate.lvup{background:radial-gradient(ellipse at 50% 40%,rgba(255,236,196,.35),rgba(30,22,14,.86) 70%)}
+html[data-xuan] .lv-burst{background:radial-gradient(circle,rgba(240,214,150,.18) 0 12%,transparent 13%) 0 0/46px 46px}
+html[data-xuan] .lv-hero canvas{width:110px;height:110px}
+/* encounter: the cafe's building rises out of a painted valley */
+html[data-xuan] .enc-stage{background:linear-gradient(180deg,rgba(243,236,220,0) 55%,rgba(243,236,220,.85)),url("img/xuan/bg-richmond.webp") center 30%/cover no-repeat}
+html[data-xuan] .enc-stage canvas{filter:drop-shadow(0 8px 10px rgba(30,20,10,.35))}

@@ -111,7 +111,7 @@ export async function create(el, region, opt) {
   if (FDN) { // warm golden-hour light + soft haze for depth
     scene.add(new THREE.HemisphereLight(0xfff0cc, 0x6e8a48, 1.45)); const sun = new THREE.DirectionalLight(0xffd59a, 2.3); sun.position.set(-7, 8, 3); scene.add(sun);
     scene.fog = new THREE.FogExp2(0xf1dcae, 0.011); }
-  else if (XU) { scene.add(new THREE.HemisphereLight(0xfff6e4, 0x9a8a6a, 1.5)); const sun = new THREE.DirectionalLight(0xffe8c0, 1.9); sun.position.set(-5, 9, 4); scene.add(sun); scene.fog = new THREE.FogExp2(0xeee4cc, 0.018); }
+  else if (XU) { scene.add(new THREE.HemisphereLight(0xfff2da, 0x7a6a4a, 1.6)); const sun = new THREE.DirectionalLight(0xffdfae, 2.1); sun.position.set(-6, 9, 3); scene.add(sun); scene.fog = new THREE.FogExp2(0xf0e6cf, 0.009); }
   else { scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d2c0, 1.6));
     const sun = new THREE.DirectionalLight(0xffffff, 1.9); sun.position.set(-4, 9, 5); scene.add(sun); }
   const ramp = track(toonRamp());
@@ -121,7 +121,9 @@ export async function create(el, region, opt) {
     for (let i = 0; i < 260; i++) { const x = R2() * w, y = R2() * h, r = 8 + R2() * 46, gr = g.createRadialGradient(x, y, 0, x, y, r); const c = FG[1 + ((R2() * 3) | 0)]; gr.addColorStop(0, c + 'aa'); gr.addColorStop(1, c + '00'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
     for (let i = 0; i < 1800; i++) { g.fillStyle = `rgba(${R2() < .5 ? '60,80,30' : '255,240,190'},${R2() * .12})`; g.fillRect(R2() * w, R2() * h, 1 + R2() * 2, 1 + R2() * 3); } }, true);
   const xuTex = () => canvasTex(512, 512, (g, w, h) => { window.Xuan.paperTex(g, w, h, 11); const R2 = rng(13); for (let i = 0; i < 70; i++) { const x = R2() * w, y = R2() * h, r = 20 + R2() * 70, gr = g.createRadialGradient(x, y, 0, x, y, r); const c = R2() < .75 ? '147,180,160' : '185,138,76'; gr.addColorStop(0, `rgba(${c},.28)`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); } }, true);
-  const GW = vw * S + 1.2, GD = vh * S + 1.2, pt = track(XU ? xuTex() : J ? pixelTex(TT.grass[0], [GW / 0.32, GD / 0.32]) : FDN ? meadowTex() : paperTex()); if (!J || XU) pt.repeat.set(GW / (FDN ? 6 : XU ? 7 : 4), GD / (FDN ? 6 : XU ? 7 : 4));
+  const XS = XU ? await Promise.race([Promise.all([window.Xuan.ready(), window.Xuan.sceneCanvas(region), window.Xuan.skyCanvas(region)]), new Promise(r => setTimeout(() => r(null), 7000))]) : null; // 古风: painted scene
+  const xuPaint = XS && XS[1] ? (() => { const t = new THREE.CanvasTexture(XS[1]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; })() : null;
+  const GW = vw * S + 1.2, GD = vh * S + 1.2, pt = track(xuPaint ? xuPaint : XU ? xuTex() : J ? pixelTex(TT.grass[0], [GW / 0.32, GD / 0.32]) : FDN ? meadowTex() : paperTex());   if ((!J || XU) && !xuPaint) pt.repeat.set(GW / (FDN ? 6 : XU ? 7 : 4), GD / (FDN ? 6 : XU ? 7 : 4));
   const ground = new THREE.Mesh(track(new THREE.PlaneGeometry(GW, GD)), track(new THREE.MeshBasicMaterial({map: pt})));
   ground.rotation.x = -Math.PI / 2; scene.add(ground);
   const bpts = [[-GW / 2, -GD / 2], [GW / 2, -GD / 2], [GW / 2, GD / 2], [-GW / 2, GD / 2], [-GW / 2, -GD / 2]];
@@ -129,7 +131,12 @@ export async function create(el, region, opt) {
   // soft "slab" under the paper so the diorama has thickness
   const base = new THREE.Mesh(track(new THREE.BoxGeometry(GW, 0.25, GD)), track(FDN ? new THREE.MeshLambertMaterial({color: '#8a6a44'}) : new THREE.MeshToonMaterial({color: XU ? '#4a2e1e' : J ? '#8a5a32' : '#e9e2d0', gradientMap: ramp})));
   base.position.y = -0.126; scene.add(base);
-  if (XU) { // 山水: misty celadon/indigo peaks ringing the far side of the diorama
+  if (XU && XS && XS[2]) { // 山水: the painting's own mountains stand up behind the diorama as a misty backdrop
+    const st = new THREE.CanvasTexture(XS[2]); st.colorSpace = THREE.SRGBColorSpace; track(st); const bw = GW * 1.55, bh = bw * 440 / 1024;
+    const bp = new THREE.Mesh(track(new THREE.PlaneGeometry(bw, bh)), track(new THREE.MeshBasicMaterial({map: st, transparent: true, depthWrite: false, fog: false}))); bp.position.set(0, bh / 2 - 0.55, -GD / 2 - 0.9); scene.add(bp);
+    const mt = track(canvasTex(128, 128, (g) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(252,248,238,.85)'); gr.addColorStop(1, 'rgba(252,248,238,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); })); const RM = rng(hash(region.id) ^ 0x77);
+    for (let i = 0; i < 7; i++) { const m = new THREE.Sprite(track(new THREE.SpriteMaterial({map: mt, transparent: true, depthWrite: false, opacity: .55 + RM() * .3}))); m.scale.set(3.5 + RM() * 3, 1.1 + RM() * .6, 1); m.position.set((RM() - .5) * GW * 1.3, 0.35 + RM() * 0.5, -GD / 2 - 0.3 + RM() * 1.2); scene.add(m); } }
+  else if (XU) { // 山水: misty celadon/indigo peaks ringing the far side of the diorama
     const RM = rng(hash(region.id) ^ 0x51), mg = new Batch(1), cone = new THREE.ConeGeometry(1, 1, 7, 1);
     for (let i = 0; i < 16; i++) { const t = i / 15, side = i % 3, hgt = 1.4 + RM() * 2.4, r = 0.9 + RM() * 1.3;
       const x = side === 2 ? (RM() < .5 ? -1 : 1) * (GW / 2 + 1 + RM() * 1.5) : (t - .5) * (GW + 3), z = side === 2 ? (RM() - .7) * GD : -GD / 2 - 1.2 - RM() * 2.2;
@@ -144,7 +151,7 @@ export async function create(el, region, opt) {
       for (let k = 1; k <= n; k++) { const t = k / n, o = k === n ? 0 : Math.sin(t * Math.PI * 2 + i) * amp; out.push([ax + (bx - ax) * t + nx * o, ay + (by - ay) * t + ny * o]); } } return out; };
   region.streets.forEach((st, si) => {
     const ws = st.w * S * (FDN ? .82 : 1), h = FDN ? 0.03 + si * 0.001 : 0.08 + st.w * 0.0022 + si * 0.0015, SP = wind(st.pts);
-    for (let i = 1; i < SP.length; i++) {
+    for (let i = 1; i < SP.length && !xuPaint; i++) {
       const [x0, z0] = W(...SP[i - 1]), [x1, z1] = W(...SP[i]), L = Math.hypot(x1 - x0, z1 - z0), ry = -Math.atan2(z1 - z0, x1 - x0);
       if (FDN) { sb.box(L + ws * .6, h * .6, ws + 0.06, (x0 + x1) / 2, h * .3, (z0 + z1) / 2, ry, '#a98c5c', {edges: false}); sb.box(L + ws * .5, h, ws, (x0 + x1) / 2, h / 2 + 0.002, (z0 + z1) / 2, ry, st.w >= 28 ? '#d9c497' : '#e2cd9c', {edges: false}); continue; }
       sb.box(L + ws + 0.07, h - 0.02, ws + 0.07, (x0 + x1) / 2, (h - 0.02) / 2, (z0 + z1) / 2, ry, XU ? '#5a5246' : J ? '#5e584c' : PENCIL, {edges: false});
@@ -180,6 +187,7 @@ export async function create(el, region, opt) {
       tb.geo(prismGeo, wx, hh + 0.09, wz, ry, ['#c8643c', '#d9a441', '#a85a48', '#8c97a3'][(R() * 4) | 0], w1 * 1.12, 0.2, d1 * 1.25);
       continue;
     }
+    if (XU && xuPaint) continue; // the painting already has its own trees / terraces
     if (XU) { // 古风 village: 粉墙黛瓦 houses with hip roofs, ink-green pines and round trees
       if (R() < 0.45) { for (let t = 0; t < 2; t++) { const ox = (R() - .5) * sz * S * .6, oz = (R() - .5) * sz2 * S * .6; tb.geo(trunkGeo, wx + ox, 0.11, wz + oz, 0, '#3b2a1e'); if (R() < .55) tb.geo(crownGeo, wx + ox, 0.42, wz + oz, R(), R() < .5 ? '#3f5e4a' : '#2f4a3c'); else tb.geo(ballGeo, wx + ox, 0.36, wz + oz, R(), R() < .12 ? '#c4574d' : '#6f8f73'); } continue; }
       const hh = 0.14 + R() * 0.2, ry = (R() - .5) * 0.1, w1 = sz * S * .8, d1 = sz2 * S * .7;
@@ -202,7 +210,7 @@ export async function create(el, region, opt) {
   [roofGeo, trunkGeo, crownGeo, ballGeo].forEach(g => g.dispose());
 
   // floating region pill
-  if (pl) {
+  if (pl && !(XU && xuPaint)) {
     const d = document.createElement('div'); d.className = 'm3d-pill'; d.textContent = region.name;
     const o = new CSS2DObject(d); const [px, pz] = W(pl.x, pl.y); o.position.set(px, 0.06, pz); scene.add(o);
   }
@@ -235,6 +243,16 @@ export async function create(el, region, opt) {
     n++; const c = cafeById(id); if (!c) return;
     const done = visited.has(id), [x, z] = W(sx, sy), g = new THREE.Group(); g.position.set(x, 0, z); g.userData.id = id;
     const ring = new THREE.Mesh(ringGeo, done ? M.ringOn : M.ringOff); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.006; g.add(ring);
+    if (XU && xuPaint) { // 🏯 painted building billboard (always faces the camera, like a hand-painted 2.5D RPG); unvisited = ink-grey
+      const bld = new THREE.Group(); g.add(bld); bld.userData.y0 = 0; ring.visible = false;
+      const bt = new THREE.CanvasTexture(window.Xuan.pavilion(id, done, false, 4)); bt.colorSpace = THREE.SRGBColorSpace; track(bt);
+      const sp = new THREE.Sprite(track(new THREE.SpriteMaterial({map: bt, transparent: true, alphaTest: .05}))); sp.center.set(.5, .06); sp.scale.set(1.7, 1.7, 1); sp.userData.id = id; bld.add(sp); pickables.push(sp);
+      const sh = new THREE.Mesh(discGeo, track(new THREE.MeshBasicMaterial({color: '#2a1c0e', transparent: true, opacity: .28, depthWrite: false}))); sh.rotation.x = -Math.PI / 2; sh.scale.set(2.1, 1.2, 1); sh.position.y = 0.012; g.add(sh);
+      if (done) { const glow = new THREE.Sprite(track(new THREE.SpriteMaterial({map: glowTex, depthWrite: false, transparent: true, opacity: .55}))); glow.scale.set(1.9, 1.5, 1); glow.position.y = 0.55; g.add(glow); }
+      const lab = document.createElement('div'); lab.className = `m3d-mk ${done ? 'done' : 'locked'} side-${side === 'l' ? 'l' : 'r'} xu xu2`; lab.dataset.id = id;
+      lab.innerHTML = `<span class="m3d-no">${n}</span><span class="m3d-name">${String(c.mapLabel || c.short || c.name).replace(/\n/g, ' ').replace(/[&<>"']/g, ch => '&#' + ch.charCodeAt(0) + ';')}</span>`;
+      lab.addEventListener('click', ev => { ev.stopPropagation(); onOpen(id); });
+      const lo = new CSS2DObject(lab); lo.position.y = -0.02; g.add(lo); scene.add(g); markers[id] = {g, cup: bld, lab}; return; }
     if (XU) { // 🏯 tiled-roof pavilion with red pillars + lanterns; not yet visited = pale ink ghost
       const bld = new THREE.Group(); g.add(bld); bld.scale.setScalar(1.55); const ry = ((Math.abs(hash(id)) >> 4) % 4) * 0.15;
       const mats = done ? M.xu : M.xuG;
@@ -306,19 +324,19 @@ export async function create(el, region, opt) {
   controls.enableDamping = true; controls.dampingFactor = 0.12; controls.screenSpacePanning = false;
   controls.minPolarAngle = 0.12; controls.maxPolarAngle = 1.18; controls.rotateSpeed = 0.7;
   controls.touches = {ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN};
-  const home = FDN ? {polar: 0.6, az: -0.32} : {polar: 0.66, az: -0.13};
+  const home = FDN ? {polar: 0.6, az: -0.32} : XU ? {polar: 0.84, az: -0.08} : {polar: 0.66, az: -0.13};
   let fitR = 16;
   // frame the cafes (not the whole sheet) so clustered regions like Brunswick aren't squeezed to one side
   const cps = Object.values(region.cafes), m = 150;
-  const fx0 = Math.min(...cps.map(c => c[0] - (c[2] === 'l' ? 280 : 70))), fx1 = Math.max(...cps.map(c => c[0] + (c[2] === 'l' ? 70 : 280)));
+  const XL = XU ? 90 : 0, fx0 = Math.min(...cps.map(c => c[0] - (XL || (c[2] === 'l' ? 280 : 70)))), fx1 = Math.max(...cps.map(c => c[0] + (XL || (c[2] === 'l' ? 70 : 280))));
   const fy0 = Math.max(vy, Math.min(...cps.map(c => c[1])) - m), fy1 = Math.min(vy + vh, Math.max(...cps.map(c => c[1])) + m);
   const [fcx, fcz] = W((fx0 + fx1) / 2, (fy0 + fy1) / 2), FW = (fx1 - fx0) * S, FH = (fy1 - fy0) * S;
   const fit = () => {
     const a = camera.aspect, vf = THREE.MathUtils.degToRad(camera.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * a);
     const needW = (FW / 2 + 0.4) / Math.tan(hf / 2), needH = (FH / 2 * Math.cos(home.polar) + 1.2) / Math.tan(vf / 2);
-    fitR = Math.max(needW * 1.04, needH, 6) * (FDN ? 0.9 : 1); controls.minDistance = fitR * 0.3; controls.maxDistance = fitR * 1.5;
+    fitR = Math.max(needW * 1.04, needH, 6) * (FDN ? 0.9 : XU ? 0.85 : 1); controls.minDistance = fitR * 0.3; controls.maxDistance = fitR * 1.5;
   };
-  const homePose = () => { const sph = new THREE.Spherical(fitR, home.polar, home.az); const target = new THREE.Vector3(fcx, 0, fcz + (FDN ? 1.2 : 0.3)); return {pos: new THREE.Vector3().setFromSpherical(sph).add(target), target}; };
+  const homePose = () => { const sph = new THREE.Spherical(fitR, home.polar, home.az); const target = new THREE.Vector3(fcx, 0, fcz + (FDN ? 1.2 : XU ? -0.5 : 0.3)); return {pos: new THREE.Vector3().setFromSpherical(sph).add(target), target}; };
 
   let raf = null, alive = true, interacting = false, frames = 0;
   const anims = [];
