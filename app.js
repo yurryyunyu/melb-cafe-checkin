@@ -30,6 +30,9 @@ const saveBeans = () => save(K.beans, beans);
 const visitedIds = () => new Set(checkins.filter(c => c.cafeId).map(c => c.cafeId));
 const checkinsOf = id => checkins.filter(c => c.cafeId === id);
 const isClosed = c => !!(c && c.closed); // permanently closed: stays listed (history kept) but never suggested
+// 🗺️ closed cafes are hidden from every map (and from map/area completion totals); data + check-in history stay
+const mapCafes = () => allCafes().filter(c => !isClosed(c));
+const mapRegion = R => R && ({...R, cafes: Object.fromEntries(Object.entries(R.cafes).filter(([id]) => !isClosed(cafeById(id))))});
 window.cafeById = cafeById; // valley.js greeting() checks .closed
 const sigOf = id => (window.SIGNATURES || {})[id] || null;
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
@@ -488,8 +491,8 @@ REGIONS.forEach(r => Object.keys(r.cafes).forEach((id, i) => { if (!REGION_OF[id
 const regionOf = id => REGION_OF[id] || {r: REGION_MORE, no: null};
 function regions() { // progress per sketch region (+ 更多 for everything else)
   const v = visitedIds();
-  const out = REGIONS.map(r => { const ids = Object.keys(r.cafes); return {id: r.id, name: r.name, zh: r.zh, total: ids.length, done: ids.filter(i => v.has(i)).length}; });
-  const more = allCafes().filter(c => !REGION_OF[c.id]);
+  const out = REGIONS.map(r => { const ids = Object.keys(mapRegion(r).cafes); return {id: r.id, name: r.name, zh: r.zh, total: ids.length, done: ids.filter(i => v.has(i)).length}; });
+  const more = mapCafes().filter(c => !REGION_OF[c.id]);
   out.push({id: 'more', name: REGION_MORE.name, zh: REGION_MORE.zh, total: more.length, done: more.filter(c => v.has(c.id)).length});
   return out.filter(r => r.total);
 }
@@ -498,7 +501,7 @@ function hudF() { const L = levelInfo(), k = window.Valley ? Valley.clock() : nu
   return `<div class="fd-res" id="fdRes">
     <a class="fd-r coin" href="#/shop" aria-label="金币">${FD.icon('coin')}<b id="fdGold">${fmtN(totalCoins())}</b></a>
     <span class="fd-r lv" title="${esc(L.title)}">${FD.icon('star')}<b>Lv.${L.lv}</b><span class="fd-xp"><i style="width:${L.pct}%"></i></span></span>
-    <span class="fd-r bld" title="已建成的据点">${FD.icon('house')}<b>${s.cafes}</b><small>/${s.total}</small></span>
+    <span class="fd-r bld" title="已建成的据点">${FD.icon('house')}<b>${s.open}</b><small>/${s.total}</small></span>
     ${k ? `<a class="fd-r day" href="#/calendar" id="fdDay" aria-label="小镇日历">${FD.icon('cal')}<b>${k.zh}·${k.dayOf}</b><small class="fd-wx" title="小镇天气（游戏内，非真实预报）">${k.wx ? k.wx.icon : ''}</small><small class="fd-time">${k.hhmm}</small></a>` : ''}
     <button class="fd-r mus${musicOn() ? ' on' : ''}" data-music aria-label="背景音乐" aria-pressed="${musicOn()}">${musicOn() ? '♪' : '♪̸'}</button></div>
     ${fe ? `<a class="fd-fest" href="#/calendar">${fe.icon} 今天是 ${esc(fe.zh)}${fe.approx ? '（约）' : ''}</a>` : ''}
@@ -652,13 +655,13 @@ const BADGES = [
   {id: 'regular', e: '💛', name: '同店 3 次常客', test: s => s.maxSame >= 3},
   {id: 'photo', e: '📸', name: '10 张照片', test: s => s.photos >= 10},
   {id: 'critic', e: '✍️', name: '写 5 条心得', test: s => s.notes >= 5},
-  {id: 'all', e: '👑', name: '全部收集', test: s => s.cafes >= s.total},
+  {id: 'all', e: '👑', name: '全部收集', test: s => s.open >= s.total},
   {id: 'overcaf', e: '⚡', name: '咖啡因过载', noXp: true, test: s => s.overcaf}, // checked in with 0 体力 · fun only, no XP
 ];
 function stats() {
   const v = visitedIds(), cafes = [...v].map(cafeById).filter(Boolean);
   const per = {}, days = {}; checkins.forEach(c => { if (c.cafeId) per[c.cafeId] = (per[c.cafeId] || 0) + 1; const d = ciDay(c); days[d] = (days[d] || 0) + 1; });
-  return {overcaf: Object.values(days).some(n => n > ST_MAX / ST_COST), count: checkins.length, cafes: cafes.length, total: allCafes().length,
+  return {overcaf: Object.values(days).some(n => n > ST_MAX / ST_COST), count: checkins.length, cafes: cafes.length, open: cafes.filter(c => !isClosed(c)).length, total: mapCafes().length, totalAll: allCafes().length,
     suburbs: new Set(cafes.map(c => c.suburb)).size, cbd: cafes.filter(c => /CBD/.test(c.suburb)).length,
     maxSame: Math.max(0, ...Object.values(per)), photos: checkins.filter(c => c.photo).length,
     notes: checkins.filter(c => c.note).length};
@@ -1025,13 +1028,13 @@ const views = {
     const head = `<div class="region-tabs">${tabs.map(([id, t]) => `<button class="chip ${ms.region === id ? 'on' : ''}" data-r="${id}">${esc(t)}</button>`).join('')}</div>`;
     if (ms.region === 'real') {
       app.innerHTML = head + `<div style="position:relative"><div id="map" class="real"></div>
-        <div class="map-legend"><span class="lg gold"></span> 已解锁 ${v.size}　<span class="lg grey"></span> 未解锁 ${allCafes().length - v.size}${allCafes().some(isClosed) ? '　<span class="lg shut"></span> 已关店' : ''}</div>
+        <div class="map-legend"><span class="lg gold"></span> 已解锁 ${mapCafes().filter(c => v.has(c.id)).length}　<span class="lg grey"></span> 未解锁 ${mapCafes().filter(c => !v.has(c.id)).length}</div>
         <button class="fab-add" id="locBtn">🎯 定位我</button></div>`;
       const token = ++mapToken;
       MapKit.create($('#map'), CBD, 13).then(map => {
         if (token !== mapToken) return map.remove();
         mapRef = map;
-        allCafes().forEach(c => {
+        mapCafes().forEach(c => {
           const done = v.has(c.id), n = checkinsOf(c.id).length, ro = regionOf(c.id);
           const inRange = lastPos && distM(lastPos, [c.lat, c.lng]) <= NEAR_M, cl = isClosed(c);
           map.addMarker(c.lat, c.lng, done, `<div class="pop-name">${esc(c.name)}${cl ? ' ' + closedBadge : ''}</div><div class="pop-sub">${esc(ro.r.name)} · ${cl ? '已永久关闭' + (n ? ' · 打卡 ' + n + ' 次' : '') : done ? '✓ 已解锁 · 打卡 ' + n + ' 次' : inRange ? '✨ 就在附近，可解锁！' : '🔒 未解锁'}</div>${sigLine(c).replace('sig-line', 'sig-line pop-sig')}<a class="pop-link" href="#/cafe/${c.id}">查看据点 ›</a>`, {no: ro.no, label: c.short || c.name, closed: cl, id: c.id});
@@ -1042,7 +1045,7 @@ const views = {
       }).catch(e => { console.warn('real map failed', e); const m = $('#map'); if (m && token === mapToken) m.innerHTML = '<div class="empty" style="padding:40px 16px"><div class="e">🗺️</div>真实地图暂时加载不了（网络问题），可以先用上面的草图区域地图</div>'; });
       $('#locBtn').onclick = async () => { toast('🎯 正在定位…'); const p = await locate(); if (!p) return toast('无法获取定位，请允许定位权限'); if (mapRef) { mapRef.showMe(p, NEAR_M); mapRef.setView(p, 15); } };
     } else {
-      const R = REGIONS.find(r => r.id === ms.region) || REGIONS[0];
+      const R = mapRegion(REGIONS.find(r => r.id === ms.region) || REGIONS[0]);
       const prog = regions().find(r => r.id === R.id);
       const J = isJ();
       const FDm = isF(), use3d = (J ? ms.jmode : FDm ? ms.fmode : ms.mode) === '3d' && can3D && !map3dFailed;
@@ -1095,7 +1098,7 @@ const views = {
         $('#zIn').onclick = () => zoom(ms.zoom + 0.35); $('#zOut').onclick = () => zoom(ms.zoom - 0.35);
       }
       $('#skLoc').onclick = async () => { toast('🎯 正在定位…'); const p = await locate(); if (!p) return toast('无法获取定位，请允许定位权限');
-        const best = REGIONS.map(r => ({r, d: Math.min(...Object.keys(r.cafes).map(id => cafeById(id)).filter(Boolean).map(c => distM(p, [c.lat, c.lng])))})).sort((a, b) => a.d - b.d)[0];
+        const best = REGIONS.map(mapRegion).map(r => ({r, d: Math.min(...Object.keys(r.cafes).map(id => cafeById(id)).filter(Boolean).map(c => distM(p, [c.lat, c.lng])))})).sort((a, b) => a.d - b.d)[0];
         if (best && best.d < 1500 && best.r.id !== ms.region) { ms.region = best.r.id; toast('📍 你在 ' + best.r.name); } views.map(); };
     }
     app.querySelector('.region-tabs').onclick = e => { const b = e.target.closest('[data-r]'); if (!b) return; ms.region = b.dataset.r; ms.zoom = 1; render(); };
@@ -1132,11 +1135,11 @@ const views = {
     if (isV()) return footprintV();
     if (isJ()) return footprintJ();
     setTop('我的足迹');
-    const s = stats(), v = visitedIds(), pct = s.total ? Math.round(s.cafes / s.total * 100) : 0;
+    const s = stats(), v = visitedIds(), pct = s.total ? Math.round(s.open / s.total * 100) : 0;
     const photos = [...checkins].filter(c => c.photo).slice(0, 9);
     const Lv = levelInfo();
     app.innerHTML = `<div class="player${stamina() <= 0 ? ' tired' : ''}"><div class="player-ava">${stamina() <= 0 ? '🥱' : '🧑'}</div><div class="player-main"><div class="player-name">Lv.${Lv.lv} ${Lv.title}</div><div class="xpbar big"><i style="width:${Lv.pct}%"></i></div><div class="hint" style="margin:3px 0 0">${Lv.into} / ${Lv.need} XP 升到下一级 · 总 ${Lv.xp} XP</div></div></div>
-      <div class="hero"><h2>已解锁 ${s.cafes} / ${s.total} 个据点</h2><div class="progress" style="background:rgba(255,255,255,.3)"><i style="width:${pct}%"></i></div><div class="addr">墨尔本咖啡世界探索度 ${pct}%</div></div>
+      <div class="hero"><h2>已解锁 ${s.open} / ${s.total} 个据点</h2><div class="progress" style="background:rgba(255,255,255,.3)"><i style="width:${pct}%"></i></div><div class="addr">墨尔本咖啡世界探索度 ${pct}%</div></div>
       <div class="stats"><div class="stat"><b>${s.count}</b><small>打卡次数</small></div><div class="stat"><b>${s.cafes}</b><small>据点</small></div><div class="stat"><b>${s.suburbs}</b><small>个区域</small></div></div>
       <div class="section-title">足迹地图 <a href="#/map" style="text-decoration:none">全部地图 ›</a></div><div id="fpMap" class="sk-mini"></div>
       <div class="section-title">区域收集</div><div class="regions">${regions().map(r => `<div class="region ${r.done === r.total ? 'full' : ''}"><div class="rg-top"><b>${r.done === r.total ? '👑 ' : ''}${esc(r.name)}</b><small class="hint" style="margin:0 auto 0 6px">${esc(r.id === 'more' ? '' : r.zh)}</small><span>${r.done}/${r.total}</span></div><div class="progress"><i style="width:${Math.round(r.done / r.total * 100)}%"></i></div></div>`).join('')}</div>
@@ -1147,7 +1150,7 @@ const views = {
     bindSettings();
     const top = regions().filter(r => r.id !== 'more').sort((x, y) => y.done - x.done)[0];
     const TR = REGIONS.find(r => r.id === (top && top.done ? top.id : 'city'));
-    $('#fpMap').innerHTML = SketchMap.render(TR, {visited: v, cafeById}).svg;
+    $('#fpMap').innerHTML = SketchMap.render(mapRegion(TR), {visited: v, cafeById}).svg;
     $('#fpMap').onclick = e => { const g = e.target.closest('[data-id]'); if (g) { location.hash = '#/cafe/' + g.dataset.id; return; } mapState.region = TR.id; location.hash = '#/map'; };
     app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(c => c.id === ed.dataset.edit), false); };
   },
@@ -1200,7 +1203,7 @@ const views = {
       ${isV() ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="jwin vl-barista"><div class="vb-face" id="vbFace"></div><div class="vb-main"><div class="vb-name">${esc(vg.title)} <b>${esc(vg.name)}</b></div>${Valley.heartsHtml(h)}<div class="vb-h">好感 ${h}/10${h >= 10 ? ' · 挚友' : h >= 5 ? ' · 好朋友' : h ? ' · 熟客' : ' · 初次见面'}</div><div class="vb-say">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="vb-talk" id="talkBtn">💬</button></div>`; })() : ''}
       ${window.Websites && Websites.of(c) ? `<div class="web-box">${Websites.btnHtml(c)}</div>` : ''}<div class="gr-box">${window.GReviews ? GReviews.btnHtml(c, 'btn ghost', '在 Google 地图看评价', 'gmLink') : `<a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图看评价</a>`}<div id="grPanelBox"></div></div>
       <button class="btn${isClosed(c) ? ' ghost' : ''}" id="ciBtn">${isClosed(c) ? ic('quill', '📝') + ' 补记一次以前的打卡' : ic('cup', '☕') + ' 在这里打卡'}</button>
-      <button class="btn ghost" id="mapBtn">${ic('map', '🗺️')} 地图上看</button>
+      ${isClosed(c) ? '' : `<button class="btn ghost" id="mapBtn">${ic('map', '🗺️')} 地图上看</button>`}
       <div class="section-title">我的打卡（${cis.length}）</div>
       ${cis.map(ci => `<div class="rec">${ci.photo ? `<img src="${ci.photo}" alt="">` : ''}<div class="body"><div class="top"><span class="stars">${stars(ci.rating) || '<span class="hint">未评分</span>'}</span><span class="date">${esc(ci.date)}</span></div>${ci.drink ? `<div class="note">🥤 ${esc(ci.drink)}</div>` : ''}${ci.note ? `<div class="note">${esc(ci.note)}</div>` : ''}<div style="text-align:right"><button class="edit" data-edit="${ci.id}">编辑</button></div></div></div>`).join('') || '<div class="hint">还没在这里打过卡</div>'}
       ${c.custom ? '<button class="btn danger" id="delCafe">删除这家咖啡馆</button>' : ''}`;
@@ -1210,7 +1213,7 @@ const views = {
       const talk = () => { const t = talks++, st = stamina(); Valley.say(t === 0 && st <= ST_LOW ? (st <= 0 ? ST_OUT : ST_WARN) : Valley.greeting(vg, t === 0 ? h : Math.max(0, h + (t % 3) - 1), id), 3200, vg); }; talk(); $('#talkBtn').onclick = () => { SFXplay('blip'); talk(); }; }
     if (FDd) { const vg = villagerOf(id), h = heartsOf(id); let talks = 1; $('#talkBtn').onclick = () => { const t = talks++, st = stamina(); $('#fdbSay').textContent = '「' + (t === 1 && st <= ST_LOW ? (st <= 0 ? ST_OUT : ST_WARN) : Valley.greeting(vg, Math.max(0, h + (t % 3) - 1), id, {...Valley.clock(), day: Valley.clock().day + t})) + '」'; }; }
     $('#ciBtn').onclick = () => openCheckinForm({id: uid(), cafeId: id, photo: '', rating: 0, drink: '', note: '', date: today(), createdAt: Date.now()}, true);
-    $('#mapBtn').onclick = () => { const ro = regionOf(c.id); if (ro.no) { mapState.region = ro.r.id; mapState.focusId = c.id; } else { mapState.region = 'real'; pendingFocus = c; } location.hash = '#/map'; };
+    if ($('#mapBtn')) $('#mapBtn').onclick = () => { const ro = regionOf(c.id); if (ro.no) { mapState.region = ro.r.id; mapState.focusId = c.id; } else { mapState.region = 'real'; pendingFocus = c; } location.hash = '#/map'; };
     app.onclick = e => { const ed = e.target.closest('[data-edit]'); if (ed) openCheckinForm(checkins.find(x => x.id === ed.dataset.edit), false); };
     const dc = $('#delCafe');
     if (dc) dc.onclick = () => { if (!confirm('删除这家咖啡馆？相关打卡会变成「未选择咖啡馆」')) return;
@@ -1344,10 +1347,10 @@ function footprintJ() {
   app.innerHTML = `<div class="jwin status"><div class="st-hero" id="stHero"></div><div class="st-main"><div class="st-name">勇者 Lv.${L.lv}</div><div class="st-title">${L.title}</div>
       ${stBar()}
       <div class="hud-bar"><span>XP</span><div class="xpbar"><i style="width:${L.pct}%"></i></div><em>${L.into}/${L.need}</em></div></div></div>
-    <div class="jwin st-stats"><div>打卡<b>${s.count}</b></div><div>据点<b>${s.cafes}/${s.total}</b></div><div>区域<b>${s.suburbs}</b></div><div>总XP<b>${L.xp}</b></div></div>
+    <div class="jwin st-stats"><div>打卡<b>${s.count}</b></div><div>据点<b>${s.open}/${s.total}</b></div><div>区域<b>${s.suburbs}</b></div><div>总XP<b>${L.xp}</b></div></div>
     <div class="section-title">📜 任务</div>
     <div class="jwin quests">${quests.map(q => `<div class="quest ${q.done >= q.total ? 'clear' : ''}"><div class="q-top"><span class="q-kind">${q.main ? '主线' : '支线'}</span><b>${esc(q.name)}</b><span class="q-st">${q.done >= q.total ? '完成！' : q.main ? `${q.done}/${q.total}` : '未达成'}</span></div>${q.main ? `<div class="xpbar"><i style="width:${Math.round(q.done / q.total * 100)}%"></i></div><small>${esc(q.zh)}</small>` : ''}</div>`).join('')}</div>
-    <div class="section-title">📖 咖啡图鉴 <small>${s.cafes}/${s.total}</small></div>
+    <div class="section-title">📖 咖啡图鉴 <small>${s.cafes}/${s.totalAll}</small></div>
     <div class="dex">${allCafes().map((c, i) => `<a class="dex-item ${v.has(c.id) ? 'seen' : 'unk'}" href="#/cafe/${c.id}"><span class="dex-no">No.${String(i + 1).padStart(3, '0')}</span><canvas data-spr="${c.id}" width="24" height="24"></canvas><span class="dex-name">${v.has(c.id) ? esc(c.short || c.name) : '？？？'}</span></a>`).join('')}</div>
     <div class="section-title">🎒 道具栏</div>
     <div class="jwin inv">${BADGES.map(b => `<div class="inv-item ${owned.has(b.id) ? 'own' : 'off'}"><span class="ii">${owned.has(b.id) ? b.e : '？'}</span><span class="in">${owned.has(b.id) ? esc(b.name) : '？？？'}</span>${owned.has(b.id) ? '<em>E</em>' : ''}</div>`).join('')}</div>
@@ -1377,7 +1380,7 @@ function footprintV() {
     collect: () => `<div class="vl-colh">🥤 饮品 <small>${drinks.filter(i => col.has(itemKey(i.name))).length}/${drinks.length}</small></div><div class="vwin vl-slots">${drinks.map(slot).join('')}</div>
       <div class="vl-colh">🥐 美食 <small>${foods.filter(i => col.has(itemKey(i.name))).length}/${foods.length}</small></div><div class="vwin vl-slots">${foods.map(slot).join('')}</div>
       <div class="vl-colh">🏅 区域徽章 <small>${regions().filter(r => r.done === r.total).length}/${regions().length}</small></div><div class="vwin vl-medals">${regions().map(r => { const t = r.done === r.total ? 'gold' : r.done * 3 >= r.total * 2 ? 'silver' : r.done * 3 >= r.total ? 'bronze' : r.done ? 'wood' : 'none'; return `<div class="vl-medal ${t}" data-region="${r.id}"><i></i><b>${esc(r.name)}</b><small>${r.done}/${r.total}</small></div>`; }).join('')}</div>
-      <div class="vl-colh">🏪 咖啡馆 <small>${s.cafes}/${s.total}</small></div><div class="vwin vl-slots shops">${allCafes().map(c => `<a class="vl-slotc ${v.has(c.id) ? 'seen' : 'unk'}" href="#/cafe/${c.id}"><canvas data-shop="${c.id}" width="32" height="32"></canvas><span>${v.has(c.id) ? esc(c.short || c.name) : '？？？'}</span></a>`).join('')}</div>`,
+      <div class="vl-colh">🏪 咖啡馆 <small>${s.cafes}/${s.totalAll}</small></div><div class="vwin vl-slots shops">${allCafes().map(c => `<a class="vl-slotc ${v.has(c.id) ? 'seen' : 'unk'}" href="#/cafe/${c.id}"><canvas data-shop="${c.id}" width="32" height="32"></canvas><span>${v.has(c.id) ? esc(c.short || c.name) : '？？？'}</span></a>`).join('')}</div>`,
     beans: () => `<div class="hint">拍豆袋标签 → 自动识别文字，存成种子包 · 每包 +${BEAN_COINS} 金币 · 共 ${beans.length} 包 <a href="#/beans">列表/搜索 ›</a></div>
       <div class="vl-packets">${beans.map(beanPacket).join('')}<button class="vl-packet add" data-newbean><span class="pk-top">新种子</span><span class="pk-plus">＋</span><b>拍豆子</b><small>拍照识别标签</small></button></div>`,
     friends: () => `<div class="hint">每次打卡，和那家店的咖啡师好感 +1 ❤（最多 10）· 已认识 ${met.length}/${friends.length}</div>
@@ -1390,7 +1393,7 @@ function footprintV() {
   app.innerHTML = `<div class="jwin status vl-status"><div class="st-hero" id="stHero"></div><div class="st-main"><div class="st-name">咖啡农夫 Lv.${L.lv}</div><div class="st-title">${L.title}</div>
       ${stBar()}
       <div class="hud-bar"><span>XP</span><div class="xpbar"><i style="width:${L.pct}%"></i></div><em>${L.into}/${L.need}</em></div></div></div>
-    <div class="jwin st-stats"><div>打卡<b>${s.count}</b></div><div>店铺<b>${s.cafes}/${s.total}</b></div><div>收藏<b>${col.size}</b></div><a href="#/shop" class="st-shop">金币<b>${fmtN(totalCoins())}</b><small>🛒 商店 ›</small></a></div>
+    <div class="jwin st-stats"><div>打卡<b>${s.count}</b></div><div>店铺<b>${s.open}/${s.total}</b></div><div>收藏<b>${col.size}</b></div><a href="#/shop" class="st-shop">金币<b>${fmtN(totalCoins())}</b><small>🛒 商店 ›</small></a></div>
     <div class="vl-tabs" id="fpTabs">${tabs.map(([t, n]) => `<button class="chip ${fpTab === t ? 'on' : ''}" data-vt="${t}">${n}</button>`).join('')}</div>
     <div id="fpBody" data-tab="${fpTab}">${body[fpTab]()}</div>
     <div class="section-title">${ic('photo', '🖼️')} 相册 <a href="#/records" style="text-decoration:none">全部记录 ›</a></div>
