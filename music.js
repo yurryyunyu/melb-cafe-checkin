@@ -59,5 +59,10 @@ function arm() { if (armed) return; armed = true; const go = () => { document.re
 if (enabled) arm();
 document.addEventListener('visibilitychange', () => { if (!enabled || !ctx) return; if (document.hidden) stop(); else start(); });
 window.addEventListener('pagehide', () => { if (ctx) stop(); });
-window.Music = {get enabled() { return enabled; }, set, mood: setMood, get state() { return {enabled, running: !!timer, ctx: ctx ? ctx.state : 'none', mood, steps: step}; }, compose};
+// 🕯 finale helpers: thin() lets the loop fade to a whisper; finale() stops the loop and leaves one plucked note, then silence; resume() brings the normal loop back
+function thin() { if (ctx && master && timer) master.gain.setTargetAtTime(.02, ctx.currentTime, 2.4); }
+function finale() { if (!ctx || !master || !enabled) return; if (timer) { clearInterval(timer); timer = null; } const t = ctx.currentTime + .1; master.gain.cancelScheduledValues(t); master.gain.setTargetAtTime(.06, t, .05);
+  tone(t, mtof(62), 7, 'triangle', .26); tone(t + .004, mtof(62) * 2.003, 4.5, 'triangle', .05); }
+function resume() { if (!enabled) return; if (master && ctx) master.gain.setTargetAtTime(.06, ctx.currentTime, .4); start(); }
+window.Music = {thin, finale, resume, get enabled() { return enabled; }, set, mood: setMood, get state() { return {enabled, running: !!timer, ctx: ctx ? ctx.state : 'none', mood, steps: step}; }, compose};
 })();

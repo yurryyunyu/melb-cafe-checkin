@@ -156,3 +156,62 @@ html[data-xuan] .st-fbar i{background:linear-gradient(90deg,var(--xcin),#d9776b)
 html[data-xuan] .st-pg .pg-th{box-shadow:0 1px 5px rgba(60,40,10,.4)}
 html[data-xuan] #storyDlg.idle-pop .ed-box{max-width:420px;margin-left:auto;margin-right:auto}
 html[data-xuan] #storyDlg .sg.half img{-webkit-mask-image:linear-gradient(180deg,#000 86%,transparent 100%);mask-image:linear-gradient(180deg,#000 86%,transparent 100%)}
+
+/* ---------- 🕯 finale (尾声「人走茶凉」): map → ink → paper, portraits fade to blank, ending card + credits ---------- */
+#storyDlg .sd-ink{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.2s ease;overflow:hidden}
+#storyDlg[data-fin="map"] .sd-ink{opacity:1}
+#storyDlg .sd-ink::after{content:'';position:absolute;inset:0;background:#efe7d6;opacity:0;transition:opacity 3.4s ease .3s}
+#storyDlg .sd-ink.paper::after{opacity:1}
+#storyDlg .sd-ink .b{position:absolute;display:none;width:var(--r,150px);height:var(--r,150px);transform:translate(-50%,-50%) scale(.25);opacity:0;transition:opacity 1.4s ease,transform 2.4s ease}
+#storyDlg .sd-ink .b::before,#storyDlg .sd-ink .b::after{content:'';position:absolute;inset:0;border-radius:50%;transition:opacity 2.6s ease}
+#storyDlg .sd-ink .b::before{background:radial-gradient(circle,rgba(12,8,6,.96) 0,rgba(12,8,6,.86) 36%,rgba(12,8,6,.34) 62%,rgba(12,8,6,0) 74%)}
+#storyDlg .sd-ink .b::after{opacity:0;background:radial-gradient(circle,rgba(236,228,210,.97) 0,rgba(236,228,210,.84) 40%,rgba(236,228,210,.3) 64%,rgba(236,228,210,0) 76%);filter:blur(5px)}
+#storyDlg .sd-ink .b.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#storyDlg .sd-ink .b.mist{transform:translate(-50%,-50%) scale(1.35)}
+#storyDlg .sd-ink .b.mist::before{opacity:0}#storyDlg .sd-ink .b.mist::after{opacity:1}
+#storyDlg .sd-ink .b span{display:none}
+html[data-xuan] #storyDlg .sd-ink .b{display:block}
+/* the other themes: six little shop icons on the dialog backdrop, greying out one by one */
+html:not([data-xuan]) #storyDlg .sd-ink{display:grid;grid-template-columns:repeat(3,1fr);align-content:center;gap:34px 0;padding:0 26px 120px;background:rgba(10,6,2,.25)}
+html:not([data-xuan]) #storyDlg .sd-ink .b{position:static;display:flex;align-items:center;justify-content:center;width:auto;height:auto;transform:none;opacity:1}
+html:not([data-xuan]) #storyDlg .sd-ink .b::before,html:not([data-xuan]) #storyDlg .sd-ink .b::after{display:none}
+html:not([data-xuan]) #storyDlg .sd-ink .b span{display:block;font-size:54px;line-height:1;filter:drop-shadow(0 0 14px rgba(255,200,110,.8));transition:filter 2.4s ease,opacity 3s ease,transform 3s ease}
+html:not([data-xuan]) #storyDlg .sd-ink .b.on span{filter:grayscale(1) brightness(.5) drop-shadow(0 0 0 transparent)}
+html:not([data-xuan]) #storyDlg .sd-ink .b.mist span{opacity:0;transform:translateY(-10px) scale(1.2)}
+html:not([data-xuan]) #storyDlg .sd-ink.paper::after{background:#f4efe4}
+html[data-theme=sketch]:not([data-xuan]) #storyDlg .sd-ink.paper::after{background:#fbfaf3}
+/* “alone”: the stage empties while the map plays or the rain falls */
+html[data-xuan] #storyDlg.alone .sd-stage{opacity:0!important}
+html[data-xuan] #storyDlg .sg.r.gone{opacity:0!important;filter:blur(7px) brightness(2.4) grayscale(1);transform:translateY(-8px);transition:opacity 2.6s ease,filter 2.6s ease,transform 2.6s ease}
+#storyDlg .st-ava-w.blank .st-ava{opacity:.05;filter:grayscale(1) brightness(2.4);transition:opacity 2.4s ease,filter 2.4s ease}
+#storyDlg .st-ava-w.blank{opacity:.55;transition:opacity 2.4s ease}
+/* final scene for the pixel themes (no painted art): dark rain + one cup */
+html:not([data-xuan]) #storyDlg[data-fin="rain"] .sd-bg{background:linear-gradient(180deg,#10151c,#1d2630 70%,#0b0f14);backdrop-filter:none;-webkit-backdrop-filter:none}
+html:not([data-xuan]) #storyDlg[data-fin="rain"] .sd-bg::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(100deg,rgba(180,200,225,.0) 0 9px,rgba(180,200,225,.22) 9px 10px);background-size:60px 100%;animation:sdRain .5s linear infinite}
+html:not([data-xuan]) #storyDlg[data-fin="rain"] .sd-bg::after{content:'☕';position:absolute;left:50%;top:42%;transform:translateX(-50%);font-size:46px;opacity:.55;filter:grayscale(1) brightness(1.4)}
+@keyframes sdRain{to{background-position:-60px 80px}}
+#storyDlg.ending .ed-box,#storyDlg.ending .sd-place,#storyDlg.ending .sd-stage{display:none}
+#storyDlg .sd-end{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;background:linear-gradient(180deg,rgba(6,8,12,.55),rgba(6,8,12,.9));color:#ece6d6;overflow:hidden}
+#storyDlg.ending .sd-end{display:flex}
+#storyDlg .sd-end.on .se-roll{animation:seRoll 30s linear forwards}
+#storyDlg .se-roll{width:100%;padding:34vh 28px 40vh;text-align:center;will-change:transform}
+#storyDlg .se-card small{display:block;letter-spacing:.5em;font-size:13px;opacity:.7;margin-bottom:12px}
+#storyDlg .se-card b{display:block;font-size:46px;letter-spacing:.3em;text-indent:.3em;font-weight:700;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+#storyDlg .se-card i{display:block;width:84px;height:1px;background:rgba(236,230,214,.55);margin:16px auto}
+#storyDlg .se-card p{font-size:14px;line-height:1.9;opacity:.8;max-width:290px;margin:0 auto 90px}
+#storyDlg .se-cred p{margin:0 0 30px;font-size:17px;line-height:1.9;letter-spacing:.1em}
+#storyDlg .se-cred p.s{font-size:13px;opacity:.7;letter-spacing:.06em}
+#storyDlg #seDone{position:absolute;left:50%;bottom:calc(26px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:auto;min-width:200px;opacity:0;animation:seBtn 1s ease 3s forwards}
+#storyDlg .sd-end:not(.on) #seDone{opacity:0}
+@keyframes seRoll{from{transform:translateY(0)}to{transform:translateY(-62%)}}
+@keyframes seBtn{to{opacity:1}}
+html[data-xuan] #storyDlg .sd-end{background:linear-gradient(180deg,rgba(8,6,6,.5),rgba(8,6,6,.92))}
+html[data-xuan] #storyDlg .se-card b{font-family:inherit;color:#f1e8d0}
+html[data-xuan] #storyDlg #seDone{background:#a8302a;color:#f6ecd6;border:1px solid #d9b46a}
+@media (prefers-reduced-motion:reduce){#storyDlg .sd-end.on .se-roll{animation:none;transform:none;padding-top:12vh}#storyDlg #seDone{animation:none;opacity:1}}
+.story-fin .st-mem{opacity:.8;font-size:13px;margin-top:6px}
+.idle-hero .ih-t small,#idleEntry small{font-style:normal}
+html:not([data-xuan]) #storyDlg[data-fin="map"] .sd-bg{background:radial-gradient(ellipse at 50% 40%,#2c2218,#120d08 80%);backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-theme=sketch]:not([data-xuan]) #storyDlg[data-fin="map"] .sd-bg{background:#f1ecdf}
+html[data-theme=sketch]:not([data-xuan]) #storyDlg .sd-ink{background:transparent}
+html:not([data-xuan]) #storyDlg.ending .sd-bg::after{opacity:0}
