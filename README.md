@@ -38,12 +38,18 @@ New Year's Day (1 Jan, plus the next Monday if it falls on a weekend) · Austral
 Events (not public holidays): Lunar New Year (published dates for 2021–2031 only), Moomba (2026: 5–9 Mar per City of Melbourne; other years approximated as the Labour Day long weekend, marked 约), and Melbourne International Coffee Expo (2027: 4–6 Mar, MCEC). Events without verified dates are left out.
 Tests: `/workspace/pwtest/testfest.mjs` (dates + calendar UI) and `testthemes.mjs` (both themes, 3D→2D fallback, progress kept).
 
-## 📖 咖啡课主线 / Coffee-education main story (edu.js, `#/edu`)
-This is a main storyline in 8 chapters, taught by the mentor villager 老焙. It takes you from 咖啡小白 through 识豆学徒 → 处理法见习生 → 烘焙观察员 → 萃取学徒 → 奶咖手艺人 → 手冲练习生 → 杯测品鉴师 to 咖啡大师. The chapters cover origins & varieties, processing, roasting, espresso extraction, milk & latte-art basics, filter/pour-over, tasting & cupping, and Melbourne coffee culture.
+## 📖 咖啡课 / Coffee course (edu.js, `#/edu`)
+This is a course in 8 chapters, taught by the mentor villager 老焙. It takes you from 咖啡小白 through 识豆学徒 → 处理法见习生 → 烘焙观察员 → 萃取学徒 → 奶咖手艺人 → 手冲练习生 → 杯测品鉴师 to 咖啡大师. The chapters cover origins & varieties, processing, roasting, espresso extraction, milk & latte-art basics, filter/pour-over, tasting & cupping, and Melbourne coffee culture.
 - Each chapter has a short dialogue lesson with class notes, then 2–3 tasks, then a 4-question quiz. Pass with 3/4 to rank up, and retry as often as you like (the options reshuffle each time).
 - Tasks are checked only against data the app already stores: check-in drink names (Long Black / Flat White / Filter …), ratings, photos and notes, bean fields (origin, process, roast), cafe tags (烘焙商, 手冲) and the researched signatures. Homebody Union and the other filter cafes are suggested as targets. Past check-ins count.
 - Rewards are coins and XP through the existing quest ledger, plus cosmetics in the pixel shop: 手摇磨豆机 (ch 3), 杯测白袍 (ch 7) and 咖啡学士帽 (ch 8). Progress is saved in `localStorage['mcc.edu']`.
 - The lessons are original Simplified Chinese, checked against SCA (cupping protocol, Golden Cup, flavor wheel), World Coffee Research, roaster and barista education pages, and Melbourne history sources. Tests: `/workspace/pwtest/testedu.mjs`.
+
+## 📜 主线剧情「第一颗豆」 / Main story (story.js, story.css, `#/story`)
+An original, Simplified-Chinese story that ties the check-ins, the coffee course and the bean notes together: a newcomer to Melbourne meets the retired roaster 老焙, who has lost a recipe-and-memory book that was torn into pages and hidden in cafes around the city. Prologue + 9 chapters + epilogue.
+- Each chapter has an opening cutscene, 2–4 objectives and a closing cutscene with coins / XP, a title and (ch 5 and ch 9) a cosmetic. Objectives are area / count based (distinct cafes in MEL CITY, RICHMOND, NORTH MEL, BRUNSWICK or the 更多 suburbs, course chapters, bean notes, ratings, photos, level) and never name one specific cafe. Existing check-ins count retroactively; progress is saved in `localStorage['mcc.story']`, rewards go through the normal quest ledger.
+- Cutscenes auto-play when a chapter unlocks or completes (tap to advance, 跳过 to skip, all replayable from the 主线 page) and use each theme's own dialog skin; the 古风 theme uses painted portraits and silk-frame dialogs. Hidden characters may cameo only after the player has already met them.
+- Under browser automation (`navigator.webdriver`) cutscenes stay off unless the URL has `?story` or `localStorage['mcc.storyTest']` is set. Tests: `/workspace/pwtest/teststory.mjs`.
 
 ## 🎭 隐藏角色 / Hidden NPCs (npc.js, `#/npc`)
 The town has 10 original hidden characters who only appear when a condition is met:

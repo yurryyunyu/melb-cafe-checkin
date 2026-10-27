@@ -1,0 +1,97 @@
+/* 📜 main story: cutscene overlay (#storyDlg) + story page + objective banner. Per-theme dialog skins at the bottom. */
+#storyDlg.edu-dlg{position:fixed;inset:0;bottom:0;padding:0 10px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;justify-content:flex-end;z-index:700;transform:none;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;transition:opacity .25s}
+#storyDlg .sd-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 38%,rgba(40,26,14,.5),rgba(10,6,2,.82));backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+#storyDlg .sd-place{position:absolute;top:calc(12px + env(safe-area-inset-top));left:14px;padding:3px 10px;border-radius:999px;background:rgba(0,0,0,.45);color:#fff3d2;font-size:12px;letter-spacing:.04em}
+#storyDlg .ed-box{position:relative;width:100%;box-sizing:border-box;align-items:center;animation:sdRise .35s ease-out}
+#storyDlg .ed-text{min-height:5.1em}
+#storyDlg .st-ava-w{display:flex;flex:none;align-items:center;justify-content:center;min-width:0}
+#storyDlg .st-ava-w:empty{display:none}
+#storyDlg .edu-ava.st-ava{width:60px;height:60px}
+#storyDlg .edu-ava.st-ava.px{background:#f4e4cc}
+#storyDlg .edu-ava.st-seal{font-size:30px;background:#fdf0d8;border:2px solid #c9a45a}
+#storyDlg .ed-box.narr .ed-text{font-style:italic;opacity:.92}
+#storyDlg .ed-box.narr .ed-name{display:none}
+#storyDlg .ed-skip.hidden{display:none}
+#storyDlg .np-rw{display:flex;flex-wrap:wrap;gap:6px;align-items:center}#storyDlg .np-rw b{width:100%;font-size:15px}#storyDlg .np-rw span{padding:3px 9px;border-radius:999px;background:#fdf0d8;font-weight:700;font-size:13px;color:#3a2414;border:1px solid rgba(122,74,37,.25)}#storyDlg .np-rw small{width:100%;font-size:11px;opacity:.75}
+/* chapter title card */
+#storyDlg .sd-card{position:absolute;left:0;right:0;top:36%;transform:translateY(-50%);display:none;flex-direction:column;align-items:center;gap:8px;text-align:center;color:#fff3d2;text-shadow:0 2px 12px rgba(0,0,0,.6);animation:sdCard .9s ease-out}
+#storyDlg.carding .sd-card{display:flex}#storyDlg.carding .ed-box,#storyDlg.carding .sd-place{visibility:hidden}
+#storyDlg .sd-card small{font-size:15px;letter-spacing:.5em;padding-left:.5em;opacity:.85}
+#storyDlg .sd-card b{font-size:34px;letter-spacing:.14em;padding-left:.14em;font-weight:700}
+#storyDlg .sd-card i{display:block;width:140px;height:2px;background:linear-gradient(90deg,transparent,#e7cf8e,transparent)}
+@keyframes sdRise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+@keyframes sdCard{from{opacity:0;letter-spacing:.9em}to{opacity:1}}
+/* story page + banner (reuse the themed .edu-* cards) */
+.story-head .st-book{font-size:34px;background:transparent}
+.story-cur .st-acts{margin-top:8px}.story-cur .st-acts .btn{width:100%}.story-cur.ready{box-shadow:0 0 0 2px #e8a33a inset}
+.story-ch .st-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}.story-ch .st-acts .chip{font-size:12px;padding:3px 10px}
+.story-ch.locked .ec-t b{letter-spacing:.05em}
+.story-entry{border-left:5px solid #b3342b}
+.edu-entry.story-bar{padding:6px 10px;margin:0 0 8px;border-radius:10px;gap:8px}.story-bar .ee-ic{font-size:18px}.story-bar .ee-t small{font-size:12px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.story-bar.ready{box-shadow:0 0 0 2px #e8a33a inset}
+.st-titles{margin-bottom:8px}
+/* ---- 城镇 (foundation) / 牧场 (ranch): the shared .edu-dlg skin already applies; add the dim backdrop tint + title card ---- */
+html[data-theme=foundation] #storyDlg .sd-card b{font-family:var(--serif);color:#f6dc9a}
+html[data-theme=foundation] #storyDlg .sd-place{background:rgba(74,46,22,.7);border:1px solid #c9a45a}
+html[data-theme=foundation] #storyDlg .np-rw span{background:#f4e6c0}
+html[data-theme=foundation] .story-entry{border-left-color:#8a2a22}
+html[data-ranch] #storyDlg .sd-bg{background:radial-gradient(ellipse at 50% 38%,rgba(70,40,10,.4),rgba(20,50,20,.78))}
+html[data-ranch] #storyDlg .sd-card b{color:#fff;text-shadow:3px 3px 0 var(--woodX,#5a3418),0 0 14px rgba(0,0,0,.4)}
+html[data-ranch] #storyDlg .sd-place{border:3px solid var(--woodX,#5a3418);border-radius:6px;background:#38b030;color:#fff}
+html[data-ranch] #storyDlg .ed-box{padding-top:22px}html[data-ranch] #storyDlg .ed-name{margin-top:-34px}
+/* ---- 田园 (valley, non-ranch) ---- */
+html[data-theme][data-skin=valley]:not([data-ranch]) #storyDlg .ed-box{background:var(--cream);border:3px solid var(--woodX);border-radius:6px;box-shadow:var(--winb);color:var(--ink)}
+html[data-theme][data-skin=valley]:not([data-ranch]) #storyDlg .ed-name{color:#8a4a1c;font-weight:700}
+html[data-theme][data-skin=valley]:not([data-ranch]) #storyDlg button{border:3px solid var(--woodX);border-radius:4px;background:#fff6d6;color:var(--ink)}
+html[data-theme][data-skin=valley]:not([data-ranch]) #storyDlg .ed-next{background:#7ab55c;color:#fff;text-shadow:1px 1px 0 var(--woodX)}
+html[data-theme][data-skin=valley]:not([data-ranch]) #storyDlg .sd-card b{font-family:"FusionPixel",monospace;color:#fff6d6;text-shadow:3px 3px 0 var(--woodX)}
+html[data-theme][data-skin=valley]:not([data-ranch]) #storyDlg .sd-place{border:3px solid var(--woodX);border-radius:4px;background:var(--cream);color:var(--ink)}
+html[data-theme][data-skin=valley] #storyDlg .edu-ava.st-ava.px{border:3px solid var(--woodX);border-radius:4px}
+/* ---- ⚔️ JRPG (default blue window) ---- */
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg .sd-bg{background:radial-gradient(ellipse at 50% 38%,rgba(20,30,90,.5),rgba(2,4,24,.88))}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg .ed-box{background:linear-gradient(180deg,#14246e,#0a1048);color:#fff;border:3px solid #fff;border-radius:8px;box-shadow:0 0 0 2px #0a1048,0 0 0 4px #8a98ff,0 10px 26px rgba(0,0,0,.5)}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg .ed-name{color:#ffd23f;text-shadow:1px 1px 0 #000}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg button{background:#1a2060;color:#fff;border:2px solid #c8d0ff;border-radius:4px}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg .ed-next{background:#2a3aa0}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg .np-rw span{background:#1a2060;color:#ffd23f;border-color:#c8d0ff}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg .sd-card b{font-family:"FusionPixel",monospace;color:#fff;text-shadow:3px 3px 0 #1a2a8a,0 0 16px #6a7aff}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg .sd-place{background:#0a1048;border:2px solid #c8d0ff;border-radius:3px}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg .edu-ava.st-ava{border:3px solid #c8d0ff;border-radius:4px}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) .story-entry,html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) .story-bar{background:rgba(10,14,60,.85);border:2px solid #c8d0ff;color:#fff}
+/* ---- ✏️ sketch ---- */
+html[data-theme=sketch] #storyDlg .sd-bg{background:rgba(250,248,240,.78)}
+html[data-theme=sketch] #storyDlg .ed-box{background:#fffefa;color:#222;border:2px solid #222;border-radius:255px 14px 225px 14px/14px 225px 14px 255px;box-shadow:4px 4px 0 #222;padding:14px 18px}
+html[data-theme=sketch] #storyDlg .ed-name{color:#222;border-bottom:2px solid #222;display:inline-block}
+html[data-theme=sketch] #storyDlg button{border:2px solid #222;background:#fff;color:#222;border-radius:3px 10px 3px 10px}
+html[data-theme=sketch] #storyDlg .ed-next{background:#222;color:#fff}
+html[data-theme=sketch] #storyDlg .sd-card{color:#222;text-shadow:none}html[data-theme=sketch] #storyDlg .sd-card i{background:#222}
+html[data-theme=sketch] #storyDlg .sd-place{background:#fff;border:2px solid #222;color:#222}
+html[data-theme=sketch] #storyDlg .np-rw span{background:#fff;border:2px solid #222;color:#222}
+html[data-theme=sketch] #storyDlg .edu-ava.st-ava{border:2px solid #222;border-radius:50%}
+/* ---- 🏮 古风 (painted): silk frame, round painted medallion, painted area backdrop ---- */
+html[data-xuan] #storyDlg .sd-bg{background:linear-gradient(180deg,rgba(20,12,6,.35),rgba(20,12,6,.7)),var(--sdbg) center/cover no-repeat;backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-xuan] #storyDlg[data-place=city]{--sdbg:url(img/xuan/bg-city.webp)}html[data-xuan] #storyDlg[data-place=richmond]{--sdbg:url(img/xuan/bg-richmond.webp)}
+html[data-xuan] #storyDlg[data-place=northmel]{--sdbg:url(img/xuan/bg-northmel.webp)}html[data-xuan] #storyDlg[data-place=brunswick],html[data-xuan] #storyDlg[data-place=more]{--sdbg:url(img/xuan/bg-brunswick.webp)}
+html[data-xuan] #storyDlg .ed-box{background:linear-gradient(180deg,rgba(255,251,242,.98),rgba(244,235,215,.98));border:1px solid rgba(138,106,58,.7);border-radius:8px;box-shadow:inset 0 0 0 3px rgba(255,253,247,.85),inset 0 0 0 4px rgba(160,122,62,.28),0 10px 28px rgba(40,26,10,.4);color:#2a2018;padding:14px 16px 12px;gap:12px}
+html[data-xuan] #storyDlg .edu-ava.st-ava{width:76px;height:76px;border-radius:50%;border:2px solid #c9a45a;box-shadow:0 0 0 2px #fffaf0,0 0 0 3px rgba(63,122,99,.65),0 3px 8px rgba(40,26,10,.25);background:#efe4cc;overflow:hidden;padding:0}
+html[data-xuan] #storyDlg .edu-ava.st-ava img{width:100%;height:100%;object-fit:cover;display:block}
+html[data-xuan] #storyDlg .edu-ava.st-ava.px canvas{width:100%;height:100%;image-rendering:pixelated}
+html[data-xuan] #storyDlg .edu-ava.st-seal{background:#fdf0d8;font-size:34px}
+html[data-xuan] #storyDlg .ed-name{color:#a3322a;font-weight:700;letter-spacing:.14em;border-bottom:1px solid rgba(163,50,42,.35);display:inline-block;margin-bottom:6px}
+html[data-xuan] #storyDlg .ed-name small{color:#6b5a44;letter-spacing:.04em}
+html[data-xuan] #storyDlg .ed-text{font-size:16px;line-height:1.62;color:#2a2018}
+html[data-xuan] #storyDlg button{background:linear-gradient(#fffaf0,#f1e6cd);color:#3a2a1a;border:1px solid rgba(138,106,58,.7);border-radius:3px}
+html[data-xuan] #storyDlg .ed-next{background:var(--xcin);color:#fff3dc;border-color:#7e1f1a;letter-spacing:.1em}
+html[data-xuan] #storyDlg .np-rw span{background:#f6ecd4;border:1px solid rgba(138,106,58,.5);color:#6b2a1a}
+html[data-xuan] #storyDlg .sd-place{background:rgba(26,14,7,.62);border:1px solid #c9a45a;color:#e7cf8e;border-radius:2px;letter-spacing:.12em}
+html[data-xuan] #storyDlg .sd-card{color:#fff3dc;text-shadow:0 2px 14px rgba(0,0,0,.8)}
+html[data-xuan] #storyDlg .sd-card b{font-family:var(--px);letter-spacing:.3em;padding-left:.3em;font-size:38px;background:linear-gradient(180deg,#fff3dc,#e7cf8e);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.7))}
+html[data-xuan] #storyDlg .sd-card small{font-family:var(--px);color:#e7cf8e}
+html[data-xuan] .story-entry,html[data-xuan] .story-bar{border-left:4px solid var(--xcin)}
+html:not([data-xuan]) #storyDlg.carding .sd-bg{background:rgba(14,8,3,.84)}
+html[data-theme=sketch] #storyDlg.carding .sd-bg{background:rgba(250,248,240,.94)}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg.carding .sd-bg{background:rgba(2,4,24,.92)}
+/* 古风: the speaker's painted portrait fades in over the scene, like a figure stepping out of the picture */
+html[data-xuan] #storyDlg .sd-stage{position:absolute;left:50%;top:calc(var(--sd-top,22%));width:262px;height:262px;margin-left:-131px;opacity:0;transform:translateY(8px) scale(.98);transition:opacity .35s,transform .35s;pointer-events:none}
+html[data-xuan] #storyDlg .sd-stage.on{opacity:1;transform:none}
+html[data-xuan] #storyDlg .sd-stage img{width:100%;height:100%;object-fit:cover;-webkit-mask-image:radial-gradient(closest-side,#000 58%,rgba(0,0,0,.65) 78%,transparent 100%);mask-image:radial-gradient(closest-side,#000 58%,rgba(0,0,0,.65) 78%,transparent 100%);filter:drop-shadow(0 6px 14px rgba(20,12,6,.5))}
+html[data-xuan] #storyDlg.carding .sd-stage{display:none}

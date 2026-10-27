@@ -20,6 +20,7 @@ const ITEMS = [
   {id: 'barista', kind: 'outfit', name: '咖啡师围裙', price: 550, desc: '深焙色，耐脏', cols: [[140, 92, 52], [92, 58, 30]]},
   {id: 'lavender', kind: 'outfit', name: '薰衣草紫', price: 600, desc: '傍晚散步专用', cols: [[150, 112, 204], [100, 70, 150]]},
   {id: 'cupcoat', kind: 'outfit', name: '杯测白袍', price: 0, edu: 7, desc: '咖啡课第 7 章奖励', cols: [[236, 236, 228], [176, 176, 168]]},
+  {id: 'wandercoat', kind: 'outfit', name: '雨巷旅人外套', price: 0, story: 5, desc: '主线第 5 章奖励', cols: [[92, 108, 132], [58, 70, 92]]},
   {id: 'oldapron', kind: 'outfit', name: '旧帆布围裙', price: 0, npc: 'master', desc: '隐藏角色白先生的礼物', cols: [[120, 132, 100], [78, 88, 64]]},
   {id: 'gold', kind: 'outfit', name: '金色礼服', price: 1200, desc: '全镇最闪亮的人', cols: [[240, 192, 64], [190, 132, 24]]},
   {id: 'bench', kind: 'decor', name: '木长椅', price: 80, desc: '坐下来喝完这杯', w: 16, h: 16},
@@ -27,6 +28,7 @@ const ITEMS = [
   {id: 'lantern', kind: 'decor', name: '小路灯', price: 250, desc: '晚上会亮起来', w: 16, h: 16, glow: true},
   {id: 'scarecrow', kind: 'decor', name: '稻草人', price: 350, desc: '守护咖啡豆田', w: 16, h: 16},
   {id: 'grinder', kind: 'decor', name: '手摇磨豆机', price: 0, edu: 3, desc: '咖啡课第 3 章奖励', w: 16, h: 16},
+  {id: 'recipe', kind: 'decor', name: '老焙的食谱簿', price: 0, story: 9, desc: '主线终章奖励', w: 16, h: 16},
   {id: 'bunting', kind: 'decor', name: '节日彩旗串', price: 0, npc: 'fest', desc: '隐藏角色彩彩的礼物', w: 16, h: 16},
   {id: 'dog', kind: 'decor', name: '小狗 Latte', price: 900, desc: '会在小镇里跑来跑去', w: 14, h: 12, pet: true},
   {id: 'fountain', kind: 'decor', name: '许愿喷泉', price: 1200, desc: '小镇广场的中心', w: 32, h: 32, frames: 2},
@@ -39,10 +41,11 @@ let S = load();
 const save = () => { try { localStorage.setItem(SK, JSON.stringify(S)); } catch (e) {} applyLook(); };
 const eduOk = it => !!(it.edu && window.Edu && Edu.rank() >= it.edu); // coffee-course rewards: owned once the chapter is passed
 const npcOk = it => !!(it.npc && window.Npc && Npc.met(it.npc)); // hidden-NPC gifts: owned once that NPC has been met
-const owns = id => { const it = byId(id); return !!it && (it.free || eduOk(it) || npcOk(it) || S.owned.includes(id)); };
-const spent = () => S.owned.filter(id => { const it = byId(id) || {}; return !it.edu && !it.npc; }).reduce((t, id) => t + ((byId(id) || {}).price || 0), 0);
+const storyOk = it => !!(it.story && window.Story && Story.done(it.story)); // main-story rewards: owned once that chapter is finished
+const owns = id => { const it = byId(id); return !!it && (it.free || eduOk(it) || npcOk(it) || storyOk(it) || S.owned.includes(id)); };
+const spent = () => S.owned.filter(id => { const it = byId(id) || {}; return !it.edu && !it.npc && !it.story; }).reduce((t, id) => t + ((byId(id) || {}).price || 0), 0);
 const equipped = id => { const it = byId(id); return !!it && (it.kind === 'hat' ? S.hat === id : it.kind === 'outfit' ? S.outfit === id : S.decor.includes(id)); };
-function buy(id) { const it = byId(id); if (!it || owns(id) || it.edu || it.npc) return false; S.owned.push(id); if (it.kind === 'decor') { if (!S.decor.includes(id)) S.decor.push(id); } else S[it.kind] = id; save(); return true; }
+function buy(id) { const it = byId(id); if (!it || owns(id) || it.edu || it.npc || it.story) return false; S.owned.push(id); if (it.kind === 'decor') { if (!S.decor.includes(id)) S.decor.push(id); } else S[it.kind] = id; save(); return true; }
 function toggle(id) { const it = byId(id); if (!it || !owns(id)) return;
   if (it.kind === 'decor') S.decor = S.decor.includes(id) ? S.decor.filter(x => x !== id) : [...S.decor, id];
   else S[it.kind] = S[it.kind] === id ? (it.kind === 'hat' ? 'straw' : 'classic') : id; save(); }
@@ -76,6 +79,8 @@ function decoFrames(id, season = 'spring', night = false) { const k = id + seaso
       const sp = f ? [[15, 4], [17, 5], [13, 7], [19, 7], [12, 9], [20, 10]] : [[16, 3], [14, 5], [18, 6], [12, 8], [20, 8], [11, 10]]; sp.forEach(([x, y]) => { P.set(x, y, '#bfe8ff'); P.set(x, y + 1, '#8fd2f2'); });
       [[8, 22], [20, 25], [24, 21], [12, 26]].forEach(([x, y], i) => P.set(x + (f ? 1 : 0), y, i % 2 ? '#ffffff' : '#bfe8ff')); P.rect(4, 27, 24, 1, '#a39279'); }
     else if (id === 'grinder') { P.rect(4, 8, 8, 7, '#a8693a'); P.rect(4, 8, 8, 1, '#c98f55'); P.rect(6, 11, 4, 2, '#7a4a25'); P.set(8, 12, '#f5c542'); P.rect(5, 5, 6, 3, '#b8b8c0'); P.rect(6, 4, 4, 1, '#d8d8e0'); P.rect(7, 2, 2, 2, '#8a8a94'); P.rect(9, 1, 4, 1, '#8a8a94'); P.rect(12, 0, 2, 2, '#7a4a25'); P.rect(4, 15, 8, 1, '#7a4a25'); }
+    else if (id === 'recipe') { P.rect(3, 13, 10, 2, '#5a3418'); P.rect(7, 10, 2, 3, '#7a4a25'); P.rect(1, 4, 7, 6, '#f4ead0'); P.rect(8, 4, 7, 6, '#fff8e8'); P.rect(1, 10, 14, 1, '#8a4a2a'); P.rect(7, 4, 2, 6, '#c98f55');
+      [[2, 5], [2, 7], [2, 8]].forEach(([x, y]) => P.rect(x, y, 4, 1, '#b8a888')); [[9, 5], [9, 6], [9, 8]].forEach(([x, y]) => P.rect(x, y, 4, 1, '#c8b898')); P.ell(12, 8.5, 1.4, 1, '#6b3f1d'); P.set(12, 8, '#4a2a10'); P.set(13, 3, '#e8403a'); P.rect(13, 3, 1, 3, '#e8403a'); }
     else if (id === 'bunting') { P.rect(1, 3, 1, 13, '#7a4a25'); P.rect(14, 3, 1, 13, '#7a4a25'); P.rect(1, 2, 2, 1, '#a8693a'); P.rect(13, 2, 2, 1, '#a8693a'); [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].forEach(x => P.set(x, 4 + (x > 4 && x < 11 ? 1 : 0), '#5a3418'));
       [[2, '#e8403a'], [5, '#ffd23f'], [8, '#4f86c6'], [11, '#7ab55c']].forEach(([x, c], i) => { const y = 5 + (i === 1 || i === 2 ? 1 : 0); P.rect(x, y, 3, 1, c); P.rect(x, y + 1, 2, 1, c); P.set(x, y + 2, c); }); P.rect(0, 15, 16, 1, '#5e3519'); }
     else if (id === 'dog') { const fur = '#e8c08a', dk = '#b88850'; P.ell(6.5, 8, 4.5, 2.6, fur); P.ell(10.5, 5.5, 2.8, 2.6, fur); P.rect(8, 3, 2, 3, dk); P.rect(12, 3, 1, 3, dk); P.set(11, 5, OUT); P.set(13, 6, OUT); P.set(12, 7, '#e87a8a');

@@ -127,6 +127,6 @@ function silhouette(id) { const k = id + ':s'; if (artCache[k]) return artCache[
   const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'); g.drawImage(src, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#2b2233'; g.fillRect(0, 0, 32, 32); return (artCache[k] = c); }
 function scaled(src, s) { if (window.JRPG && JRPG.scaled) return JRPG.scaled(src, s); const c = document.createElement('canvas'); c.width = src.width * s; c.height = src.height * s; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(src, 0, 0, c.width, c.height); return c; }
 
-window.Npc = {NPCS, byId, pending, meet, met, flag, count, reset, reload() { S = load(); }, get state() { return S; }, portrait, silhouette, scaled, BG,
+window.Npc = {_art: {ART, base, SK1, SK2, SK3, SK4}, NPCS, byId, pending, meet, met, flag, count, reset, reload() { S = load(); }, get state() { return S; }, portrait, silhouette, scaled, BG,
   _t: {mel, dayOf, liveHour, procKinds, longestStreak, STREAK, REGULAR, PROCS}};
 })();
