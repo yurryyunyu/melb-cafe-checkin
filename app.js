@@ -822,6 +822,7 @@ function eduRankUp(n, before, L0) { let m = $('#eduRankUp'); if (m) m.remove(); 
 const STORY_ON = () => !!window.Story && (!navigator.webdriver || /[?&]story\b/.test(location.search) || !!load('mcc.storyTest', false));
 const ST_PLACE = {city: 'MEL CITY · 市中心', richmond: 'RICHMOND · 列治文', northmel: 'NORTH MEL · 北墨尔本', brunswick: 'BRUNSWICK · 布伦瑞克', more: '更多街区 · Fitzroy / Collingwood / Carlton'};
 const ST_XU = {laobei: 'p-laobei', che: 'p-che', you: 'p-you', xiaodou: 'keeper'}; // painted portraits (古风 skin)
+const ST_CUT = {laobei: 'p-laobei-full'}; // half-body cut-out figures (古风): the 侠客 老焙 stands in the scene instead of a vignette
 const ST_ROLE = {laobei: '退休烘豆师', xiaodou: '咖啡师'};
 function storyCtx() { const by = {}, ids = new Set();
   checkins.forEach(c => { if (c.cafeId && cafeById(c.cafeId)) ids.add(c.cafeId); });
@@ -829,7 +830,7 @@ function storyCtx() { const by = {}, ids = new Set();
   return {area: r => by[r] ? by[r].size : 0, cafes: ids.size, beans: beans.length, notes: checkins.filter(c => (c.note || '').trim()).length, rated: checkins.filter(c => c.rating > 0).length, photos: checkins.filter(c => c.photo).length,
     rank: window.Edu ? Edu.rank() : 0, sca: window.SCAQ && SCAQ.state ? Object.keys(SCAQ.state.mastered || {}).length : 0, lv: levelInfo().lv}; }
 function stStage(w) { const el = $('#sdStage'); if (!el) return; const k = w.startsWith('npc:') ? w.slice(4) : w, f = ST_XU[k];
-  if (!f) { el.classList.remove('on'); return; } if (el.dataset.who !== k) { el.dataset.who = k; el.innerHTML = `<img src="img/xuan/${f}.webp" alt="">`; el.classList.remove('on'); void el.offsetWidth; } el.classList.add('on'); }
+  if (!f) { el.classList.remove('on'); return; } if (el.dataset.who !== k) { el.dataset.who = k; el.classList.toggle('cut', !!ST_CUT[k]); el.innerHTML = `<img src="img/xuan/${ST_CUT[k] || f}.webp" alt="">`; el.classList.remove('on'); void el.offsetWidth; } el.classList.add('on'); }
 function stAva(w) { if (w === 'n') return ''; const k = w.startsWith('npc:') ? w.slice(4) : w;
   if (isXuan() && ST_XU[k]) return `<span class="edu-ava st-ava xp"><img src="img/xuan/${ST_XU[k]}.webp" alt=""></span>`;
   return `<span class="edu-ava px npc-ava st-ava" data-npc-ava="${k}"></span>`; }
@@ -891,7 +892,7 @@ function storyPlay(id, opt = {}) { if (!window.Story) return; const sc = Story.s
     return `<div class="np-rw" id="sdReward"><b>${isEpi ? '📖 尾声 · 故事告一段落' : `📖 第 ${sc.n} 章 完成`}</b><span>🪙 +${rw.c}</span><span>⭐ +${xp} XP</span><span>🏷️ 称号：${esc(rw.title)}</span>${rw.item ? `<span>🎁 ${esc(npcItemName(rw.item))}</span>` : ''}${rw.item ? `<small>${isV() ? '装扮已经放进杂货店，可以免费装备。' : '装扮会出现在像素主题（田园 / 牧场）的杂货店里。'}</small>` : ''}</div>`; };
   const show = () => { const b = pages[i], last = i === pages.length - 1, box = d.querySelector('.ed-box'); SFXplay('blip');
     if (b === null) { stStage('n'); box.classList.remove('narr'); $('#sdAva').innerHTML = '<span class="edu-ava st-ava st-seal">📜</span>'; $('#sdName').textContent = '主线'; clearInterval(tm); tm = null; $('#sdText').innerHTML = rwHtml(); }
-    else { box.classList.toggle('narr', b.w === 'n'); box.dataset.who = b.w; $('#sdAva').innerHTML = stAva(b.w); paintNpc(d); stStage(b.w); $('#sdName').innerHTML = b.name ? `${esc(b.name)}${ST_ROLE[b.w] ? ` <small>${ST_ROLE[b.w]}</small>` : ''}` : ''; typeIn(b.t); }
+    else { box.classList.toggle('narr', b.w === 'n'); box.dataset.who = b.w; $('#sdAva').innerHTML = stAva(b.w); paintNpc(d); stStage(b.w); $('#sdName').innerHTML = b.name ? `${esc(b.name)}${ST_ROLE[b.w] ? ` <small>${b.w === 'laobei' && isXuan() ? '退隐的烘豆师' : ST_ROLE[b.w]}</small>` : ''}` : ''; typeIn(b.t); }
     $('#sdPage').textContent = b === null ? '' : `${i + 1}/${L.length}`; $('#sdNext').textContent = last ? (b === null ? '✔ 收下' : '✔ 完') : '▼ 继续'; $('#sdSkip').classList.toggle('hidden', !replay && b === null); };
   const end = () => { clearInterval(tm); d.remove(); if (!replay) { storyHold = true; npcHold = true; SFXplay(rw ? 'harvest' : 'blip'); drawHud();
       if (rw) { coinBurst(null, rw.c, before); xpPop(null, Math.round(rw.c / 2), L0); const L1 = levelInfo(); if (L1.lv > L0.lv) setTimeout(() => toast(`⬆️ 升级！Lv.${L1.lv} ${L1.title}`, 2600), 1300); }
