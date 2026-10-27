@@ -116,8 +116,9 @@ const byTime = () => [...checkins].sort((a, b) => (a.createdAt || 0) - (b.create
 function coinLedger() { const seen = new Set(), out = new Map();
   byTime().forEach(c => { let n = 15 + (c.rating || 0) * 5 + (c.photo ? 5 : 0) + (c.drink ? 5 : 0); if (c.cafeId && !seen.has(c.cafeId)) { n += 50; seen.add(c.cafeId); } out.set(c.id, n); }); return out; }
 const BEAN_COINS = 20; // beans never touch stamina
-const earnedCoins = () => { let t = beans.length * BEAN_COINS + questCoins(); coinLedger().forEach(v => { t += v; }); return t; };
-const shopSpent = () => { try { return window.PixShop ? PixShop.spent() : 0; } catch (e) { return 0; } };
+const idleIn = () => { try { return window.Idle ? Idle.coinsIn() : 0; } catch (e) { return 0; } }, idleOut = () => { try { return window.Idle ? Idle.coinsOut() : 0; } catch (e) { return 0; } }; // 🏮 idle roastery coins (no XP)
+const earnedCoins = () => { let t = beans.length * BEAN_COINS + questCoins() + idleIn(); coinLedger().forEach(v => { t += v; }); return t; };
+const shopSpent = () => { let s = 0; try { s = window.PixShop ? PixShop.spent() : 0; } catch (e) {} return s + idleOut(); };
 const totalCoins = () => Math.max(0, earnedCoins() - shopSpent()); // 🛒 purse = everything earned − what the shop took
 // ---------- 📜 daily quests (每日委托): 3 per Melbourne day, picked deterministically from the date; rewards are coins you claim ----------
 const QK = 'mcc.quests';
@@ -821,32 +822,65 @@ function eduRankUp(n, before, L0) { let m = $('#eduRankUp'); if (m) m.remove(); 
 // Auto-play cutscenes stay off under automation (navigator.webdriver) unless ?story or localStorage mcc.storyTest — keeps older suites undisturbed.
 const STORY_ON = () => !!window.Story && (!navigator.webdriver || /[?&]story\b/.test(location.search) || !!load('mcc.storyTest', false));
 const ST_PLACE = {city: 'MEL CITY · 市中心', richmond: 'RICHMOND · 列治文', northmel: 'NORTH MEL · 北墨尔本', brunswick: 'BRUNSWICK · 布伦瑞克', more: '更多街区 · Fitzroy / Collingwood / Carlton'};
-const ST_XU = {laobei: 'p-laobei', che: 'p-che', you: 'p-you', xiaodou: 'keeper'}; // painted portraits (古风 skin)
-const ST_CUT = {laobei: 'p-laobei-full'}; // half-body cut-out figures (古风): the 侠客 老焙 stands in the scene instead of a vignette
+const ST_XU = {laobei: 'p-laobei', che: 'p-che', you: 'p-you', xiaodou: 'keeper', jin: 'p-jin'}; // painted round portraits (古风 skin)
+const ST_FIG = {you: 'p-you-full', che: 'p-che-full', laobei: 'p-laobei-full', jin: 'p-jin-full'}; // painted standing figures (transparent cut-outs) for the scene stage
+const ST_HALF = {laobei: 1, jin: 1}; // half-body figures (drawn smaller than the full-body ones so everyone reads as the same scale)
 const ST_ROLE = {laobei: '退休烘豆师', xiaodou: '咖啡师'};
 function storyCtx() { const by = {}, ids = new Set();
   checkins.forEach(c => { if (c.cafeId && cafeById(c.cafeId)) ids.add(c.cafeId); });
   ids.forEach(id => { const r = regionOf(id).r.id; (by[r] = by[r] || new Set()).add(id); });
   return {area: r => by[r] ? by[r].size : 0, cafes: ids.size, beans: beans.length, notes: checkins.filter(c => (c.note || '').trim()).length, rated: checkins.filter(c => c.rating > 0).length, photos: checkins.filter(c => c.photo).length,
     rank: window.Edu ? Edu.rank() : 0, sca: window.SCAQ && SCAQ.state ? Object.keys(SCAQ.state.mastered || {}).length : 0, lv: levelInfo().lv}; }
-function stStage(w) { const el = $('#sdStage'); if (!el) return; const k = w.startsWith('npc:') ? w.slice(4) : w, f = ST_XU[k];
-  if (!f) { el.classList.remove('on'); return; } if (el.dataset.who !== k) { el.dataset.who = k; el.classList.toggle('cut', !!ST_CUT[k]); el.innerHTML = `<img src="img/xuan/${ST_CUT[k] || f}.webp" alt="">`; el.classList.remove('on'); void el.offsetWidth; } el.classList.add('on'); }
-function stAva(w) { if (w === 'n') return ''; const k = w.startsWith('npc:') ? w.slice(4) : w;
+const stImg = f => `<img src="img/xuan/${f}.webp" alt="" decoding="async">`;
+// painted backdrops (古风): lazy — an image is only fetched when its beat plays; the new layer cross-fades in over the old one
+function sdBg(d, name) { if (!isXuan() || !name || d.dataset.bg === name) return; d.dataset.bg = name; const box = d.querySelector('#sdScenes'); if (!box) return; const im = new Image();
+  im.onload = () => { if (d.dataset.bg !== name || !d.isConnected) return; const l = document.createElement('div'); l.className = 'sd-scene'; l.dataset.n = name; l.style.backgroundImage = `url(img/xuan/sc-${name}.webp)`; box.appendChild(l); void l.offsetWidth; l.classList.add('in');
+    setTimeout(() => { [...box.children].slice(0, -1).forEach(o => o.remove()); }, 900); };
+  im.src = `img/xuan/sc-${name}.webp`; }
+// the 古风 stage: you stand on the left, the person talking on the right; whoever is not speaking is dimmed
+function stStage(w) { const el = $('#sdStage'); if (!el) return; const k = w.startsWith('npc:') ? w.slice(4) : w; let L = el.querySelector('.l'), R = el.querySelector('.r');
+  if (!L) { el.innerHTML = '<div class="sg l fig"></div><div class="sg r"></div>'; L = el.querySelector('.l'); R = el.querySelector('.r'); L.innerHTML = stImg(ST_FIG.you); }
+  const art = ST_FIG[k] || ST_XU[k], isOther = k !== 'you' && k !== 'n' && k !== 'choice';
+  if (isOther && art && k !== 'you' && R.dataset.k !== k) { R.dataset.k = k; R.className = 'sg r ' + (ST_FIG[k] ? 'fig' + (ST_HALF[k] ? ' half' : '') : 'vig') + ' ent'; R.innerHTML = stImg(art); void R.offsetWidth; R.classList.remove('ent'); }
+  el.classList.add('on'); el.dataset.who = k;
+  L.classList.toggle('dim', k !== 'you' && k !== 'choice'); R.classList.toggle('dim', !(isOther && art)); R.classList.toggle('off', isOther && !art && !!R.dataset.k); }
+function stAva(w) { if (w === 'n') return ''; if (w.startsWith('x:')) return `<span class="edu-ava st-ava st-glyph">${esc(Story.glyphOf(w))}</span>`; const k = w.startsWith('npc:') ? w.slice(4) : w;
   if (isXuan() && ST_XU[k]) return `<span class="edu-ava st-ava xp"><img src="img/xuan/${ST_XU[k]}.webp" alt=""></span>`;
   return `<span class="edu-ava px npc-ava st-ava" data-npc-ava="${k}"></span>`; }
 const stGoalText = g => `${g.t}${g.need > 1 ? `　${g.have}/${g.need}` : ''}`;
 function stTargets(g) { if (!g.id.startsWith('a-')) return ''; const r = g.id.slice(2), v = visitedIds(), L = allCafes().filter(c => !isClosed(c) && regionOf(c.id).r.id === r && !v.has(c.id)), show = L.slice(0, 5);
   return L.length ? `<div class="edu-tg"><small>这个街区还没去过的店（共 ${L.length} 家，哪几家都行）：</small>${show.map(c => `<a class="chip" href="#/cafe/${c.id}">${esc(c.short || c.name)}</a>`).join('')}</div>` : ''; }
-function storyEntry() { if (!window.Story) return ''; const x = storyCtx(), n = Story.cur(), N = Story.CH.length, p = Story.progress();
+const stSideDue = () => window.Story ? Story.sides(storyCtx()).filter(s => s.due).length : 0;
+function storyEntry() { if (!window.Story) return ''; const x = storyCtx(), n = Story.cur(), N = Story.CH.length, p = Story.progress(), sd = stSideDue(), sdTag = sd ? ' · 🧭有新的支线' : '';
   if (n === 0) return `<a class="edu-entry vwin jwin story-entry" href="#/story" id="storyEntry"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 序章《巷口的灯》</b><small>一杯雨后的咖啡，一本失落的食谱簿……</small></span><span class="ee-go">›</span></a>`;
-  if (n > N) return `<a class="edu-entry vwin jwin story-entry done" href="#/story" id="storyEntry"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 第一颗豆　${Story.finished() ? '已完成' : '终章在等你'}</b><small>称号：${esc(Story.title())} · 随时回来重温</small></span><span class="ee-go">›</span></a>`;
+  if (n > N) return `<a class="edu-entry vwin jwin story-entry done" href="#/story" id="storyEntry"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 第一颗豆　${Story.finished() ? '已完成' : '终章在等你'}</b><small>称号：${esc(Story.title())}${Story.finished() && Story.ending() ? ' · 结局「' + esc(Story.ENDINGS[Story.ending()].name) + '」' : ''}${sdTag}</small></span><span class="ee-go">›</span></a>`;
   const c = Story.CH[n - 1], gs = Story.goals(n, x).filter(g => !g.opt), ready = Story.complete(n, x), g = gs.find(q => !q.ok), o = !Story.seen('c' + n + 'o');
-  return `<a class="edu-entry vwin jwin story-entry${ready ? ' ready' : ''}" href="#/story" id="storyEntry" data-ch="${n}"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 第 ${n} 章《${esc(c.name)}》</b><small>${o ? '新的一章在等你翻开' : ready ? '目标达成！点开听这一章的结局' : esc('目标：' + stGoalText(g))}</small></span><span class="ee-bar"><i style="width:${Math.round(p / N * 100)}%"></i></span><span class="ee-go">›</span></a>`; }
+  return `<a class="edu-entry vwin jwin story-entry${ready ? ' ready' : ''}" href="#/story" id="storyEntry" data-ch="${n}"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 第 ${n} 章《${esc(c.name)}》</b><small>${o ? '新的一章在等你翻开' : ready ? '目标达成！点开听这一章的结局' : esc('目标：' + stGoalText(g))}${sdTag}</small></span><span class="ee-bar"><i style="width:${Math.round(p / N * 100)}%"></i></span><span class="ee-go">›</span></a>`; }
 function storyBar() { if (!window.Story) return ''; const n = Story.cur(), N = Story.CH.length; if (n > N) return '';
   if (n === 0) return `<a class="edu-entry vwin jwin story-bar" href="#/story" id="storyBar"><span class="ee-ic">📜</span><span class="ee-t"><small>主线 · 序章《巷口的灯》</small></span><span class="ee-go">›</span></a>`;
   const x = storyCtx(), c = Story.CH[n - 1], g = Story.goals(n, x).filter(q => !q.opt && !q.ok)[0], o = !Story.seen('c' + n + 'o');
   return `<a class="edu-entry vwin jwin story-bar${!g ? ' ready' : ''}" href="#/story" id="storyBar" data-ch="${n}"><span class="ee-ic">📜</span><span class="ee-t"><small>第 ${n} 章《${esc(c.name)}》· ${o ? '新的一章在等你翻开' : g ? esc(stGoalText(g)) : '目标达成，点开听结局'}</small></span><span class="ee-go">›</span></a>`; }
 const storyTitleTag = () => window.Story && Story.title() ? ` · 📜${esc(Story.title())}` : '';
+// 好感 card: 老焙 always; 澈 once she has shown up. Gifts of 生豆 (from the idle roastery) raise it a little.
+function stFavCard() { const who = [['laobei', '老焙']]; if (Story.seen('c2c')) who.push(['che', Story.nameOf('che')]);
+  const idle = !!window.Idle, bn = idle ? Idle.beans() : 0;
+  return `<div class="edu-notes vwin jwin st-fav-card" id="storyFav"><div class="en-h">❤ 好感</div>${who.map(([w, nm]) => { const t = Story.tier(w), g = Story.state.gifts[w] || 0, can = Story.canGift(w);
+    return `<div class="st-fav" data-who="${w}"><b>${esc(nm)}</b><span class="st-fbar"><i style="width:${Math.round(t.v / Story.FAV_MAX * 100)}%"></i></span><em>${esc(t.name)} · ${t.v}/${Story.FAV_MAX}</em>${idle ? `<button class="chip st-gift" data-gift="${w}"${can && bn >= Story.GIFT_BEANS ? '' : ' disabled'}>🎁 送 ${Story.GIFT_BEANS} 生豆 <small>${g}/${Story.GIFT_MAX}</small></button>` : ''}</div>`; }).join('')}
+    <small class="hint">好感来自你的选择、支线，也可以用「老焙的小铺」里的生豆送礼（每人最多 ${Story.GIFT_MAX} 次）。好感高了，有些话他们才肯说。${idle ? ` 你现在有 🫘${bn}。` : ''}</small></div>`; }
+function stPagesCard() { const P = Story.pages(), got = P.filter(p => p.got).length;
+  return `<div class="section-title">📖 食谱簿的散页 <small>${got}/${P.length}</small></div><div class="st-pages" id="storyPages">${P.map(p => p.got ? `<button class="st-pg got vwin jwin" data-page="${p.id}">${isXuan() ? `<span class="pg-th" style="background-position:${(p.sp % 3) * 50}% ${p.sp >= 3 ? 100 : 0}%"></span>` : `<span class="pg-em">${p.ic}</span>`}<b>${esc(p.name)}</b></button>` : `<div class="st-pg lock vwin jwin"><span class="pg-em">？</span><b>第 ${p.n} 页</b></div>`).join('')}</div>`; }
+function pgOpen(id) { const p = Story.pages().find(q => q.id === id); if (!p || !p.got) return; const old = $('#pgDlg'); if (old) old.remove();
+  const art = isXuan() ? `<span class="pg-art xp" style="background-position:${(p.sp % 3) * 50}% ${p.sp >= 3 ? 100 : 0}%"></span>` : `<span class="pg-art em">${p.ic}</span>`;
+  const d = document.createElement('div'); d.id = 'pgDlg'; d.className = 'pg-dlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', p.name);
+  d.innerHTML = `<div class="pg-card">${art}<small class="pg-no">${esc(p.name)}</small><div class="pg-head">${esc(p.head)}</div><div class="pg-note">${p.note.split('\n').map(l => `<p>${esc(l)}</p>`).join('')}</div><small class="pg-by">——林 · 手写笔记</small><button class="btn pg-close">合上</button></div>`;
+  d.onclick = () => d.remove(); document.body.appendChild(d); requestAnimationFrame(() => d.classList.add('show')); SFXplay('blip'); }
+function stSidesCard(x) { const S2 = Story.sides(x), seenN = S2.filter(s => s.seen).length;
+  const row = s => s.seen ? `<div class="edu-ch vwin jwin story-ch passed" data-side="${s.id}"><span class="ec-n">✔</span><span class="ec-t"><b>${esc(s.title)}</b><small>${esc(Story.AREA_NAMES[s.area].split('（')[0])} · 🪙${s.c}${s.fav ? ' · ❤' : ''}</small><span class="st-acts"><button class="chip" data-play="${s.id}" data-replay="1">🔁 重看</button></span></span></div>`
+    : s.due ? `<div class="edu-ch vwin jwin story-ch open due" data-side="${s.id}"><span class="ec-n">🧭</span><span class="ec-t"><b>新的支线 · ${esc(s.title)}</b><small>${esc(Story.AREA_NAMES[s.area].split('（')[0])} 的故事 · 🪙${s.c}</small><span class="st-acts"><button class="chip" data-play="${s.id}">▶ 听听看</button></span></span></div>`
+    : `<div class="edu-ch vwin jwin story-ch locked" data-side="${s.id}"><span class="ec-n">🔒</span><span class="ec-t"><b>？？？ · 支线</b><small>${s.need && !s.gate ? '主线走到更远的地方后才会出现' : `在 ${esc(Story.AREA_NAMES[s.area].split('（')[0])} 打卡 ${s.n} 家不同的店　${Math.min(s.have, s.n)}/${s.n}`}</small></span></div>`;
+  return `<div class="section-title">🧭 支线 <small>${seenN}/${S2.length}</small></div><div class="edu-list" id="storySides">${S2.map(row).join('')}</div>`; }
+function stChoicesCard() { const C = Story.state.choices, ks = Object.keys(Story.CHOICES).filter(k => C[k] != null); if (!ks.length) return '';
+  return `<div class="section-title">🔀 你的选择</div><div class="edu-notes vwin jwin st-choices" id="storyChoices">${ks.map(k => `<div class="st-ch"><small>${esc(Story.CHOICES[k].ask)}</small><b>${esc(Story.CHOICES[k].opts[C[k]].t)}</b></div>`).join('')}</div>`; }
 function storyView() { const x = storyCtx(), n = Story.cur(), N = Story.CH.length, p = Story.progress(), t = Story.title();
   setTop(isR() ? '主线 · 食谱簿' : isF() ? '主线 · 编年史' : '主线 · 第一颗豆');
   const pips = Array.from({length: N + 1}, (_, i) => `<i class="${i === 0 ? (Story.seen('pro') ? 'on' : '') : i <= N ? (Story.done(i) ? 'on' : '') : ''}${i === n ? ' cur' : ''}"></i>`).join('');
@@ -857,53 +891,130 @@ function storyView() { const x = storyCtx(), n = Story.cur(), N = Story.CH.lengt
     cur = `<div class="edu-notes vwin jwin story-cur${ready ? ' ready' : ''}" id="storyCur" data-ch="${n}"><div class="en-h">📖 第 ${n} 章 · 《${esc(c.name)}》</div><div class="en-l">${esc(c.sum)}</div>
       ${o ? `<div class="section-title">🎯 本章目标 <small>${req.filter(g => g.ok).length}/${req.length}</small></div><div class="edu-tasks" id="storyTasks">${gs.map(goalRow).join('')}</div>` : ''}
       <div class="st-acts">${!o ? `<button class="btn" id="stGo" data-play="c${n}o">▶ 翻开这一章</button>` : ready ? `<button class="btn" id="stGo" data-play="c${n}c">📖 目标达成 · 听这一章的结局</button>` : `<small class="hint">做完目标，这一章的结局会自动播放。以前的记录也算数。</small>`}</div></div>`;
-  } else cur = `<div class="edu-notes vwin jwin story-cur" id="storyCur"><div class="en-h">🎉 第一颗豆 · 全部章节完成</div><div class="en-l">簿子的每一页都找回来了。新的一页，由你来写。</div>${Story.finished() ? '' : '<button class="btn" id="stGo" data-play="epi">▶ 听尾声</button>'}</div>`;
+  } else cur = `<div class="edu-notes vwin jwin story-cur" id="storyCur"><div class="en-h">🎉 第一颗豆 · 全部章节完成</div><div class="en-l">${Story.finished() && Story.ending() ? `结局：「${esc(Story.ENDINGS[Story.ending()].name)}」——${esc(Story.ENDINGS[Story.ending()].sum)}` : '簿子的每一页都找回来了。新的一页，由你来写。'}</div>${Story.finished() ? '' : '<button class="btn" id="stGo" data-play="epi">▶ 听尾声</button>'}</div>`;
   const row = (icon, name, sub, plays, cls) => `<div class="edu-ch vwin jwin story-ch ${cls}"><span class="ec-n">${icon}</span><span class="ec-t"><b>${name}</b><small>${sub}</small>${plays ? `<span class="st-acts">${plays}</span>` : ''}</span></div>`;
   const pb = (id, t) => Story.seen(id) ? `<button class="chip" data-play="${id}" data-replay="1">${t}</button>` : '';
   const list = [row(Story.seen('pro') ? '✔' : '📖', '序章 · 巷口的灯', Story.seen('pro') ? '已读' : '尚未翻开', pb('pro', '🔁 重看'), Story.seen('pro') ? 'passed' : 'open')]
     .concat(Story.CH.map(c => { const st = Story.done(c.n) ? 'passed' : Story.unlocked(c.n) ? 'open' : 'locked';
       return st === 'locked' ? row('🔒', `第 ${c.n} 章 · ？？？`, '完成上一章后翻开', '', 'locked')
         : row(st === 'passed' ? '✔' : '📖', `第 ${c.n} 章 · ${esc(c.name)}`, st === 'passed' ? `称号「${esc(c.reward.title)}」· 🪙${c.reward.c}${c.reward.item ? ' · 🎁' : ''}` : esc(c.sum), pb('c' + c.n + 'o', '🔁 开场') + pb('c' + c.n + 'c', '🔁 结局'), st); }))
-    .concat([Story.done(N) ? row(Story.seen('epi') ? '✔' : '📖', '尾声 · 新的一页', Story.seen('epi') ? `称号「${esc(Story.EPI.reward.title)}」` : '最后一幕', pb('epi', '🔁 重看'), Story.seen('epi') ? 'passed' : 'open') : row('🔒', '尾声 · ？？？', '完成全部章节后翻开', '', 'locked')]);
+    .concat([Story.done(N) ? row(Story.seen('epi') ? '✔' : '📖', '尾声 · ' + (Story.seen('epi') && Story.ending() ? esc(Story.ENDINGS[Story.ending()].name) : '新的一页'), Story.seen('epi') ? `称号「${esc(Story.EPI.reward.title)}」` : '最后一幕', pb('epi', '🔁 重看'), Story.seen('epi') ? 'passed' : 'open') : row('🔒', '尾声 · ？？？', '完成全部章节后翻开', '', 'locked')]);
   const ts = Story.titles();
   app.innerHTML = `<div class="edu-head vwin jwin story-head"><span class="edu-ava big st-book">📜</span><div><small>主线 · 第一颗豆</small><b class="edu-rank" id="storyTitle">${t ? esc(t) : '尚无称号'}</b><div class="edu-ladder">${pips}</div><small>已完成 ${p}/${N} 章${Story.finished() ? ' · 尾声已读' : ''}</small></div></div>
-    ${cur}<div class="section-title">📚 章节</div><div class="edu-list" id="storyList">${list.join('')}</div>
+    ${cur}${Story.seen('pro') ? stFavCard() : ''}<div class="section-title">📚 章节</div><div class="edu-list" id="storyList">${list.join('')}</div>
+    ${Story.seen('pro') ? stPagesCard() + stSidesCard(x) : ''}${stChoicesCard()}
     ${ts.length ? `<div class="section-title">🏷️ 已获得的称号</div><div class="chips st-titles">${ts.map(q => `<span class="chip on">${esc(q.title)}</span>`).join('')}</div>` : ''}
-    <div class="hint edu-foot">主线把「咖啡课、打卡、豆子笔记」串成一个故事。每章的目标都看你<b>已有的记录</b>（以前打过的卡也算），不要求去某一家特定的店。完成目标后，这一章的结局会自动播放，并送金币、XP、称号，部分章节还送装扮（在像素主题的杂货店里装备）。</div>`;
-  app.onclick = e => { const b = e.target.closest('[data-play]'); if (!b) return; const id = b.dataset.play; storyPlay(id, {replay: !!b.dataset.replay}); }; }
+    <div class="hint edu-foot">主线把「咖啡课、打卡、豆子笔记」串成一个故事。每章的目标都看你<b>已有的记录</b>（以前打过的卡也算），不要求去某一家特定的店。完成目标后，这一章的结局会自动播放，并送金币、XP、称号和林的一页手写笔记；部分章节还送装扮（在像素主题的杂货店里装备）。路上有三次选择，会改变之后的对话和结局。</div>`;
+  app.onclick = e => { const g = e.target.closest('[data-gift]'); if (g && !g.disabled) { const w = g.dataset.gift; if (Story.canGift(w) && Idle.spendBeans(Story.GIFT_BEANS) && Story.gift(w)) { SFXplay('harvest'); toast(`❤ ${Story.nameOf(w)} 好感 +1`); render(); } return; }
+    const pg = e.target.closest('[data-page]'); if (pg) return pgOpen(pg.dataset.page);
+    const b = e.target.closest('[data-play]'); if (!b) return; const id = b.dataset.play; storyPlay(id, {replay: !!b.dataset.replay}); }; }
 let storyTimer = null, storyHold = false; // storyHold: after a scene closes, wait for the next navigation before another one
 const storySchedule = (ms = 600) => { if (!STORY_ON()) return; clearTimeout(storyTimer); storyTimer = setTimeout(storyTick, ms); };
 const storyDue = () => STORY_ON() && !storyHold && !!Story.nextScene(storyCtx());
 function storyTick(chain) { if (!STORY_ON() || (storyHold && chain !== true)) return; const id = Story.nextScene(storyCtx()); if (!id) return;
   if (document.querySelector('#storyDlg') || npcBlocked()) return storySchedule(1500); storyPlay(id); }
-function storyPlay(id, opt = {}) { if (!window.Story) return; const sc = Story.scene(id), L = Story.lines(id); if (!sc || !L.length) return;
+// one full-screen overlay shell shared by cutscenes and the idle popups (so the per-theme dialog skins apply everywhere)
+function sdShell(id, kind, place) { const d = document.createElement('div'); d.id = 'storyDlg'; d.className = 'edu-dlg story-dlg'; d.dataset.scene = id; d.dataset.kind = kind; d.dataset.place = place; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', kind === 'idle' ? '老焙的小铺' : '主线剧情'); return d; }
+function storyPlay(id, opt = {}) { if (!window.Story) return; const sc = Story.scene(id); let L = Story.lines(id); if (!sc || !L.length) return;
   const replay = !!opt.replay; let d = $('#storyDlg'); if (d) d.remove(); { const g = $('#dlg'); if (g) g.classList.remove('show'); }
   const L0 = levelInfo(), before = totalCoins(); let rw = null, mk = null;
   if (!replay) { mk = Story.mark(id, today()); const cid = Story.claimId(id); // progress + reward are recorded as the scene opens, so skipping or closing early never loses them
     if (mk && mk.reward && !questLog.claims.some(x => x.id === cid)) { questLog.claims.push({d: today(), id: cid, c: mk.reward.c}); save(QK, questLog); rw = mk.reward; } }
-  const pages = rw ? [...L, null] : L, place = sc.place || 'city';
-  d = document.createElement('div'); d.id = 'storyDlg'; d.className = 'edu-dlg story-dlg' + (replay ? ' replay' : ''); d.dataset.scene = id; d.dataset.kind = sc.kind; d.dataset.place = place; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', '主线剧情');
-  d.innerHTML = `<div class="sd-bg"></div>${sc.card ? `<div class="sd-card" id="sdCard"><small>${esc(sc.card[0])}</small><b>${esc(sc.card[1])}</b><i></i></div>` : ''}<div class="sd-place">📍 ${esc(ST_PLACE[place] || '')}</div>${isXuan() ? '<div class="sd-stage" id="sdStage"></div>' : ''}
+  let pages = rw ? [...L, null] : L; const place = sc.place || 'city', xu = isXuan(); const refresh = () => { L = Story.lines(id); pages = rw ? [...L, null] : L; };
+  d = sdShell(id, sc.kind, place); if (replay) d.classList.add('replay');
+  d.innerHTML = `<div class="sd-bg"></div>${xu ? '<div id="sdScenes"></div>' : ''}<div class="sd-shade"></div>${sc.card ? `<div class="sd-card" id="sdCard"><small>${esc(sc.card[0])}</small><b>${esc(sc.card[1])}</b><i></i></div>` : ''}<div class="sd-place">📍 ${esc(ST_PLACE[place] || '')}</div>${xu ? '<div class="sd-stage" id="sdStage"></div>' : ''}<div class="sd-fx" id="sdFx"></div><div class="sd-fav" id="sdFav"></div>
     <div class="ed-box"><span class="st-ava-w" id="sdAva"></span><div class="ed-body"><div class="ed-name" id="sdName"></div><div class="ed-text" id="sdText"></div><div class="ed-foot"><span id="sdPage"></span><button class="ed-skip" id="sdSkip">${replay ? '关闭' : '跳过'}</button><button class="ed-next" id="sdNext">▼ 继续</button></div></div></div>`;
   document.body.appendChild(d); let i = 0, tm = null, full = '';
   const still = navigator.webdriver || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   const typeIn = t => { const el = $('#sdText'); clearInterval(tm); tm = null; full = t; if (still || t.length < 2) { el.textContent = t; return; } let k = 0; el.textContent = ''; tm = setInterval(() => { el.textContent = t.slice(0, ++k); if (k >= t.length) { clearInterval(tm); tm = null; } }, 26); };
-  const rwHtml = () => { const xp = Math.round(rw.c / 2), isEpi = sc.kind === 'epi';
-    return `<div class="np-rw" id="sdReward"><b>${isEpi ? '📖 尾声 · 故事告一段落' : `📖 第 ${sc.n} 章 完成`}</b><span>🪙 +${rw.c}</span><span>⭐ +${xp} XP</span><span>🏷️ 称号：${esc(rw.title)}</span>${rw.item ? `<span>🎁 ${esc(npcItemName(rw.item))}</span>` : ''}${rw.item ? `<small>${isV() ? '装扮已经放进杂货店，可以免费装备。' : '装扮会出现在像素主题（田园 / 牧场）的杂货店里。'}</small>` : ''}</div>`; };
-  const show = () => { const b = pages[i], last = i === pages.length - 1, box = d.querySelector('.ed-box'); SFXplay('blip');
-    if (b === null) { stStage('n'); box.classList.remove('narr'); $('#sdAva').innerHTML = '<span class="edu-ava st-ava st-seal">📜</span>'; $('#sdName').textContent = '主线'; clearInterval(tm); tm = null; $('#sdText').innerHTML = rwHtml(); }
-    else { box.classList.toggle('narr', b.w === 'n'); box.dataset.who = b.w; $('#sdAva').innerHTML = stAva(b.w); paintNpc(d); stStage(b.w); $('#sdName').innerHTML = b.name ? `${esc(b.name)}${ST_ROLE[b.w] ? ` <small>${b.w === 'laobei' && isXuan() ? '退隐的烘豆师' : ST_ROLE[b.w]}</small>` : ''}` : ''; typeIn(b.t); }
-    $('#sdPage').textContent = b === null ? '' : `${i + 1}/${L.length}`; $('#sdNext').textContent = last ? (b === null ? '✔ 收下' : '✔ 完') : '▼ 继续'; $('#sdSkip').classList.toggle('hidden', !replay && b === null); };
+  const doFx = f => { if (!f) return; if (f === 'shake') { d.classList.remove('fx-shake'); void d.offsetWidth; d.classList.add('fx-shake'); setTimeout(() => d.classList.remove('fx-shake'), 700); } else { const fx = $('#sdFx'); fx.className = 'sd-fx ' + f; void fx.offsetWidth; fx.classList.add('go'); } };
+  const favPop = g => { const t = Object.entries(g || {}).map(([w, n]) => `❤ ${Story.nameOf(w)} +${n}`).join('　'); const el = $('#sdFav'); if (!t || !el) return; el.textContent = t; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); };
+  const pagesOf = () => (sc.kind === 'close' ? Story.pages().filter(p => p.ch === sc.n) : []);
+  const rwHtml = () => { const xp = Math.round(rw.c / 2), isEpi = sc.kind === 'epi', isSide = sc.kind === 'side', pg = pagesOf(), fv = isSide && sc.side.fav ? Object.entries(sc.side.fav).map(([w, n]) => `❤ ${Story.nameOf(w)} 好感 +${n}`) : [];
+    return `<div class="np-rw" id="sdReward"><b>${isEpi ? `📖 尾声 · ${esc(Story.ENDINGS[Story.ending() || 'lamp'].name)}` : isSide ? `🧭 支线完成 · ${esc(sc.title)}` : `📖 第 ${sc.n} 章 完成`}</b><span>🪙 +${rw.c}</span><span>⭐ +${xp} XP</span>${rw.title ? `<span>🏷️ 称号：${esc(rw.title)}</span>` : ''}${fv.map(t => `<span>${t}</span>`).join('')}${rw.item ? `<span>🎁 ${esc(npcItemName(rw.item))}</span>` : ''}
+      ${pg.map(p => `<button class="chip st-getpg" data-page="${p.id}">📖 找回：${esc(p.name)} · 读林的笔记</button>`).join('')}${rw.item ? `<small>${isV() ? '装扮已经放进杂货店，可以免费装备。' : '装扮会出现在像素主题（田园 / 牧场）的杂货店里。'}</small>` : ''}</div>`; };
+  const isChoice = () => !!pages[i] && pages[i].w === 'choice';
+  const show = () => { const b = pages[i], last = i === pages.length - 1, box = d.querySelector('.ed-box'); SFXplay('blip'); box.classList.remove('choosing');
+    if (b === null) { stStage('n'); box.classList.remove('narr'); $('#sdAva').innerHTML = '<span class="edu-ava st-ava st-seal">📜</span>'; $('#sdName').textContent = sc.kind === 'side' ? '支线' : '主线'; clearInterval(tm); tm = null; $('#sdText').innerHTML = rwHtml(); }
+    else if (b.w === 'choice') { box.classList.remove('narr'); box.classList.add('choosing'); box.dataset.who = 'choice'; sdBg(d, b.bg); $('#sdAva').innerHTML = stAva('you'); paintNpc(d); stStage('choice'); $('#sdName').textContent = '你的回答'; clearInterval(tm); tm = null; full = '';
+      $('#sdText').innerHTML = `<div class="sd-ask">${esc(b.ask)}</div><div class="sd-opts">${b.opts.map((o, k) => `<button class="sd-opt" data-i="${k}">${esc(o.t)}</button>`).join('')}</div>`; }
+    else { box.classList.toggle('narr', b.w === 'n'); box.dataset.who = b.w; sdBg(d, b.bg); $('#sdAva').innerHTML = stAva(b.w); paintNpc(d); stStage(b.w); doFx(b.fx); $('#sdName').innerHTML = b.name ? `${esc(b.name)}${ST_ROLE[b.w] ? ` <small>${b.w === 'laobei' && isXuan() ? '退隐的烘豆师' : ST_ROLE[b.w]}</small>` : ''}` : ''; typeIn(b.t); }
+    d.style.setProperty('--sd-box', (box.offsetHeight + 26) + 'px'); $('#sdPage').textContent = b === null ? '' : `${i + 1}/${L.length}`; $('#sdNext').textContent = last ? (b === null ? '✔ 收下' : '✔ 完') : '▼ 继续'; $('#sdSkip').classList.toggle('hidden', !replay && b === null); };
   const end = () => { clearInterval(tm); d.remove(); if (!replay) { storyHold = true; npcHold = true; SFXplay(rw ? 'harvest' : 'blip'); drawHud();
       if (rw) { coinBurst(null, rw.c, before); xpPop(null, Math.round(rw.c / 2), L0); const L1 = levelInfo(); if (L1.lv > L0.lv) setTimeout(() => toast(`⬆️ 升级！Lv.${L1.lv} ${L1.title}`, 2600), 1300); }
       if (mk && (mk.kind === 'pro' || (mk.kind === 'close' && mk.n < Story.CH.length))) setTimeout(() => storyTick(true), 1100); }
     if (['story', 'list', 'map'].includes(app.dataset.view)) render(); };
   const next = () => { if (tm) { clearInterval(tm); tm = null; $('#sdText').textContent = full; return; } if (++i >= pages.length) return end(); show(); };
+  const pickOpt = k => { const b = pages[i]; if (!b || b.w !== 'choice') return; const r = Story.choose(b.id, k); SFXplay('harvest'); if (r) favPop(r.fav); refresh(); show(); };
   const card = $('#sdCard'); let cardT = null; const hideCard = () => { if (!d.classList.contains('carding')) return; clearTimeout(cardT); d.classList.remove('carding'); show(); };
-  d.addEventListener('click', e => { if (e.target.closest('#sdSkip')) return; if (e.target.closest('#sdNext')) { e.stopPropagation(); return next(); } if (d.classList.contains('carding')) return hideCard(); next(); });
-  $('#sdSkip').onclick = e => { e.stopPropagation(); if (d.classList.contains('carding')) d.classList.remove('carding'); if (replay || !rw) return end(); i = pages.length - 1; show(); };
+  d.addEventListener('click', e => { const op = e.target.closest('.sd-opt'); if (op) { e.stopPropagation(); return pickOpt(+op.dataset.i); } const pgb = e.target.closest('[data-page]'); if (pgb) { e.stopPropagation(); return pgOpen(pgb.dataset.page); }
+    if (e.target.closest('#sdSkip')) return; if (d.classList.contains('carding')) return hideCard(); if (isChoice()) return; if (e.target.closest('#sdNext')) { e.stopPropagation(); return next(); } next(); });
+  $('#sdSkip').onclick = e => { e.stopPropagation(); if (d.classList.contains('carding')) d.classList.remove('carding'); if (!replay) { Story.autoPick(id); refresh(); } if (replay || !rw) return end(); i = pages.length - 1; show(); };
   SFXplay(replay ? 'blip' : 'harvest'); requestAnimationFrame(() => d.classList.add('show'));
-  if (card) { d.classList.add('carding'); cardT = setTimeout(hideCard, 2000); } else show(); }
+  if (card) { d.classList.add('carding'); sdBg(d, (pages[0] || {}).bg); cardT = setTimeout(hideCard, 2000); } else show(); }
+// ---------- 🏮 老焙的小铺 (idle / 放置). Engine in idle.js; state in localStorage 'mcc.idle'. Production is computed from timestamps when you return. ----------
+// Auto popups (“你不在时…”) stay off under automation (navigator.webdriver) unless ?idle or localStorage mcc.idleTest.
+const IDLE_ON = () => !!window.Idle && (!navigator.webdriver || /[?&]idle\b/.test(location.search) || !!load('mcc.idleTest', false));
+function idleCtx() { const live = []; checkins.forEach(c => { if (c.createdAt && melDate(c.createdAt) === ciDay(c)) live.push(c.createdAt); }); // only check-ins made on the day they are dated (back-filled ones never boost)
+  const met = window.Npc && Npc.NPCS ? Npc.NPCS.filter(n => Npc.met(n.id)).map(n => n.id) : [];
+  return {live, met, chapters: window.Story ? Story.progress() + (Story.finished() ? 1 : 0) : 0, cur: window.Story ? Story.cur() : 0, today: today()}; }
+if (window.Idle) Idle.setCtx(idleCtx);
+const idHM = ms => { const m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60); return h ? `${h} 小时${m % 60 ? ' ' + (m % 60) + ' 分' : ''}` : `${m} 分钟`; };
+const idIc = (sp, ic) => isXuan() ? `<span class="idle-sp" style="--c:${sp % 3};--r:${sp >= 3 ? 1 : 0}"></span>` : `<span class="idle-em">${ic}</span>`;
+const idNum = n => (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, '');
+const IDLE_LINES = ['小豆：「今天来了好多客人，烘豆机一直在响！」', '老焙：「（翻着账本）嗯，没偷懒。」', '阿满：「豆袋我都码好啦，您点点？」', '铺子里有股焦糖的香味，一直没散。', '窗台上的旧斗笠，落了一点点烘豆的香灰。', '老焙在柜台后面打了个盹，杯子还冒着热气。'];
+let idleBy = 'laobei', idleTimer = null, idleAwayShown = false, idleAwayTries = 0;
+function idleSummary() { const now = nowMs(), x = idleCtx(), P = Idle.pending(now, x); return {P, x, now, E: Idle.expInfo(now)}; }
+function idleEntry() { if (!window.Idle) return ''; const {P, E} = idleSummary(), ready = P.c >= 10 || (E && E.done), R = Idle.rates(idleCtx());
+  return `<a class="edu-entry vwin jwin idle-entry${ready ? ' ready' : ''}" href="#/idle" id="idleEntry"><span class="ee-ic">${isXuan() ? '🏮' : '☕'}</span><span class="ee-t"><b>老焙的小铺</b><small>${E && E.done ? '🧭 出门的人回来了 · ' : ''}待收 🪙${fmtN(P.c)} · 🫘${fmtN(P.b)} · 每小时约 +${idNum(R.c)}（上限 ${P.capH} 小时）</small></span><span class="ee-go">›</span></a>`; }
+function idleView() { const now = nowMs(), x = idleCtx(); Idle.sync(now); const P = Idle.pending(now, x), R = Idle.rates(x), B = Idle.boostAt(now, x), E = Idle.expInfo(now), M = R.m, coins = totalCoins(), st = Idle.state;
+  setTop(isR() ? '老焙的小铺 · 放置' : '老焙的小铺');
+  const chips = [M.app ? `学徒 +${Math.round(M.app * 100)}%` : '', M.help ? `帮手 +${Math.round(M.help * 100)}%` : '', M.story ? `主线 +${Math.round(M.story * 100)}%` : '', M.relic ? `旧物 +${Math.round(M.relic * 100)}%` : ''].filter(Boolean);
+  const stRow = t => { const k = Idle.cost(t.id), L = k.lv, can = !k.full && coins >= k.c && Idle.beans() >= k.b;
+    return `<div class="idle-st vwin jwin${L ? '' : ' off'}" data-st="${t.id}">${idIc(t.sp, t.ic)}<div class="is-t"><b>${t.name} <em>Lv.${L}/${k.max}</em></b><small>${t.desc}　每级 +${idNum(t.a)} 🪙/h${t.b ? ` · +${idNum(t.b)} 🫘/h` : ''}</small></div>${k.full ? '<span class="chip on">已满级</span>' : `<button class="btn idle-up" data-up="${t.id}"${can ? '' : ' disabled'}>${L ? '升级' : '开张'} 🪙${fmtN(k.c)}${k.b ? ` 🫘${k.b}` : ''}</button>`}</div>`; };
+  const sk = Idle.cost('store'), sRow = `<div class="idle-st vwin jwin" data-st="store">${idIc(Idle.STORE.sp, Idle.STORE.ic)}<div class="is-t"><b>${Idle.STORE.name} <em>Lv.${sk.lv}/${sk.max}</em></b><small>${Idle.STORE.desc}　每级 +${Idle.STORE.add} 小时（现在 ${P.capH} 小时）</small></div>${sk.full ? '<span class="chip on">已满级</span>' : `<button class="btn idle-up" data-up="store"${coins >= sk.c ? '' : ' disabled'}>扩建 🪙${fmtN(sk.c)}</button>`}</div>`;
+  const hc = Idle.hireCost(), apps = `<div class="idle-st vwin jwin idle-app">${idIc(5, '🧑‍🍳')}<div class="is-t"><b>学徒 <em>${st.app}/${Idle.APPR.length}</em></b><small>每位学徒让全铺产出 +${Math.round(Idle.CFG.APPR_B * 100)}%</small><span class="idle-chips">${Idle.APPR.map((a, i) => `<span class="chip${i < st.app ? ' on' : ''}">${i < st.app ? esc(a.name) : '？'}</span>`).join('')}</span></div>${hc == null ? '<span class="chip on">满员</span>' : `<button class="btn idle-up" data-hire="1"${coins >= hc ? '' : ' disabled'}>招收${esc(Idle.APPR[st.app].name)} 🪙${fmtN(hc)}</button>`}</div>`;
+  const helpers = x.met.filter(id => Idle.HELPERS[id]);
+  const helpHtml = helpers.length ? helpers.map(id => `<div class="idle-help vwin jwin" data-help="${id}">${npcAva(id, false, 'idle-hava')}<div class="is-t"><b>${esc(Idle.HELPERS[id][0])} <em>+${id === 'master' ? 5 : 2}%</em></b><small>${esc(Idle.HELPERS[id][1])}</small></div></div>`).join('') : '<div class="hint idle-nohelp">铺子里的帮手，都是自己找上门的朋友。</div>';
+  const left = E ? E.left : 0, today3 = Idle.tripsToday(x);
+  const exp = E ? `<div class="idle-exp vwin jwin run" id="idleExp"><span class="idle-em">${E.dest.ic}</span><div class="is-t"><b>${esc(E.dest.name)} · ${E.by === 'you' ? '你' : '老焙'}出发了</b><small>${E.done ? '回来了！看看带回了什么' : `还要 ${idHM(left)}`}</small><div class="xpbar"><i style="width:${Math.round(E.pct * 100)}%"></i></div></div>${E.done ? '<button class="btn" id="idleClaim">迎接 ›</button>' : ''}</div>`
+    : `<div class="idle-by" id="idleBy"><button class="chip${idleBy === 'laobei' ? ' on' : ''}" data-by="laobei">老焙去（更爱捡到旧物）</button><button class="chip${idleBy === 'you' ? ' on' : ''}" data-by="you">你去（带回更多金币）</button></div>
+      <div class="idle-dests">${Idle.DESTS.map((D, i) => { const g = Idle.canGo(i, idleBy, now, x); return `<button class="idle-dest vwin jwin" data-go="${i}"${g.ok ? '' : ' disabled'}><span class="idle-em">${D.ic}</span><b>${esc(D.name)}</b><small>${D.min >= 60 ? D.min / 60 + ' 小时' : D.min + ' 分钟'} · 🫘${D.beans}</small><small>🪙${D.c[0]}–${D.c[1]}${g.ok ? '' : g.why === 'beans' ? ' · 生豆不够' : g.why === 'daily' ? ' · 今天走够了' : ''}</small></button>`; }).join('')}</div>`;
+  const rel = Idle.RELICS, rs = Idle.relics();
+  app.innerHTML = `<div class="idle-hero vwin jwin"><div class="ih-art"></div><div class="ih-t"><b>老焙的小铺</b><small>不在的时候，铺子也在慢慢烘豆</small></div></div>
+    <div class="edu-notes vwin jwin idle-sum${P.full ? ' full' : ''}" id="idleSum"><div class="is-row"><span>待收</span><b id="idPendC">🪙 ${fmtN(P.c)}</b><b id="idPendB">🫘 ${fmtN(P.b)}</b></div><div class="xpbar idle-bar"><i style="width:${Math.min(100, Math.round(P.hours / P.capH * 100))}%"></i></div>
+      <small id="idPendH">已累积 ${idHM(P.hours * 3600000)} / 上限 ${P.capH} 小时${P.full ? ' · 仓库满了，快去收一收' : ''}</small>
+      <small id="idRate">每小时：🪙 ${idNum(R.c)}${B.n ? `（打卡加成后 ${idNum(R.c * B.mult)}）` : ''} · 🫘 ${idNum(R.b)}${chips.length ? ' · ' + chips.join(' · ') : ''}</small>
+      <small class="idle-boost${B.n ? ' on' : ''}" id="idBoost">⚡ 打卡加成 ×${idNum(B.mult)}${B.n ? `（${B.n} 次打卡，还剩 ${idHM(B.left)}）` : '：今天出门真的打一次卡，铺子的产出 +50%（6 小时，最多 ×3）'}</small>
+      <button class="btn" id="idleCollect"${P.c + P.b > 0 ? '' : ' disabled'}>领取 🪙${fmtN(P.c)} · 🫘${fmtN(P.b)}</button></div>
+    <div class="section-title">🛠️ 工坊</div><div class="idle-list" id="idleStations">${Idle.STATIONS.map(stRow).join('')}${sRow}${apps}</div>
+    <div class="section-title">🤝 帮手</div><div class="idle-list" id="idleHelpers">${helpHtml}</div>
+    <div class="section-title">🧭 出门游历 <small>今天 ${today3}/${Idle.CFG.DAILY_TRIPS}</small></div><div id="idleExpBox">${exp}</div>
+    <div class="section-title">🎒 旧物 <small>${Object.keys(rs).length}/${rel.length}</small></div><div class="idle-relics" id="idleRelics">${rel.map(r => rs[r.id] ? `<div class="idle-rel got vwin jwin" title="${esc(r.lore)}"><b>${esc(r.name)}</b><small>${esc(r.lore)}</small></div>` : `<div class="idle-rel vwin jwin"><b>？</b><small>还没找到</small></div>`).join('')}</div>
+    <div class="hint edu-foot">放置规则：离开后铺子继续产出，回来时按时间一次算清，最多累积 ${P.capH} 小时（仓库每级 +${Idle.STORE.add} 小时，最多 ${Idle.CFG.CAP_H + Idle.STORE.add * Idle.STORE.max} 小时）。基础 ${Idle.CFG.BASE_C} 🪙/小时，烘豆机等工坊逐级加成；真实打卡一次 +50%（6 小时，最多叠 4 次 = ×3，补录的打卡不算）。学徒每位 +6%，主线每章 +2%，旧物每件 +1%，遇见的朋友来帮忙也有加成。生豆 🫘 用来升级高阶工坊、出门游历和送礼（主线好感）。金币和商店共用一个钱包。</div>`;
+  app.onclick = e => { const t = e.target.closest('button,[data-by]'); if (!t || t.disabled) return; const n = nowMs(), c = idleCtx();
+    if (t.id === 'idleCollect') { const before = totalCoins(), r = Idle.collect(n, c); SFXplay('harvest'); drawHud(); if (r.c) coinBurst(null, r.c, before); toast(`收下了 🪙${fmtN(r.c)} · 🫘${fmtN(r.b)}`); return render(); }
+    if (t.dataset.up) { const r = Idle.upgrade(t.dataset.up, totalCoins(), n, c); if (r.ok) { SFXplay('harvest'); toast(`升级完成：${t.dataset.up === 'store' ? '仓库扩建' : '工坊 Lv.' + r.lv}`); } else toast(r.why === 'beans' ? '生豆不够' : '金币不够'); return render(); }
+    if (t.dataset.hire) { const r = Idle.hire(totalCoins(), n, c); if (r.ok) { SFXplay('harvest'); toast(`${r.name} 成了铺子的学徒！`); } else toast('金币不够'); return render(); }
+    if (t.dataset.by) { idleBy = t.dataset.by; return render(); }
+    if (t.dataset.go != null) { const r = Idle.go(+t.dataset.go, idleBy, n, c); if (r.ok) { SFXplay('blip'); toast('出发啦，过一会儿回来看看'); } return render(); }
+    if (t.id === 'idleClaim') return idleClaimTrip(); };
+  idleTimer = setInterval(() => { if (!document.getElementById('idPendC')) { clearInterval(idleTimer); idleTimer = null; return; } const n = nowMs(), p = Idle.pending(n, idleCtx()); $('#idPendC').textContent = `🪙 ${fmtN(p.c)}`; $('#idPendB').textContent = `🫘 ${fmtN(p.b)}`; const e = Idle.expInfo(n); if (e && e.done && !document.getElementById('idleClaim')) render(); }, 1000); }
+// pop-ups reuse the story overlay shell, so every theme's dialog skin applies
+function idleModal(html, opts = {}) { const old = $('#storyDlg'); if (old) old.remove(); const d = sdShell('idle', 'idle', 'city'); d.classList.add('idle-pop');
+  d.innerHTML = `<div class="sd-bg"></div>${isXuan() ? '<div id="sdScenes"></div>' : ''}<div class="sd-shade"></div><div class="ed-box idle-box"><div class="ed-body"><div class="ed-text idle-pt">${html}</div><div class="ed-foot">${opts.look ? '<button class="ed-skip" id="idLook">去看看</button>' : ''}<button class="ed-next" id="idTake">${opts.take || '收下'}</button></div></div></div>`;
+  document.body.appendChild(d); if (opts.bg) sdBg(d, opts.bg); requestAnimationFrame(() => d.classList.add('show'));
+  d.addEventListener('click', e => { const t = e.target.closest('button'); if (!t) return; e.stopPropagation(); if (t.id === 'idLook') { d.remove(); location.hash = '#/idle'; } else if (t.id === 'idTake') { d.remove(); if (opts.done) opts.done(); } });
+  return d; }
+function idleAwayTry(force) { if (!window.Idle || (!force && !IDLE_ON())) return; const now = nowMs(), x = idleCtx(), a = Idle.away(now, x);
+  if (!force && (idleAwayShown || a.mins < 30 || (a.c < 5 && !a.exp))) { if (!idleAwayShown) Idle.touch(now); return; }
+  if (document.querySelector('#storyDlg') || npcBlocked() || storyDue()) { if (idleAwayTries++ < 12) setTimeout(() => idleAwayTry(force), 1500); return; }
+  idleAwayShown = true; const h = Math.floor(a.mins / 60), line = IDLE_LINES[(h + a.c) % IDLE_LINES.length];
+  idleModal(`<div class="id-h">🌙 你不在时…</div><div>离开了 <b>${idHM(a.mins * 60000)}</b>，铺子里一直在忙。</div><div class="np-rw" id="idleAway"><span>🪙 +${fmtN(a.c)}</span><span>🫘 +${fmtN(a.b)}</span>${a.capped ? '<span>⌛ 仓库满了</span>' : ''}</div><div class="id-line">${esc(line)}</div>${a.exp ? `<div class="id-line">🧭 ${esc(a.exp.dest.name)}那边，${a.exp.by === 'you' ? '你' : '老焙'}已经回来了。</div>` : ''}`,
+    {look: true, take: '收下', bg: 'oldshop', done: () => { const before = totalCoins(), r = Idle.collect(nowMs(), idleCtx()); SFXplay('harvest'); drawHud(); if (r.c) coinBurst(null, r.c, before); if (['list', 'idle'].includes(app.dataset.view)) render(); }}); }
+function idleClaimTrip() { const n = nowMs(), before = totalCoins(), r = Idle.claimExp(n, idleCtx()); if (!r) return; SFXplay('harvest'); drawHud(); if (r.c) coinBurst(null, r.c, before);
+  idleModal(`<div class="id-h">${r.dest.ic} ${esc(r.dest.name)} · 回来了</div><div class="id-snip" id="idleSnip">${esc(r.snippet)}</div><div class="np-rw" id="idleLoot"><span>🪙 +${fmtN(r.c)}</span><span>🫘 +${r.b}</span>${r.relic ? `<span>🎒 旧物：${esc(r.relic.name)}</span>` : r.bonus ? '<span>🎒 旧物都找齐了，多得一份礼</span>' : ''}</div>${r.relic ? `<div class="id-line">${esc(r.relic.lore)}（全铺产出 +1%）</div>` : ''}`, {take: '收好', bg: ['alley', 'river', 'dawn'][Idle.DESTS.indexOf(r.dest)], done: () => render()}); }
+document.addEventListener('visibilitychange', () => { if (document.hidden) { idleAwayShown = false; idleAwayTries = 0; if (window.Idle) Idle.touch(nowMs()); } else if (window.Idle) setTimeout(idleAwayTry, 400); });
 // ---------- 🎭 hidden NPCs (隐藏角色): encounters, codex, map visitor. Logic in npc.js; state in localStorage 'mcc.npc' ----------
 // Under automation (navigator.webdriver) encounters stay off unless ?npc or localStorage mcc.npcTest — keeps older test suites undisturbed.
 const NPC_ON = () => !!window.Npc && (!navigator.webdriver || /[?&]npc\b/.test(location.search) || !!load('mcc.npcTest', false));
@@ -920,7 +1031,7 @@ function npcFestName() { const t = npcFest(today())[0]; if (t) return t.zh; cons
 const npcLine = (n, t) => t.replace('{fest}', (Npc.state.met[n.id] && Npc.state.met[n.id].fest) || npcFestName());
 let npcTimer = null, npcHold = false; // npcHold: after an encounter closes, wait for the next navigation before another one
 function npcSchedule(ms = 700) { if (!NPC_ON()) return; clearTimeout(npcTimer); npcTimer = setTimeout(npcTick, ms); }
-const npcBlocked = () => !!document.querySelector('#celebrate:not(.hidden), #eduDlg, #eduRankUp, #npcDlg, #storyDlg, #fdSplash, #vlSplash, #shModal') || !($('#sheetWrap') || {classList: {contains: () => true}}).classList.contains('hidden') || /^#\/(edu\/q|add)/.test(location.hash);
+const npcBlocked = () => !!document.querySelector('#celebrate:not(.hidden), #eduDlg, #eduRankUp, #npcDlg, #storyDlg, #pgDlg, #fdSplash, #vlSplash, #shModal') || !($('#sheetWrap') || {classList: {contains: () => true}}).classList.contains('hidden') || /^#\/(edu\/q|add)/.test(location.hash);
 function npcTick() { if (!NPC_ON() || npcHold) return; const p = Npc.pending(npcCtx()); if (!p.length) return; if (npcBlocked() || storyDue()) return npcSchedule(1500); npcEncounter(p[0]); }
 // one encounter per page view: met + reward are recorded when the dialogue opens, so closing early never loses them
 function npcEncounter(id, replay) { const n = Npc.byId(id); if (!n) return; let d = $('#npcDlg'); if (d) d.remove(); { const g = $('#dlg'); if (g) g.classList.remove('show'); } // the encounter takes over the barista's speech bubble
@@ -1081,6 +1192,7 @@ const views = {
   calendar(arg) { return calendarV(arg); },
   sca(arg) { return scaView(arg); },
   story() { if (!window.Story) { location.hash = '#/list'; return; } return storyView(); },
+  idle() { if (!window.Idle) { location.hash = '#/list'; return; } return idleView(); },
   npc() { if (!window.Npc) { location.hash = '#/list'; return; } return npcCodex(); },
   edu(arg) { if (!window.Edu) { location.hash = '#/list'; return; } const q = /^q(\d)$/.exec(arg || ''); if (q) return eduQuiz(+q[1]); if (/^\d$/.test(arg || '')) return eduChapter(+arg); return eduJournal(); },
   list() {
@@ -1088,7 +1200,7 @@ const views = {
     $('#addCafeBtn').onclick = () => location.hash = '#/add';
     const subs = [...new Set(allCafes().map(c => c.suburb))].sort();
     const v = visitedIds();
-    app.innerHTML = `${festBanner()}${storyEntry()}${eduEntry()}${scaEntry()}${npcEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
+    app.innerHTML = `${festBanner()}${storyEntry()}${idleEntry()}${eduEntry()}${scaEntry()}${npcEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
       <select id="sub"><option value="">全部区域</option>${[...REGIONS, REGION_MORE].map(r => `<option value="${r.id}" ${r.id === listState.suburb ? 'selected' : ''}>${esc(r.name)}${r.zh && r.id !== 'more' ? ' ' + r.zh : ''}</option>`).join('')}</select></div>
       <div class="chips">${[['all', '全部'], ['todo', '未解锁'], ['done', '已解锁'], ['near', '离我最近']].map(([k, t]) => `<button class="chip ${listState.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
       <div class="hint">已解锁 ${v.size} / ${allCafes().length} 家</div><div id="cards"></div>`;
@@ -1511,6 +1623,7 @@ $('#backBtn').onclick = () => history.length > 1 ? history.back() : (location.ha
 function render() {
   mapToken++; if (mapRef) { mapRef.remove(); mapRef = null; }
   if (scaTimer) { clearInterval(scaTimer); scaTimer = null; }
+  if (idleTimer) { clearInterval(idleTimer); idleTimer = null; }
   app.classList.remove('full'); app.onclick = null;
   const [, name = 'list', arg] = (location.hash || '#/list').split('/');
   const v = views[name] ? name : 'list';
@@ -1525,12 +1638,13 @@ function render() {
   if (window.Npc) { try { paintNpc(app); if (v === 'cafe' && arg === 'hash') Npc.flag('hash', today()); if (v === 'map') npcVisitor(); npcSchedule(); } catch (e) { console.warn('npc', e); } }
   if (window.Story) { try { storySchedule(); } catch (e) { console.warn('story', e); } }
 }
-window.addEventListener('hashchange', () => { npcHold = false; storyHold = false; closeSheet(); ['eduDlg', 'eduRankUp', 'npcDlg', 'storyDlg'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
+window.addEventListener('hashchange', () => { npcHold = false; storyHold = false; closeSheet(); ['eduDlg', 'eduRankUp', 'npcDlg', 'storyDlg', 'pgDlg'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
 render();
+if (window.Idle) setTimeout(idleAwayTry, 1200);
 // quietly fetch location if already permitted (for distances), never prompt on load
 if (navigator.permissions) navigator.permissions.query({name: 'geolocation'}).then(p => { if (p.state === 'granted') locate().then(() => render()); }).catch(() => {});
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-window.__mcc = {storyCtx, regionId: id => regionOf(id).r.id, stamina, today, xp: () => totalXP(), badges: () => BADGES.filter(b => b.test(stats())).map(b => b.id), get checkins() { return checkins; }, get beans() { return beans; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf, quests: () => dailyQuests(), questXP: () => questXP(), earned: () => earnedCoins(), level: () => levelInfo()}; // for testing
+window.__mcc = {storyCtx, idleCtx, regionId: id => regionOf(id).r.id, stamina, today, xp: () => totalXP(), badges: () => BADGES.filter(b => b.test(stats())).map(b => b.id), get checkins() { return checkins; }, get beans() { return beans; }, get map() { return mapRef; }, get theme() { return THEME; }, coins: () => totalCoins(), collection: () => [...collection().values()], hearts: heartsOf, quests: () => dailyQuests(), questXP: () => questXP(), earned: () => earnedCoins(), level: () => levelInfo()}; // for testing
 window.__appBooted = true; document.documentElement.classList.add('booted');
 if (window.PixUI) { try { PixUI.installVars(); if (isV()) PixUI.splash(/[?&]splash\b/.test(location.search), isR() ? 'ranch' : 'valley'); } catch (e) { console.warn('pixui', e); } }
 if (isXuan()) { try { Xuan.splash(/[?&]splash\b/.test(location.search)); } catch (e) { console.warn('xuan splash', e); } }

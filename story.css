@@ -90,11 +90,69 @@ html[data-xuan] .story-entry,html[data-xuan] .story-bar{border-left:4px solid va
 html:not([data-xuan]) #storyDlg.carding .sd-bg{background:rgba(14,8,3,.84)}
 html[data-theme=sketch] #storyDlg.carding .sd-bg{background:rgba(250,248,240,.94)}
 html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg.carding .sd-bg{background:rgba(2,4,24,.92)}
-/* 古风: the speaker's painted portrait fades in over the scene, like a figure stepping out of the picture */
-html[data-xuan] #storyDlg .sd-stage{position:absolute;left:50%;top:calc(var(--sd-top,22%));width:262px;height:262px;margin-left:-131px;opacity:0;transform:translateY(8px) scale(.98);transition:opacity .35s,transform .35s;pointer-events:none}
-html[data-xuan] #storyDlg .sd-stage.on{opacity:1;transform:none}
-html[data-xuan] #storyDlg .sd-stage img{width:100%;height:100%;object-fit:cover;-webkit-mask-image:radial-gradient(closest-side,#000 58%,rgba(0,0,0,.65) 78%,transparent 100%);mask-image:radial-gradient(closest-side,#000 58%,rgba(0,0,0,.65) 78%,transparent 100%);filter:drop-shadow(0 6px 14px rgba(20,12,6,.5))}
+
+/* ---- v2: scene layers, stage, effects, choices (all themes share the structure; 古风 gets the painted art) ---- */
+#storyDlg .sd-shade{position:absolute;inset:0;pointer-events:none}
+#storyDlg .sd-fx{position:absolute;inset:0;pointer-events:none;opacity:0;z-index:3}
+#storyDlg .sd-fx.fade{background:#000}#storyDlg .sd-fx.flash{background:#fff}
+#storyDlg .sd-fx.fade.go{animation:sdFade 1s ease-in-out}#storyDlg .sd-fx.flash.go{animation:sdFlash .7s ease-out}
+@keyframes sdFade{0%{opacity:0}35%{opacity:1}65%{opacity:1}100%{opacity:0}}@keyframes sdFlash{0%{opacity:.9}100%{opacity:0}}
+@keyframes sdShake{0%,100%{transform:none}12%{transform:translate(-9px,3px)}25%{transform:translate(8px,-4px)}38%{transform:translate(-7px,-3px)}52%{transform:translate(6px,4px)}66%{transform:translate(-4px,2px)}80%{transform:translate(3px,-2px)}}
+#storyDlg.fx-shake .sd-bg,#storyDlg.fx-shake #sdScenes,#storyDlg.fx-shake .sd-stage,#storyDlg.fx-shake .sd-place{animation:sdShake .6s ease-in-out}
+#storyDlg.fx-shake .ed-box{animation:sdShake .6s ease-in-out}
+#storyDlg .sd-fav{position:absolute;left:0;right:0;bottom:calc(var(--sd-box,176px) + 6px);text-align:center;font-weight:700;font-size:15px;color:#ffd7d0;text-shadow:0 1px 6px rgba(0,0,0,.7);opacity:0;pointer-events:none;z-index:4}
+#storyDlg .sd-fav.go{animation:sdFav 1.8s ease-out}@keyframes sdFav{0%{opacity:0;transform:translateY(10px)}15%{opacity:1}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+#storyDlg .sd-ask{font-weight:700;margin-bottom:8px;line-height:1.5}
+#storyDlg .sd-opts{display:flex;flex-direction:column;gap:7px}
+#storyDlg .sd-opt{text-align:left;padding:9px 12px;font:inherit;font-size:14px;line-height:1.45;border-radius:8px;cursor:pointer;border:1.5px solid rgba(0,0,0,.35);background:rgba(255,255,255,.7);color:inherit;white-space:normal}
+#storyDlg .ed-box.choosing #sdNext{visibility:hidden}#storyDlg .ed-box.choosing .ed-text{min-height:0}
+#storyDlg .st-glyph{font-size:34px;background:#fdf0d8;border:2px solid #c9a45a;display:flex;align-items:center;justify-content:center}
+#storyDlg .st-getpg{margin-top:2px}
+#storyDlg.idle-pop .ed-box{align-items:flex-start}#storyDlg.idle-pop .ed-text{min-height:0;font-size:15px;line-height:1.6;display:flex;flex-direction:column;gap:8px}
+#storyDlg.idle-pop{justify-content:center}#storyDlg.idle-pop .ed-box{margin-bottom:6vh}
+.id-h{font-weight:700;font-size:18px}.id-line{font-size:14px;opacity:.9}.id-snip{font-size:15px;line-height:1.7;font-style:italic}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) #storyDlg .sd-opt{background:#1a2060;border-color:#c8d0ff;color:#fff;border-radius:4px}
+html[data-theme][data-skin=valley]:not([data-ranch]) #storyDlg .sd-opt,html[data-ranch] #storyDlg .sd-opt{background:#fff6d6;border:3px solid var(--woodX,#5a3418);border-radius:4px;color:var(--ink,#3a2414)}
+html[data-theme=sketch] #storyDlg .sd-opt{background:#fff;border:2px solid #222;border-radius:3px 10px 3px 10px;color:#222}
+html[data-theme=foundation] #storyDlg .sd-opt{background:#f8ecc8;border-color:#a88a4a}
+/* story page: 好感 / pages / side stories / choices */
+.st-fav-card .st-fav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}.st-fav b{min-width:2.6em}.st-fav em{font-style:normal;font-size:12px;opacity:.85}
+.st-fbar{flex:1;min-width:70px;height:9px;border-radius:6px;background:rgba(0,0,0,.12);overflow:hidden}.st-fbar i{display:block;height:100%;background:linear-gradient(90deg,#e8736a,#f2a39a)}
+.st-gift{font-size:12px;padding:3px 9px}.st-gift[disabled]{opacity:.45}.st-gift small{opacity:.8}
+.st-pages{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.st-pg{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 6px 8px;text-align:center;font:inherit;cursor:pointer;color:inherit}.st-pg b{font-size:11px;line-height:1.25}.st-pg.lock{opacity:.55;cursor:default}
+.st-pg .pg-em{font-size:30px;line-height:60px;height:60px}.st-pg .pg-th{display:block;width:100%;aspect-ratio:200/260;background:url(img/xuan/pg-sheet.webp) 0 0/300% 200% no-repeat;border-radius:4px;max-height:96px}
+.st-ch{margin:5px 0}.st-ch small{display:block;opacity:.7;font-size:11px}.st-ch b{font-size:13px;font-weight:600}
+.story-ch.due{box-shadow:0 0 0 2px #e8a33a inset}
+.pg-dlg{position:fixed;inset:0;z-index:760;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(20,12,6,.72);opacity:0;transition:opacity .25s;cursor:pointer}.pg-dlg.show{opacity:1}
+.pg-card{position:relative;width:min(340px,100%);box-sizing:border-box;padding:18px 20px 16px;background:#fbf3dc linear-gradient(180deg,rgba(255,255,255,.4),rgba(190,150,80,.14));color:#3a2a18;border-radius:3px;box-shadow:0 14px 36px rgba(0,0,0,.5),inset 0 0 0 1px rgba(150,110,50,.35),inset 0 0 28px rgba(160,110,40,.22);transform:rotate(-1.2deg);display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center}
+.pg-art{display:block;width:150px;height:195px;border-radius:3px;box-shadow:0 2px 8px rgba(60,40,10,.35)}.pg-art.xp{background:url(img/xuan/pg-sheet.webp) 0 0/300% 200% no-repeat}.pg-art.em{display:flex;align-items:center;justify-content:center;font-size:72px;background:#f1e4bd;height:120px;width:120px}
+.pg-no{letter-spacing:.2em;font-size:12px;color:#8a2a1e;font-weight:700}.pg-head{font-size:16px;font-weight:700;line-height:1.5}
+.pg-note{font-family:"STKaiti","Kaiti SC","KaiTi","楷体","LXGW WenKai",cursive,serif;font-size:17px;line-height:1.75;color:#2a2a5a;text-align:left;border-top:1px dashed rgba(120,90,40,.45);padding-top:8px;width:100%}.pg-note p{margin:0 0 2px;transform:rotate(-.4deg)}
+.pg-by{opacity:.7;align-self:flex-end;font-family:"STKaiti","Kaiti SC","KaiTi",serif}.pg-close{margin-top:4px}
+html[data-theme=sketch] .pg-card{background:#fffefa;border:2px solid #222;box-shadow:5px 5px 0 #222;border-radius:3px 12px 3px 12px;color:#222}
+html[data-theme][data-skin=valley] .pg-card{border:4px solid var(--woodX,#5a3418);border-radius:6px;box-shadow:var(--winb,0 6px 0 rgba(0,0,0,.35))}
+/* ---- 🏮 古风: painted backdrops, standing figures, silk frame ---- */
+html[data-xuan] #storyDlg .sd-shade{background:linear-gradient(180deg,rgba(14,8,4,.42) 0%,rgba(14,8,4,.05) 28%,rgba(14,8,4,.05) 52%,rgba(14,8,4,.62) 100%)}
+html[data-xuan] #storyDlg #sdScenes{position:absolute;inset:0;overflow:hidden}
+html[data-xuan] #storyDlg .sd-scene{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transform:scale(1.04);transition:opacity .8s ease,transform 6s ease-out}
+html[data-xuan] #storyDlg .sd-scene.in{opacity:1;transform:scale(1)}
 html[data-xuan] #storyDlg.carding .sd-stage{display:none}
-/* 古风 侠客 老焙: a painted half-body figure (transparent cut-out) standing over the scene, boxed by the dialog */
-html[data-xuan] #storyDlg .sd-stage.cut{top:auto;bottom:158px;width:330px;height:440px;margin-left:-165px}
-html[data-xuan] #storyDlg .sd-stage.cut img{object-fit:contain;object-position:bottom;filter:drop-shadow(0 6px 10px rgba(14,8,3,.55));-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent),linear-gradient(180deg,#000 84%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent),linear-gradient(180deg,#000 84%,transparent 100%);mask-composite:intersect}
+html[data-xuan] #storyDlg .sd-stage{position:absolute;left:0;right:0;bottom:var(--sd-box,176px);height:410px;opacity:0;transition:opacity .4s;pointer-events:none}
+html[data-xuan] #storyDlg .sd-stage.on{opacity:1}
+html[data-xuan] #storyDlg .sg{position:absolute;bottom:0;display:flex;align-items:flex-end;transition:opacity .4s,filter .4s,transform .4s}
+html[data-xuan] #storyDlg .sg img{display:block;height:100%;width:auto;max-width:none;filter:drop-shadow(0 6px 10px rgba(14,8,3,.55))}
+html[data-xuan] #storyDlg .sg.l{left:-8px;height:400px;z-index:1}html[data-xuan] #storyDlg .sg.r{right:-6px;z-index:2}
+html[data-xuan] #storyDlg .sg.r.fig{height:400px}html[data-xuan] #storyDlg .sg.r.fig.half{height:330px}
+html[data-xuan] #storyDlg .sg.r.vig{height:230px;bottom:16px;right:8px}
+html[data-xuan] #storyDlg .sg.r.vig img{-webkit-mask-image:radial-gradient(closest-side,#000 58%,rgba(0,0,0,.65) 78%,transparent 100%);mask-image:radial-gradient(closest-side,#000 58%,rgba(0,0,0,.65) 78%,transparent 100%)}
+html[data-xuan] #storyDlg .sg.dim{filter:brightness(.66) saturate(.75);transform:scale(.985)}html[data-xuan] #storyDlg .sg.off{opacity:0}html[data-xuan] #storyDlg .sg.r.ent{opacity:0;transform:translateX(22px)}
+html[data-xuan] #storyDlg .sg.dim img{filter:none}
+html[data-xuan] #storyDlg .sd-opt{background:linear-gradient(#fffaf0,#f4e8cc);border:1px solid rgba(138,106,58,.75);border-radius:3px;color:#2a2018;font-size:14.5px}
+html[data-xuan] #storyDlg .sd-opt:active,html[data-xuan] #storyDlg .sd-opt:hover{background:#f6e4b8;border-color:var(--xcin)}
+html[data-xuan] #storyDlg .sd-ask{color:#a3322a;letter-spacing:.04em}
+html[data-xuan] #storyDlg .st-glyph{border-radius:50%}
+html[data-xuan] .st-fbar i{background:linear-gradient(90deg,var(--xcin),#d9776b)}
+html[data-xuan] .st-pg .pg-th{box-shadow:0 1px 5px rgba(60,40,10,.4)}
+html[data-xuan] #storyDlg.idle-pop .ed-box{max-width:420px;margin-left:auto;margin-right:auto}
+html[data-xuan] #storyDlg .sg.half img{-webkit-mask-image:linear-gradient(180deg,#000 86%,transparent 100%);mask-image:linear-gradient(180deg,#000 86%,transparent 100%)}

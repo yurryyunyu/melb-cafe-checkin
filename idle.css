@@ -1,0 +1,39 @@
+/* 🏮 老焙的小铺 (idle page). Reuses the themed .edu-*, .vwin/.jwin, .btn, .chip, .xpbar classes so every theme skin applies. */
+.idle-entry .ee-ic{filter:saturate(1.1)}.idle-entry{border-left:5px solid #d08a2a}
+.idle-hero{position:relative;overflow:hidden;margin:0 0 10px;padding:0;min-height:96px;display:flex;align-items:flex-end}
+.idle-hero .ih-art{position:absolute;inset:0;background:linear-gradient(135deg,#f6d9a0,#e9a964 60%,#c46a3a)}
+.idle-hero .ih-art::after{content:"🏪☕🫘";position:absolute;right:12px;top:8px;font-size:34px;letter-spacing:6px;opacity:.9}
+.idle-hero .ih-t{position:relative;display:flex;flex-direction:column;gap:2px;padding:10px 14px;color:#3a2414;text-shadow:0 1px 0 rgba(255,255,255,.4)}.idle-hero .ih-t b{font-size:18px}.idle-hero .ih-t small{font-size:12px;opacity:.85}
+.idle-sum{display:flex;flex-direction:column;gap:6px}.idle-sum .is-row{display:flex;align-items:baseline;gap:12px}.idle-sum .is-row span{font-size:13px;opacity:.8}.idle-sum .is-row b{font-size:22px}
+.idle-sum small{font-size:12px;opacity:.85;line-height:1.5}.idle-sum .btn{width:100%;margin-top:4px}.idle-sum.full{box-shadow:0 0 0 2px #e8a33a inset}
+.idle-boost.on{color:#b3562a;font-weight:700;opacity:1}
+.idle-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.idle-st,.idle-help,.idle-exp{display:flex;align-items:center;gap:10px;padding:9px 10px}.idle-st.off{opacity:.8}
+.idle-st .is-t,.idle-help .is-t,.idle-exp .is-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.idle-st .is-t b,.idle-help .is-t b,.idle-exp .is-t b{font-size:14px}.idle-st .is-t em,.idle-help .is-t em{font-style:normal;font-size:12px;opacity:.75;margin-left:4px}
+.idle-st .is-t small,.idle-help .is-t small,.idle-exp .is-t small{font-size:11.5px;opacity:.8;line-height:1.4}
+.idle-st .btn{flex:none;font-size:12.5px;padding:6px 10px;white-space:nowrap}.idle-st .btn[disabled]{opacity:.45}
+.idle-em{flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1}
+.idle-sp{flex:none;display:block;width:52px;height:65px;background:url(img/xuan/idle-icons.webp) calc(var(--c) * -52px) calc(var(--r) * -65px)/156px 130px no-repeat;filter:drop-shadow(0 2px 3px rgba(40,26,10,.35))}
+.idle-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px}.idle-chips .chip{font-size:11px;padding:1px 8px}
+.idle-hava{width:44px;height:44px;flex:none}.idle-nohelp{padding:2px 4px}
+.idle-by{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.idle-by .chip{font-size:12.5px}
+.idle-dests{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.idle-dest{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;text-align:center;font:inherit;color:inherit;cursor:pointer}.idle-dest[disabled]{opacity:.5;cursor:default}.idle-dest b{font-size:13px}.idle-dest small{font-size:11px;opacity:.8}.idle-dest .idle-em{font-size:26px;height:34px}
+.idle-exp.run .xpbar{margin-top:4px}
+.idle-relics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
+.idle-rel{padding:7px 9px;display:flex;flex-direction:column;gap:2px}.idle-rel b{font-size:13px}.idle-rel small{font-size:11px;opacity:.8;line-height:1.4}.idle-rel:not(.got){opacity:.55}
+/* 古风: painted shop banner */
+html[data-xuan] .idle-hero{min-height:150px;padding:0}
+html[data-xuan] .idle-hero .ih-art{background:url(img/xuan/idle-banner.webp) center/cover no-repeat}html[data-xuan] .idle-hero .ih-art::after{content:none}
+html[data-xuan] .idle-hero .ih-t{width:100%;padding:26px 14px 10px;background:linear-gradient(180deg,transparent,rgba(20,12,6,.78));color:#fff3dc;text-shadow:0 2px 8px rgba(0,0,0,.7)}
+html[data-xuan] .idle-hero .ih-t b{letter-spacing:.2em;font-size:20px;color:var(--xgoldL)}
+html[data-xuan] .idle-entry,html[data-xuan] .idle-entry.ready{border-left:4px solid var(--xgold)}
+html[data-xuan] .idle-boost.on{color:var(--xcin)}
+html[data-xuan] .idle-sum .is-row b{color:#8a2a1e}
+/* 田园 / 牧场 / 城镇 / 手绘 tweaks */
+html[data-theme][data-skin=valley] .idle-hero .ih-art{background:linear-gradient(135deg,#bfe38a,#6fb34a)}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) .idle-hero .ih-art{background:linear-gradient(135deg,#1a2a8a,#0a1048)}html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) .idle-hero .ih-t{color:#fff;text-shadow:1px 1px 0 #000}
+html[data-theme=sketch] .idle-hero .ih-art{background:#fffefa;border-bottom:2px solid #222}
+html[data-theme=foundation] .idle-hero .ih-art{background:linear-gradient(135deg,#f0dba8,#d6a85a)}
+.idle-st .btn,.idle-exp .btn{width:auto!important;margin:0!important;flex:none}
+.idle-st .is-t{flex:1 1 0}
