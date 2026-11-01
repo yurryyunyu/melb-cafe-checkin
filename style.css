@@ -79,7 +79,28 @@ html[data-theme] a.go-here,html[data-theme=jrpg] a.go-here,html[data-xuan] a.go-
 a.go-here small{display:block;margin-top:2px;font-size:12px;font-weight:650;letter-spacing:.04em;opacity:.9}
 #app[data-view=cafe]{padding-bottom:calc(168px + var(--safe-b))}
 .live-wx{position:relative;margin:0 0 12px;border-radius:16px;overflow:hidden;border:1px solid rgba(90,70,40,.28);background:#fffaf2;color:#2a2018;box-shadow:0 8px 18px rgba(40,24,8,.08)}
-.lw-sky{height:72px}
+.lw-sky{position:relative;height:72px;overflow:hidden}
+.lw-orb,.lw-cloud,.lw-glow,.lw-drop{position:absolute;pointer-events:none}
+.lw-glow{inset:0;opacity:0;background:radial-gradient(ellipse at 72% 90%,rgba(255,140,70,.6),transparent 62%)}
+.lw-orb{width:22px;height:22px;left:16%;top:14px;border-radius:50%;background:radial-gradient(circle at 38% 36%,#fff,#ffe08a 46%,#f0b44a 70%,transparent 72%);box-shadow:0 0 16px rgba(255,210,120,.85);animation:lw-orb 14s ease-in-out infinite}
+.lw-cloud{height:18px;border-radius:20px;background:rgba(255,255,255,.78)}
+.lw-cloud:before{content:"";position:absolute;border-radius:50%;background:inherit}
+.lw-cloud.c1{width:74px;top:16px;left:-40px;animation:lw-drift 12s linear infinite}
+.lw-cloud.c1:before{width:28px;height:28px;left:14px;top:-14px}
+.lw-cloud.c2{width:52px;height:14px;top:34px;left:30px;animation:lw-drift 18s linear infinite;animation-delay:-6s}
+.lw-cloud.c2:before{width:20px;height:20px;left:10px;top:-10px}
+.lw-drop{inset:0;opacity:0;background:repeating-linear-gradient(105deg,transparent 0 8px,rgba(255,255,255,.7) 8px 9px);background-size:18px 28px;animation:lw-rain .65s linear infinite}
+.live-wx[data-wx=cloud] .lw-cloud,.live-wx[data-wx=rain] .lw-cloud{background:rgba(226,232,238,.88)}
+.live-wx[data-wx=rain] .lw-drop{opacity:.8}
+.live-wx[data-wx=cloud] .lw-drop{opacity:.22;animation-duration:1.8s}
+.live-wx[data-phase=night] .lw-orb{width:16px;height:16px;background:radial-gradient(circle at 38% 36%,#fff,#d5e2ff 55%,transparent 72%);box-shadow:0 0 12px rgba(190,210,255,.75)}
+.live-wx[data-phase=dusk] .lw-orb{background:radial-gradient(circle at 38% 36%,#fff6e0,#ff8a4a 55%,transparent 72%);box-shadow:0 0 18px rgba(255,120,60,.8)}
+.live-wx[data-phase=dusk] .lw-glow{animation:lw-pulse 3.2s ease-in-out infinite}
+@keyframes lw-drift{from{transform:translateX(0)}to{transform:translateX(340px)}}
+@keyframes lw-orb{0%,100%{transform:translate(0,0)}50%{transform:translate(22px,7px)}}
+@keyframes lw-pulse{0%,100%{opacity:.28}50%{opacity:.8}}
+@keyframes lw-rain{from{background-position:0 0}to{background-position:-14px 28px}}
+@media (prefers-reduced-motion:reduce){.lw-orb,.lw-cloud,.lw-glow,.lw-drop{animation:none}}
 .live-wx[data-wx=sun] .lw-sky{background:linear-gradient(#7ec8f4,#d7f3c4)}
 .live-wx[data-wx=cloud] .lw-sky{background:linear-gradient(#8e9aaa,#d5dde6)}
 .live-wx[data-wx=rain] .lw-sky{background:linear-gradient(#667480,#c5d0d8)}
