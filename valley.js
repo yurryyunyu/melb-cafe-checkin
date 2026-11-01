@@ -194,13 +194,17 @@ function sealSprite(id, kind, on) {
     const wax = on ? (kind === 'hero' ? '#8a3a2a' : kind === 'love' ? '#a85a55' : kind === 'end' ? '#6a4030' : '#c4843a') : '#b7aa96';
     const ink = on ? '#fff6d8' : '#8a7d6c';
     P.ell(18, 18, 15, 15, shade(wax, -28)); P.ell(18, 17.5, 13.2, 13.2, wax); P.ell(15, 14, 6, 4, shade(wax, 28));
-    if (!on) { P.ell(18, 17.5, 8, 8, shade(wax, 18)); }
-    else if (kind === 'love') { P.rect(14, 16, 3, 3, ink); P.rect(19, 16, 3, 3, ink); P.rect(15, 19, 7, 2, ink); P.rect(16, 21, 5, 2, ink); P.set(18, 23, ink); }
-    else if (kind === 'hero') { P.rect(17, 10, 2, 12, ink); P.rect(14, 12, 8, 2, ink); P.rect(16, 22, 4, 3, '#e8c56a'); }
-    else if (kind === 'end') { P.rect(16, 11, 4, 6, ink); P.rect(14, 16, 8, 2, ink); P.set(18, 22, '#ffe08a'); P.set(17, 23, '#ffe08a'); }
+    if (!on) { P.ell(18, 17.5, 7.2, 7.2, shade(wax, 16)); P.ell(18, 17.5, 4.2, 4.2, shade(wax, -12)); }
+    else if (kind === 'love') {
+      const heart = ['01100110', '11111111', '11111111', '01111110', '00111100', '00011000', '00001000'];
+      heart.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '1') P.set(14 + i, 13 + j, ink); }));
+    }
+    else if (kind === 'hero') { P.rect(17, 9, 2, 14, ink); P.rect(13, 11, 10, 2, ink); P.rect(15, 23, 6, 3, '#e8c56a'); P.rect(17, 26, 2, 2, ink); }
+    else if (kind === 'end') { P.rect(15, 10, 6, 8, ink); P.rect(13, 16, 10, 2, ink); P.set(17, 24, '#ffe08a'); P.set(18, 23, '#ffe08a'); P.set(19, 24, '#ffe08a'); }
     else {
       const roof = ['#c9503c', '#3f7fbf', '#5f9e4a', '#d98a2b'][(R() * 4) | 0];
-      P.rect(12, 20, 12, 7, ink); P.rect(13, 15, 10, 5, roof); P.rect(16, 22, 3, 5, '#6b3f1d'); P.rect(13, 21, 3, 3, '#fff6c0');
+      P.rect(9, 18, 18, 11, ink); P.rect(10, 11, 16, 8, roof); P.rect(15, 21, 5, 8, '#5e3519');
+      P.rect(11, 20, 4, 4, '#fff6c0'); P.rect(21, 20, 4, 4, '#fff6c0'); P.rect(16, 11, 4, 3, '#ffe08a');
     }
     P.outline('#3a2414');
     sealCache[key] = P.canvas();
