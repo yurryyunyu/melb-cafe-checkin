@@ -753,7 +753,7 @@ let pxFailed = false; const heroAt = {};
 const dynImport = (() => { try { return new Function('u', 'return import(u)'); } catch (e) { return () => Promise.reject(new Error('dynamic import unsupported')); } })();
 function loadMap3d() {
   if (map3dMod) return Promise.resolve(map3dMod);
-  const url = new URL('map3d.js?v=11', document.baseURI).href;
+  const url = new URL('map3d.js?v=12', document.baseURI).href;
   return Promise.race([dynImport(url), new Promise((_, rej) => setTimeout(() => rej(new Error('3D 模块加载超时')), 15000))]).then(m => (map3dMod = m));
 }
 const app = $('#app');
@@ -802,6 +802,29 @@ function todayPlan() {
   }
   if (!nToday) return {act: 'checkin', kicker: '今天就一件事', title: checkins.length ? '打一次卡' : '打第一张卡', sub: checkins.length ? '今天还没坐下。一家就够。' : '拍一张，选一家店。就从这一杯开始。', go: checkins.length ? '去拍照打卡' : '拍下第一杯'};
   return {href: '#/map', kicker: '今天可以歇一歇', title: '今天这一杯记下了', sub: '不急着再打。想再走一家，地图还开着。', go: '去看看地图'};
+}
+function liveSky() {
+  const L = window.LiveWx ? LiveWx.view() : null;
+  const phase = window.Valley && Valley.clock ? Valley.clock().phase : 'day';
+  return {L, phase, wx: L && L.src !== 'game' ? L.id : null};
+}
+function applyLiveSky() {
+  const s = liveSky(), h = document.documentElement;
+  if (s.phase) h.dataset.livePhase = s.phase;
+  if (s.L) { h.dataset.liveWx = s.wx || s.L.id || 'sun'; h.dataset.liveSrc = s.L.src || 'game'; }
+}
+function skyWx(fallback) {
+  const s = liveSky();
+  return s.wx || (fallback && fallback.id) || null;
+}
+function liveWxCard() {
+  if (!window.LiveWx) return '';
+  const L = LiveWx.view(), phase = window.Valley && Valley.clock ? Valley.clock().phase : 'day';
+  const temp = L.temp == null ? '—' : Math.round(L.temp) + '°';
+  const hours = (L.hourly || []).map(h => `<span><b>${esc(h.hh)}</b><em>${h.temp == null ? '—' : Math.round(h.temp) + '°'}</em><small>${esc(h.zh)}</small></span>`).join('');
+  const days = (L.daily || []).map(d => `<span><b>${esc(d.label)}</b><em>${d.min == null ? '—' : Math.round(d.min) + '–' + Math.round(d.max) + '°'}</em><small>${esc(d.zh)}</small></span>`).join('');
+  const note = L.src === 'game' ? '暂时连不上墨尔本实况，先用小镇里的天气' : (L.src === 'cache' ? '上次实况 · ' : '墨尔本实况 · ') + (L.ago || '');
+  return `<section class="live-wx" id="liveWx" data-wx="${esc(L.id || 'sun')}" data-phase="${esc(phase)}" data-src="${esc(L.src)}"><div class="lw-sky" aria-hidden="true"></div><div class="lw-body"><div class="lw-now"><b class="lw-temp">${temp}</b><div><div class="lw-zh">${L.icon || ''} ${esc(L.zh || '')}</div><small>今日温度 · 墨尔本</small></div></div>${hours ? `<div class="lw-h">${hours}</div>` : ''}${days ? `<div class="lw-d">${days}</div>` : ''}<small class="lw-note">${esc(note)}</small></div></section>`;
 }
 function todayCard() {
   const p = todayPlan();
@@ -1439,7 +1462,7 @@ const views = {
     $('#addCafeBtn').onclick = () => location.hash = '#/add';
     const subs = [...new Set(allCafes().map(c => c.suburb))].sort();
     const v = visitedIds();
-    app.innerHTML = `${festBanner('today')}${todayCard()}${homeMore()}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
+    app.innerHTML = `${festBanner('today')}${liveWxCard()}${todayCard()}${homeMore()}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
       <select id="sub"><option value="">全部区域</option>${[...REGIONS, REGION_MORE].map(r => `<option value="${r.id}" ${r.id === listState.suburb ? 'selected' : ''}>${esc(r.name)}${r.zh && r.id !== 'more' ? ' ' + r.zh : ''}</option>`).join('')}</select></div>
       <div class="chips">${[['all', '全部'], ['todo', '未解锁'], ['done', '已解锁'], ['near', '离我最近']].map(([k, t]) => `<button class="chip ${listState.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
       <div class="hint">已解锁 ${v.size} / ${allCafes().length} 家</div><div id="cards"></div>`;
@@ -1501,7 +1524,7 @@ const views = {
       const VK = isV() ? Valley.clock() : null;
       const FK = FDm && window.Valley ? Valley.clock() : null;
       const bar = FK ? `<div class="fd-panel region-banner fd-banner"><div class="rb-name">${esc(R.name)}</div><div class="rb-sub">${esc(R.zh)} · 已建成 <b class="rg-count">${prog.done}/${prog.total}</b>${crown}</div><div class="rb-time">${FK.icon} ${FK.zh}季 第 ${FK.dayOf} 天 · ${FK.wx ? FK.wx.icon + ' ' : ''}${FK.hhmm}${FK.fest[0] ? ' · ' + FK.fest[0].icon + ' ' + esc(FK.fest[0].zh) : ''}</div></div>`
-        : VK ? `<div class="jwin region-banner vl-banner"><div class="rb-name">${esc(R.name)}</div><div class="rb-sub">${esc(R.zh)} · 已解锁 <b class="rg-count">${prog.done}/${prog.total}</b>${crown}</div><div class="rb-time">${VK.icon} ${VK.zh}季 第 ${VK.dayOf} 天 · ${VK.sky} ${VK.hhmm}</div></div>`
+        : VK ? `<div class="jwin region-banner vl-banner"><div class="rb-name">${esc(R.name)}</div><div class="rb-sub">${esc(R.zh)} · 已解锁 <b class="rg-count">${prog.done}/${prog.total}</b>${crown}</div><div class="rb-time">${VK.icon} ${VK.zh}季 第 ${VK.dayOf} 天 · ${VK.sky} ${VK.hhmm}${window.LiveWx && LiveWx.view().temp != null ? ' · ' + LiveWx.view().icon + ' ' + Math.round(LiveWx.view().temp) + '°C ' + esc(LiveWx.view().zh) : ''}</div></div>`
         : J ? `<div class="jwin region-banner"><div class="rb-name">～ ${esc(R.name)} ～</div><div class="rb-sub">${esc(R.zh)} · 已解锁 <b class="rg-count">${prog.done}/${prog.total}</b>${crown}</div></div>`
         : `<div class="region-head"><div><b>${esc(R.name)}</b> <span class="hint">${esc(R.zh)}</span></div><div class="rg-count">${prog.done}/${prog.total}${crown}</div></div>
         <div class="progress" style="margin:0 14px 6px"><i style="width:${Math.round(prog.done / prog.total * 100)}%"></i></div>`;
@@ -1519,7 +1542,7 @@ const views = {
         const token = ++mapToken, wrap = $('#m3d');
         const fail = e => { console.warn('3D map failed, falling back', e); if (token !== mapToken) return; map3dFailed = true; if (mapRef && mapRef.kind === '3d') { try { mapRef.remove(); } catch (x) {} mapRef = null; } toast(e && e.slow ? ((valleyWorld || J) ? '这台设备上 3D 有点慢，已切换为像素地图（可随时点 3D 再试）' : '这台设备上 3D 有点慢，已切换为 2D 地图（可随时点 3D 再试）') : J ? '3D 地图暂不可用，已切换为像素地图' : '3D 地图暂不可用，已切换为 2D 手绘地图'); render(); };
         const seen = new Set(load('mcc.seen3d', [])), pop = new Set([...v].filter(id => R.cafes[id] && !seen.has(id)));
-        loadMap3d().then(mod => mod.create(wrap, R, {theme: J ? 'jrpg' : FDm ? 'foundation' : 'sketch', xuan: isXuan(), valley: valleyWorld, season: FK ? FK.season : (valleyWorld && VK ? VK.season : null), phase: (valleyWorld && VK) ? VK.phase : (FK ? FK.phase : null), wx: (valleyWorld && VK && VK.wx) ? VK.wx.id : (FK && FK.wx ? FK.wx.id : null), onSlow: (FDm || valleyWorld) ? () => fail(Object.assign(new Error('slow'), {slow: true})) : null, visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
+        loadMap3d().then(mod => mod.create(wrap, R, {theme: J ? 'jrpg' : FDm ? 'foundation' : 'sketch', xuan: isXuan(), valley: valleyWorld, season: FK ? FK.season : (valleyWorld && VK ? VK.season : null), phase: (valleyWorld && VK) ? VK.phase : (FK ? FK.phase : null), wx: skyWx(valleyWorld && VK ? VK.wx : (FK ? FK.wx : null)), cloud: window.LiveWx && LiveWx.view().src !== 'game' ? LiveWx.view().cloud : null, onSlow: (FDm || valleyWorld) ? () => fail(Object.assign(new Error('slow'), {slow: true})) : null, visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
           .then(m => {
             if (token !== mapToken) return m.remove();
             mapRef = m; const ld = wrap.querySelector('.m3d-loading'); if (ld) ld.remove();
@@ -1896,4 +1919,6 @@ window.__appBooted = true; document.documentElement.classList.add('booted');
 if (window.PixUI) { try { PixUI.installVars(); if (isV()) PixUI.splash(/[?&]splash\b/.test(location.search), isR() ? 'ranch' : 'valley'); } catch (e) { console.warn('pixui', e); } }
 if (isXuan()) { try { Xuan.splash(/[?&]splash\b/.test(location.search)); } catch (e) { console.warn('xuan splash', e); } }
 if (isF() && window.FD) { try { FD.splash(/[?&]splash\b/.test(location.search)); } catch (e) { console.warn('fd splash', e); } }
+applyLiveSky();
+if (window.LiveWx) LiveWx.refresh().then(() => { applyLiveSky(); const v = app.dataset.view; if (v === 'list' || v === 'map') render(); }).catch(() => {});
 })();
