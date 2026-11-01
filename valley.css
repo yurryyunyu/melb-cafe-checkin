@@ -5,7 +5,7 @@ html[data-theme][data-skin=valley]{
   --winb:inset 0 0 0 2px #fff6d4,inset 0 0 0 5px var(--woodL),inset 0 0 0 8px var(--wood),0 4px 0 var(--woodX),0 7px 0 rgba(44,26,14,.12);
   --jt:var(--ink);--jdim:var(--ink2);
 }
-html[data-theme][data-skin=valley],html[data-theme][data-skin=valley] body{color:var(--ink);background-color:#7ec24a;
+html[data-theme][data-skin=valley]:not([data-ranch]),html[data-theme][data-skin=valley]:not([data-ranch]) body{color:var(--ink);background-color:#7ec24a;
   background-image:radial-gradient(#f0d48a 1.15px,transparent 1.7px),radial-gradient(#5a9a32 1.2px,transparent 1.6px),radial-gradient(#ffd0c4 1px,transparent 1.6px),linear-gradient(#8ec8ea 0 72px,#b7dc78 72px 140px,#7ec24a 140px);background-size:26px 26px,18px 18px,86px 86px,100% 100%;background-position:0 0,9px 13px,36px 18px,0 0;background-attachment:fixed}
 /* wooden-framed parchment panels */
 html[data-theme][data-skin=valley] .jwin,html[data-theme][data-skin=valley] .vwin,html[data-theme][data-skin=valley] .card,html[data-theme][data-skin=valley] .stat,html[data-theme][data-skin=valley] .bdg,html[data-theme][data-skin=valley] .region,

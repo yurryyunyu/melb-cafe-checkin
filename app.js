@@ -52,10 +52,20 @@ const today = () => melDate(nowMs());
 const stars = n => n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '';
 
 // ---------- 🎨 theme: 🌾 田园 valley is the default. valley + JRPG share the pixel engine (data-theme=jrpg); valley adds data-skin=valley on top.
-// A saved mcc.theme is kept (古风 stays 古风). Only a missing or unknown value falls back to valley.
+// Skin attributes follow the saved theme id, not whether valley.js / xuan.js finished. Missing kits must not fall through to the blue JRPG shell.
+// v38 one-shot: legacy blue ids (classic, blue, pixel…) are rewritten to valley. jrpg stays 古风. Picker clicks stamp mcc.themePick.
 // 🏰 foundation · 🐄 ranch · 🌾 valley (default) · ⚔️ jrpg · ✏️ sketch
 const THEMES = ['foundation', 'ranch', 'valley', 'jrpg', 'sketch'];
-let THEME = load('mcc.theme', 'valley'); if (!THEMES.includes(THEME)) THEME = 'valley';
+const LEGACY_BLUE = {classic: 1, blue: 1, pixel: 1, 'jrpg-pixel': 1, 'jrpg-blue': 1, default: 1};
+function migrateTheme(raw) {
+  let mig = null; try { mig = localStorage.getItem('mcc.themeMig'); } catch (e) {}
+  if (mig !== 'v38') {
+    try { localStorage.setItem('mcc.themeMig', 'v38'); } catch (e) {}
+    if (raw == null || raw === '' || LEGACY_BLUE[raw]) { raw = 'valley'; save('mcc.theme', 'valley'); }
+  }
+  return THEMES.includes(raw) ? raw : 'valley';
+}
+let THEME = migrateTheme(load('mcc.theme', null));
 const isJ = () => (THEME === 'jrpg' || THEME === 'valley' || THEME === 'ranch') && !!window.JRPG;
 const isV = () => (THEME === 'valley' || THEME === 'ranch') && isJ() && !!window.Valley;
 const isR = () => THEME === 'ranch' && isV();
@@ -63,15 +73,17 @@ const isF = () => THEME === 'foundation';
 const isXuan = () => THEME === 'jrpg' && isJ() && !!window.Xuan; // ⚔️ 古风 ink-wash skin of the JRPG theme
 const SFXplay = n => { try { if (window.JRPG) JRPG.SFX.play(n); } catch (e) {} };
 function applyTheme() {
-  const t = isJ() ? 'jrpg' : isF() ? 'foundation' : 'sketch', h = document.documentElement; h.dataset.theme = t;
-  if (isV()) h.dataset.skin = 'valley'; else delete h.dataset.skin;
-  if (isR()) h.dataset.ranch = '1'; else delete h.dataset.ranch;
-  if (isXuan()) h.dataset.xuan = '1'; else delete h.dataset.xuan;
-  if (window.Valley && Valley.setStyle) Valley.setStyle(isR() ? 'ranch' : 'valley');
-  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = isR() ? '#e07a2a' : isV() ? '#7a4a25' : isF() ? '#3e2c1e' : isXuan() ? '#e8dcc0' : t === 'jrpg' ? '#0b0f2a' : '#f7f4ec';
+  const h = document.documentElement, pixel = THEME === 'jrpg' || THEME === 'valley' || THEME === 'ranch';
+  h.dataset.theme = pixel ? 'jrpg' : THEME === 'foundation' ? 'foundation' : 'sketch';
+  if (THEME === 'valley' || THEME === 'ranch') h.dataset.skin = 'valley'; else delete h.dataset.skin;
+  if (THEME === 'ranch') h.dataset.ranch = '1'; else delete h.dataset.ranch;
+  if (THEME === 'jrpg') h.dataset.xuan = '1'; else delete h.dataset.xuan;
+  if (window.Valley && Valley.setStyle) Valley.setStyle(THEME === 'ranch' ? 'ranch' : 'valley');
+  const m = document.querySelector('meta[name=theme-color]');
+  if (m) m.content = THEME === 'ranch' ? '#e07a2a' : THEME === 'valley' ? '#7a4a25' : THEME === 'foundation' ? '#3e2c1e' : THEME === 'jrpg' ? '#e8dcc0' : '#f7f4ec';
 }
 applyTheme();
-function setTheme(t) { THEME = t; save('mcc.theme', t); if (t === 'sketch' && window.__sketchFonts) window.__sketchFonts(); applyTheme(); const d = $('#dlg'); if (d) d.classList.remove('show'); render(); }
+function setTheme(t) { if (!THEMES.includes(t)) return; THEME = t; save('mcc.theme', t); save('mcc.themePick', t); if (t === 'sketch' && window.__sketchFonts) window.__sketchFonts(); applyTheme(); const d = $('#dlg'); if (d) d.classList.remove('show'); render(); }
 document.addEventListener('click', e => { const b = e.target.closest('[data-snd]'); if (b && window.JRPG) { JRPG.SFX.set(!JRPG.SFX.on); } });
 // ---------- ❤️ stamina (体力 / HP): 100 per Melbourne day, each check-in today costs 20, floors at 0 ----------
 // Purely derived from today's check-ins → editing a date / deleting a check-in updates it; refills at local midnight by date (sleeping never refills).
