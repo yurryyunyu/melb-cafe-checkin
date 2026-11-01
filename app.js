@@ -1401,16 +1401,31 @@ function loyaltyView() {
     }
   };
 }
-// Directions. iOS opens Apple Maps; Android and desktop open Google Maps. Coords when we have them.
+// Directions. Coords when the cafe has them; otherwise name, address, suburb, and Melbourne.
+// The button is always shown. iOS opens Apple Maps; everywhere else opens Google Maps directions.
 function navHere(c) {
-  const lat = c && +c.lat, lng = c && +c.lng;
+  c = c || {};
+  const lat = +c.lat, lng = +c.lng;
   const has = Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
-  const label = [c && c.name, c && c.address, c && c.suburb].filter(Boolean).join(', ') || 'Melbourne';
+  const label = [c.name, c.address, c.suburb, 'Melbourne'].filter(Boolean).join(', ') || 'Melbourne';
   const ios = /iPad|iPhone|iPod/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (ios) return has ? 'https://maps.apple.com/?daddr=' + lat + ',' + lng + '&q=' + encodeURIComponent((c && c.name) || label) : 'https://maps.apple.com/?daddr=' + encodeURIComponent(label);
+  if (ios) return has ? 'https://maps.apple.com/?daddr=' + lat + ',' + lng + '&q=' + encodeURIComponent(c.name || label) : 'https://maps.apple.com/?daddr=' + encodeURIComponent(label);
   return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(has ? (lat + ',' + lng) : label);
 }
 window.navHere = navHere;
+function mountGoHere(c) {
+  let href = '';
+  try { href = navHere(c); } catch (e) { href = ''; }
+  if (!/^https:\/\/(maps\.apple\.com\/|www\.google\.com\/maps\/)/.test(href)) {
+    const q = encodeURIComponent([c && c.name, c && c.address, c && c.suburb, 'Melbourne'].filter(Boolean).join(', ') || 'Melbourne');
+    href = 'https://www.google.com/maps/dir/?api=1&destination=' + q;
+  }
+  let a = document.getElementById('goHere');
+  if (!a) { a = document.createElement('a'); a.id = 'goHere'; a.className = 'btn go-here'; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); }
+  a.href = href;
+  a.innerHTML = `${ic('boot', '🧭')} 去这里<small>打开地图导航</small>`;
+  return a;
+}
 const views = {
   calendar(arg) { return calendarV(arg); },
   loyalty() { if (!window.Loyalty) { location.hash = '#/list'; return; } return loyaltyView(); },
@@ -1618,6 +1633,7 @@ const views = {
     const c = cafeById(id);
     if (!c) { app.innerHTML = '<div class="empty">找不到这家咖啡馆</div>'; return; }
     setTop(c.name, '', true);
+    mountGoHere(c);
     const cis = checkinsOf(id).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     const hero = cis.find(x => x.photo);
     const avg = cis.filter(x => x.rating).length ? (cis.reduce((s, x) => s + (x.rating || 0), 0) / cis.filter(x => x.rating).length).toFixed(1) : null;
@@ -1625,7 +1641,6 @@ const views = {
     const FDd = isF() && window.FD && window.Valley;
     app.innerHTML = `${hero ? `<img class="hero-photo" src="${hero.photo}" alt="">` : PXI() ? PixUI.sceneHtml(c, {closed: isClosed(c)}) : FDd ? `<div class="fd-scene${cis.length ? ' built' : ''}"><div class="fd-scene-sky"></div><img class="fd-scene-b" src="${FD.url(c.id, cis.length > 0 && !isClosed(c), {flag: cis.length >= 5})}" alt=""><div class="fd-scene-cap">${isClosed(c) ? '已关店' : cis.length ? `已建成 · 打卡 ${cis.length} 次` : '蓝图 · 打卡后建成'}</div></div>` : ''}
       <div class="hero${isClosed(c) ? ' closed' : ''}"><div class="hero-reg">${regionOf(c.id).no ? `<span class="num">${regionOf(c.id).no}</span> ` : ''}${esc(regionOf(c.id).r.name)}${isClosed(c) ? ' ' + closedBadge : ''}</div><h2>${esc(c.name)}</h2><div class="addr">📍 ${esc(c.address)}</div><div class="addr" style="margin-top:4px">${esc(c.suburb)}${d ? ' · 距你 ' + d : ''}${avg ? ' · 我的评分 ' + avg + ' ★' : ''}</div></div>
-      <a class="btn go-here" id="goHere" target="_blank" rel="noopener" href="${esc(navHere(c))}">${ic('boot', '🧭')} 去这里<small>打开地图导航</small></a>
       <div>${(c.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${c.custom ? '<span class="tag">我添加的</span>' : ''}</div>
       ${isClosed(c) ? `<div class="closed-note">🚪 这家店已永久关闭，以前的打卡记录都还在。</div>` : ''}${sigBox(c)}
       ${FDd ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="fd-panel fd-barista"><div class="fdb-ava">${esc([...vg.name][0] || '咖')}</div><div class="fdb-main"><div class="fdb-name">${esc(vg.title)} <b>${esc(vg.name)}</b> <small>好感 ${h}/10</small></div>${Valley.heartsHtml(h)}<div class="fdb-say" id="fdbSay">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="fdb-talk" id="talkBtn" aria-label="聊天">💬</button></div>`; })() : ''}
@@ -1852,6 +1867,7 @@ $('#backBtn').onclick = () => history.length > 1 ? history.back() : (location.ha
 
 function render() {
   mapToken++; if (mapRef) { mapRef.remove(); mapRef = null; }
+  const oldGo = document.getElementById('goHere'); if (oldGo) oldGo.remove();
   if (scaTimer) { clearInterval(scaTimer); scaTimer = null; }
   if (idleTimer) { clearInterval(idleTimer); idleTimer = null; }
   app.classList.remove('full'); app.onclick = null;
@@ -1863,7 +1879,8 @@ function render() {
   app.dataset.view = v; if (isV()) { app.classList.remove('vt-in'); void app.offsetWidth; app.classList.add('vt-in'); }
   { const ov = $('#npcVisitor'); if (ov) ov.remove(); }
   try { views[v](arg && decodeURIComponent(arg)); }
-  catch (e) { console.error('view render failed', e); app.innerHTML = `<div class="card"><b>页面出了点问题 😵</b><div class="hint">${String(e && e.message || e).replace(/[<>&]/g, '')}</div><a class="btn" href="#/list">回到发现页</a></div>`; }
+  catch (e) { console.error('view render failed', e); app.innerHTML = `<div class="card"><b>页面出了点问题 😵</b><div class="hint">${String(e && e.message || e).replace(/[<>&]/g, '')}</div><a class="btn" href="#/list">回到发现页</a></div>`;
+    if (v === 'cafe' && arg) { try { const c = cafeById(decodeURIComponent(arg)); if (c) mountGoHere(c); } catch (err) {} } }
   if (!['cafe', 'add'].includes(v)) window.scrollTo(0, 0);
   if (window.Npc) { try { paintNpc(app); if (v === 'cafe' && arg === 'hash') Npc.flag('hash', today()); if (v === 'map') npcVisitor(); npcSchedule(); } catch (e) { console.warn('npc', e); } }
   if (window.Story) { try { storySchedule(); } catch (e) { console.warn('story', e); } }
