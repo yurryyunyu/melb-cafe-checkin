@@ -1,6 +1,6 @@
 # 墨尔本咖啡打卡 · Melbourne Cafe Check-in
 
-A cozy town-building game for checking in to 101 real Melbourne cafes: photo check-ins, a 3D village map, villager baristas, quests, a coin shop, a bean collection, a loyalty stamp booklet, an Australian festival calendar, a coffee-education main story with three endings, and Google review links. Five themes: ⚔️ 古风 (default), 🏰 城镇, 🐄 牧场, pixel valley and hand-drawn sketch.
+A cozy town-building game for checking in to 101 real Melbourne cafes: photo check-ins, a 3D village map, villager baristas, quests, a coin shop, a bean collection, a loyalty stamp booklet, an Australian festival calendar, a coffee-education main story with three endings, and Google review links. Five themes: 🌾 田园 (default), ⚔️ 古风, 🏰 城镇, 🐄 牧场, and hand-drawn sketch.
 
 **Play it:** https://yurryyunyu.github.io/melb-cafe-checkin/
 
@@ -26,11 +26,13 @@ Local test: python3 -m http.server 8787 ; tests: /workspace/pwtest/test.mjs
 - ❤️ 体力 / HP (stamina): max 100, each check-in on today's Melbourne date costs 20 (5 cafes empties it), floors at 0. Derived purely from check-in dates, so edits/deletes update it and it refills at Melbourne midnight (the valley day summary never refills). Drop animation (shake + red flash + floating -20 / JRPG "HP -20"), green→yellow→red; barista warns at ≤40, tired hero + "体力耗尽！明天再来吧" at 0; checking in at 0 still works and unlocks ⚡ 咖啡因过载 (no XP). Beans cost nothing.
 
 ## 🎨 Themes (设置 → 界面主题)
-All themes share one save: check-ins, coins, XP, stamina, quests, beans and friendship are kept when you switch.
-- **⚔️ 古风 / JRPG (`jrpg`, default)**: the ink-wash skin. New saves and a missing `mcc.theme` load this. The other four themes stay selectable and share the same save.
+All themes share one save: check-ins, coins, XP, stamina, quests, beans and friendship are kept when you switch. A save that already chose a theme is left alone. Only a missing `mcc.theme` (or a value this app does not know) loads 田园.
+- **🌾 田园 / Valley (`valley`, default)**: the cozy pixel valley. Cottages, the loyalty booklet and the story panel use the wood-and-meadow frame. 古风 stays one tap away in 设置.
+- **Home:** 发现 leads with one action for today — open the story when a scene is ready, open the stamp book when a new stamp or a full set is waiting, otherwise check in once. Coffee course, the idle shop, SCA practice, hidden characters and the quest board sit under 发现 · 更多玩法, and the same links sit in 设置.
+- **⚔️ 古风 / JRPG (`jrpg`)**: the ink-wash skin. Choose it in 设置 → 界面主题. Same save.
 - **🏰 城镇 / Town (`foundation`)**: a medieval-village look with painterly low-poly 3D, a warm pastoral palette, golden light, parchment-and-wood panels, serif headings and system-font body text (no web fonts). Each cafe is a little cottage: a dashed blue blueprint until you check in, then a built house. On the cafe page the house raises a flag after 5 check-ins. The HUD is a resource bar (coins, Lv/XP, buildings built, season·day·weather·time) with stamina underneath. The 3D map (three.js, vendored) shows winding dirt roads, orchards and wheat fields, seasonal meadow colours, a tilt-shift blur at the top and bottom, and building markers. If WebGL is missing, the map uses the 2D sketch map instead. On a slow device (median frame over 60 ms in a 12-frame probe) it switches to 2D automatically, and you can try 3D again later. Music is an optional procedural plucked "lute" tune for day and night (original, off by default).
 - **🐄 牧场 / Ranch (`ranch`)**: a bright, chunky farm-life skin on the pixel valley engine. It has a date board with weekday, day, season·day, time and in-game weather, a rucksack tool bar (日历/种子袋/日记/背包/杂货店), friendship hearts with villager baristas that rise with repeat check-ins, a dialogue box with a name ribbon, and seasonal town tiles (spring blossom, summer green, autumn orange, frosty winter). On rainy days it rains, and bunting goes up on festival days. Four original seasonal chiptune variants (off by default).
-- Valley and sketch stay selectable. All art and music is original and drawn in code; no sprites, logos, names or melodies from any commercial game.
+- Sketch stays selectable. All art and music is original and drawn in code; no sprites, logos, names or melodies from any commercial game.
 
 ## 📅 Season calendar & Australian festivals (festivals.js, `#/calendar`)
 Seasons follow the southern hemisphere: spring Sep–Nov, summer Dec–Feb, autumn Mar–May, winter Jun–Aug. In-game weather is deterministic per date and season and labelled as in-game, not a real forecast. Festival days show a banner, villagers say festival lines, and a 4th daily quest (check in on the festival day) pays 80 coins (+40 XP).

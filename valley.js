@@ -48,8 +48,8 @@ function clock() {
 
 // ---------- seasonal palette ----------
 const PALS = {
-  spring: {grass: ['#7ccf5a', '#68bb48', '#95de70', '#57a83c'], leaf: ['#f6b3cd', '#e98fb3', '#ffd9e7', '#c76a91'], fl: ['#ff9ec4', '#fff3f7', '#ffd85e', '#b58bff'], ground: '#5aa83c'},
-  summer: {grass: ['#5fbf3f', '#4ea833', '#7bd458', '#3f8f2b'], leaf: ['#4fae3c', '#3b912e', '#7acf5a', '#2b6e23'], fl: ['#ffd23f', '#ff7b54', '#ffffff', '#ff5e8a'], ground: '#3f8f2b'},
+  spring: {grass: ['#7ed45c', '#5aae3e', '#a6ea86', '#3c9228'], leaf: ['#f6b3cd', '#e98fb3', '#ffd9e7', '#c76a91'], fl: ['#ff9ec4', '#fff3f7', '#ffd85e', '#b58bff'], ground: '#4ea336'},
+  summer: {grass: ['#62c844', '#46a030', '#86dc5c', '#2f7e22'], leaf: ['#3ea834', '#2e8424', '#6ec84e', '#1e6418'], fl: ['#ffd23f', '#ff7b54', '#ffffff', '#ff5e8a'], ground: '#348626'},
   autumn: {grass: ['#a9b84b', '#94a53f', '#c4c95d', '#7e8e35'], leaf: ['#f08a2c', '#d6641e', '#ffb648', '#a5431a'], fl: ['#e2552a', '#f2a03d', '#9a4ab0', '#ffd96a'], ground: '#7e8e35'},
   winter: {grass: ['#eef4fa', '#dde8f2', '#ffffff', '#c3d3e2'], leaf: null, fl: ['#d33a3a', '#2f7a3a', '#ffffff', '#b02a2a'], ground: '#c3d3e2'}};
 
@@ -113,7 +113,8 @@ function tiles(season = 'spring', lit = false) {
     px(1, 2, 14, 1, OUT); for (let y = 3; y < 8; y++) px(0 + (y < 4 ? 1 : 0), y, 16 - (y < 4 ? 2 : 0), 1, y % 2 ? rf : rd); px(0, 8, 16, 1, OUT);
     if (W) { px(1, 3, 14, 2, '#fff'); px(3, 5, 1, 1, '#fff'); px(10, 5, 1, 1, '#fff'); }
     px(2, 9, 12, 6, '#e8c999'); px(2, 11, 12, 1, '#d4b07a'); px(1, 9, 1, 6, OUT); px(14, 9, 1, 6, OUT); px(1, 14, 14, 1, OUT);
-    px(7, 10, 3, 4, '#7a4a25'); const win = lit && (i % 3 !== 1) ? '#ffd56b' : lit ? '#3d4a6e' : '#9fd4ea'; px(3, 10, 3, 2, win); px(11, 10, 2, 2, win); px(3, 12, 3, 1, '#6b3f1d'); }));
+    px(7, 10, 3, 4, '#6b3f1d'); px(8, 11, 1, 3, '#c98f55'); px(6, 14, 5, 1, '#d8c4a0');
+    const win = lit && (i % 3 !== 1) ? '#ffd56b' : lit ? '#3d4a6e' : '#b7e4f4'; px(3, 10, 3, 2, win); px(11, 10, 2, 2, win); px(4, 10, 1, 2, '#5a3418'); px(12, 10, 1, 2, '#5a3418'); px(3, 12, 3, 1, '#6b3f1d'); }));
   T.fence = tile(px => { grass(px, 15); px(0, 7, 16, 2, OUT); px(0, 11, 16, 2, OUT); px(0, 7, 16, 1, '#c98f5a'); px(0, 11, 16, 1, '#c98f5a');
     for (let x = 1; x < 16; x += 7) { px(x - 1, 4, 4, 11, OUT); px(x, 5, 2, 9, '#d9a066'); px(x, 5, 2, 1, '#e8bc84'); if (W) px(x - 1, 3, 4, 2, '#fff'); } });
   T.crop = tile(px => { px(0, 0, 16, 16, W ? '#a07850' : '#8a5a33'); for (let y = 1; y < 16; y += 4) { px(0, y + 2, 16, 1, W ? '#8a6440' : '#6e4526'); px(0, y, 16, 1, W ? '#b8926a' : '#a06c40'); }
@@ -140,24 +141,33 @@ const shopCache = {};
 function shop(id, lit, season = 'spring', night = false) {
   const key = [id, lit, season, night, STYLE].join('|'); if (shopCache[key]) return shopCache[key];
   const R = rng(hash(id) ^ 0x51ed), [rf, rd] = pick(R, ROOFS), wall = pick(R, WALLS), awn = pick(R, AWN), P = Pix(32, 32), W = season === 'winter' && STYLE !== 'ranch';
-  P.rect(22, 2, 4, 6, '#a5503a'); P.rect(22, 2, 4, 1, '#c86a50'); // chimney
-  for (let y = 5; y <= 13; y++) { const inset = Math.round((13 - y) * 0.85); P.rect(1 + inset, y, 30 - inset * 2, 1, y % 2 ? rf : rd); }
-  P.rect(2, 13, 28, 1, rd);
-  if (W) { for (let y = 5; y <= 7; y++) { const inset = Math.round((13 - y) * 0.85); P.rect(1 + inset, y, 30 - inset * 2, 1, '#ffffff'); } [4, 9, 15, 20, 26].forEach(x => P.set(x, 8 + (x % 2), '#ffffff')); P.rect(22, 1, 4, 1, '#fff'); }
-  P.rect(10, 8, 12, 5, '#f6e7c1'); P.rect(10, 8, 12, 1, '#fffaf0'); P.rect(14, 9, 3, 3, '#7a4a25'); P.set(17, 10, '#7a4a25'); P.rect(14, 9, 3, 1, '#c98f5a'); // sign with cup
-  P.rect(3, 14, 26, 16, wall); for (let y = 16; y < 30; y += 3) P.rect(3, y, 26, 1, 'rgba(0,0,0,0)') ; // keep
-  for (let y = 16; y < 30; y += 3) for (let x = 3; x < 29; x++) P.set(x, y, shade(wall, -18));
-  for (let x = 2; x < 30; x++) for (let y = 14; y < 18; y++) P.set(x, y, ((x >> 1) % 2) ? awn : '#fff6e0');
-  for (let x = 2; x < 30; x += 2) P.set(x, 18, ((x >> 1) % 2) ? awn : '#fff6e0');
-  const glass = lit && night ? '#ffd56b' : night ? '#3d4a6e' : '#a8dcef', glow = lit && night ? '#fff3b8' : night ? '#4d5a80' : '#e8f8ff';
-  P.rect(5, 20, 10, 7, '#6b3f1d'); P.rect(6, 21, 8, 5, glass); P.rect(9, 21, 2, 5, '#6b3f1d'); P.set(7, 22, glow); P.set(12, 22, glow); if (lit && night) { P.rect(6, 25, 8, 1, '#ffe9a0'); }
-  P.rect(4, 27, 12, 1, '#8a5a33'); // window box
-  P.rect(18, 20, 8, 10, '#6b3f1d'); P.rect(19, 21, 6, 9, '#8a5a33'); P.rect(20, 22, 4, 2, glass); P.set(24, 26, '#f5c542'); P.rect(19, 25, 6, 1, '#7a4a25');
   const fl = ((STYLE === 'ranch' ? RPALS : PALS)[season] || PALS.spring).fl;
-  [[4, fl[0]], [7, fl[1]], [10, fl[2]], [13, fl[0]]].forEach(([x, c]) => { P.set(x, 26, W ? '#fff' : c); P.set(x + 1, 26, W ? '#2f6a3a' : '#3f8f2b'); });
-  P.rect(27, 26, 3, 4, '#c0603a'); P.rect(27, 24, 3, 2, W ? '#2f6a3a' : '#3f9a3a'); P.set(28, 23, W ? '#d33a3a' : fl[3]);
+  P.rect(0, 30, 32, 2, W ? '#d5cbb8' : '#c4a56a');
+  P.rect(13, 28, 8, 4, W ? '#efe6d4' : '#e8c98a');
+  P.rect(14, 28, 6, 1, W ? '#fff' : '#f6e2b0');
+  P.rect(22, 3, 4, 6, '#8a4030'); P.rect(22, 3, 4, 1, '#c86a50'); P.rect(23, 4, 1, 4, '#a85a42');
+  if (lit) { P.set(23, 1, 'rgba(255,255,255,.85)'); P.set(24, 0, 'rgba(255,255,255,.65)'); P.set(22, 2, 'rgba(255,255,255,.5)'); }
+  for (let y = 5; y <= 12; y++) { const inset = Math.round((12 - y) * 0.95); P.rect(1 + inset, y, 30 - inset * 2, 1, y % 2 ? rf : rd); }
+  P.rect(1, 12, 30, 2, rd); P.rect(0, 13, 32, 1, shade(rd, -30));
+  if (W) { for (let y = 5; y <= 7; y++) { const inset = Math.round((12 - y) * 0.95); P.rect(1 + inset, y, 30 - inset * 2, 1, '#ffffff'); } P.rect(22, 2, 4, 1, '#fff'); }
+  P.rect(12, 7, 9, 6, '#5a3418'); P.rect(13, 8, 7, 4, '#f6e7c1');
+  P.rect(15, 9, 3, 2, '#fdf7ec'); P.set(14, 10, '#fdf7ec'); P.set(18, 10, '#fdf7ec'); P.rect(15, 8, 3, 1, '#7a4a25');
+  P.rect(2, 14, 28, 16, wall);
+  for (let y = 17; y < 30; y += 4) P.rect(2, y, 28, 1, shade(wall, -22));
+  for (let x = 1; x < 31; x++) { const stripe = ((x / 3) | 0) % 2; P.set(x, 14, stripe ? awn : '#fff8ea'); P.set(x, 15, stripe ? awn : '#fff8ea'); P.set(x, 16, stripe ? shade(awn, -28) : '#f0e0c0'); }
+  for (let x = 2; x < 30; x += 3) P.set(x, 17, shade(awn, -18));
+  const glass = lit && night ? '#ffe08a' : night ? '#3d4a6e' : '#c5ecff', glow = lit && night ? '#fff6c0' : night ? '#5a6a90' : '#ffffff';
+  P.rect(3, 19, 12, 8, '#3a2414'); P.rect(4, 20, 10, 6, glass);
+  P.rect(8, 20, 1, 6, '#3a2414'); P.rect(4, 22, 10, 1, '#3a2414');
+  P.set(5, 21, glow); P.set(11, 21, glow);
+  if (lit && night) P.rect(4, 25, 10, 1, '#ffe9a0');
+  P.rect(2, 27, 14, 2, '#5a3418'); P.rect(3, 27, 12, 1, '#8a5a33');
+  [[4, fl[0]], [7, fl[1]], [10, fl[2]], [13, fl[3]]].forEach(([x, c]) => { P.set(x, 26, W ? '#fff' : c); P.set(x, 27, W ? '#2f6a3a' : '#3f8f2b'); });
+  P.rect(18, 19, 9, 11, '#3a2414'); P.rect(19, 20, 7, 10, '#8a5a33');
+  P.rect(20, 21, 5, 3, shade('#8a5a33', 30)); P.rect(20, 25, 5, 4, shade('#8a5a33', -16));
+  P.set(24, 24, '#f5c542'); P.rect(19, 29, 7, 1, '#5e3519'); P.rect(17, 30, 11, 1, '#c9b18a');
+  P.rect(28, 25, 3, 5, '#a85a32'); P.rect(28, 23, 3, 2, W ? '#2f6a3a' : '#3f9a3a'); P.set(29, 22, W ? '#d33a3a' : fl[0]); P.set(28, 24, W ? '#fff' : fl[2]);
   P.outline(OUT);
-  P.rect(16, 31, 11, 1, '#b3a58f'); P.rect(2, 31, 14, 1, 'rgba(30,40,10,.28)'); P.rect(27, 31, 4, 1, 'rgba(30,40,10,.28)');
   return (shopCache[key] = P.canvas());
 }
 function shade(hex, d) { const n = parseInt(hex.slice(1), 16), c = v => Math.max(0, Math.min(255, v + d)); return '#' + [c(n >> 16), c((n >> 8) & 255), c(n & 255)].map(v => v.toString(16).padStart(2, '0')).join(''); }

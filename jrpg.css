@@ -1,4 +1,4 @@
-/* ================= ⚔️ JRPG theme (default) — everything scoped to html[data-theme=jrpg] ================= */
+/* ================= ⚔️ JRPG pixel engine — scoped to html[data-theme=jrpg]; 田园 and 牧场 add data-skin, 古风 adds data-xuan ================= */
 @font-face{font-family:"FusionPixel";src:url("vendor/fonts/fusion-pixel-12-zh_hans.subset.woff2") format("woff2");font-display:swap}
 html[data-theme=jrpg]{
   --win:linear-gradient(180deg,#3a52d6 0%,#2234a8 45%,#121c6e 100%);

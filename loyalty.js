@@ -10,7 +10,7 @@ const SETS = [
   {id: 'richmond', name: '列治文', title: '河岸印信', c: 80, line: '河对岸的火，你都闻过了。'},
   {id: 'northmel', name: '北墨尔本', title: '北巷印信', c: 80, line: '安静的街上，杯子还热。'},
   {id: 'brunswick', name: '布伦瑞克', title: '街坊印信', c: 80, line: '邻居的客厅里，有你的椅子。'},
-  {id: 'more', name: '更多街区', title: '散页行者', c: 100, line: '页还没合上，路还可以再走。'},
+  {id: 'more', name: '更多街区', title: '散页行者', c: 100, line: 'Fitzroy、Collingwood、Carlton 的店还在「更多」里，打卡就会盖印。'},
 ];
 // secret cards stay silhouettes until earned (ending names are not shown early)
 const CARDS = [
@@ -120,11 +120,12 @@ function model(ctx) {
 function paint(info) {
   if (typeof document === 'undefined') return '';
   const c = document.createElement('canvas'); c.width = 640; c.height = 860;
-  const g = c.getContext('2d'), xuan = !!info.xuan;
-  g.fillStyle = xuan ? '#e8dcc0' : '#f6efe2'; g.fillRect(0, 0, 640, 860);
-  g.strokeStyle = xuan ? '#2a2018' : '#4a4038'; g.lineWidth = 10; g.strokeRect(28, 28, 584, 804);
-  g.strokeStyle = xuan ? '#9c6b22' : '#c4a574'; g.lineWidth = 2; g.strokeRect(48, 48, 544, 764);
-  g.fillStyle = xuan ? '#2a2018' : '#3a322c';
+  const g = c.getContext('2d'), xuan = !!info.xuan, valley = !!info.valley && !xuan;
+  g.fillStyle = xuan ? '#e8dcc0' : valley ? '#5ea83c' : '#f6efe2'; g.fillRect(0, 0, 640, 860);
+  if (valley) { g.fillStyle = '#f6e7c1'; g.fillRect(40, 78, 560, 720); g.fillStyle = '#7a4a25'; g.fillRect(520, 96, 40, 28); g.fillStyle = '#fdf7ec'; g.fillRect(530, 102, 18, 16); g.fillStyle = '#c98f55'; g.fillRect(524, 112, 8, 6); }
+  g.strokeStyle = xuan ? '#2a2018' : valley ? '#3a2414' : '#4a4038'; g.lineWidth = 10; g.strokeRect(28, 28, 584, 804);
+  g.strokeStyle = xuan ? '#9c6b22' : valley ? '#c98f55' : '#c4a574'; g.lineWidth = valley ? 6 : 2; g.strokeRect(48, 48, 544, 764);
+  g.fillStyle = xuan ? '#2a2018' : '#3a2414';
   g.font = '28px "PingFang SC","Noto Sans CJK SC",sans-serif';
   g.fillText(info.kicker || (xuan ? '江湖通行印' : '咖啡集卡'), 72, 120);
   g.font = 'bold 42px "PingFang SC","Noto Sans CJK SC",sans-serif';

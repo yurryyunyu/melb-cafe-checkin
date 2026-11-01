@@ -94,7 +94,11 @@ html[data-theme][data-skin=valley] .rate-menu{background:var(--cream2);border:3p
 .vh.pop{animation:hpop .7s steps(5)}
 @keyframes hpop{0%{transform:scale(2.4)}60%{transform:scale(.8)}100%{transform:none}}
 /* 💬 dialogue: wood frame + name tag */
-html[data-theme][data-skin=valley] #dlg{padding:14px 12px 14px;border-radius:6px;margin-top:12px}
+html[data-theme][data-skin=valley]:not([data-ranch]) #dlg{padding:18px 12px 14px;border-radius:8px;margin-top:12px;background:linear-gradient(180deg,#fff8e6 0 16px,#f6e7c1);border:4px solid var(--woodX);box-shadow:inset 0 0 0 3px var(--woodL),0 4px 0 var(--woodX);color:var(--ink);text-shadow:none}
+html[data-theme][data-skin=valley]:not([data-ranch]) .today-card{background:linear-gradient(180deg,#fff8e4,#f3e0b4);border:4px solid var(--woodX);border-radius:8px;box-shadow:inset 0 0 0 3px var(--woodL),0 4px 0 var(--woodX)}
+html[data-theme][data-skin=valley]:not([data-ranch]) .today-card .td-k{color:var(--woodD);letter-spacing:.18em}
+html[data-theme][data-skin=valley]:not([data-ranch]) .home-more{background:var(--cream);border:4px solid var(--woodX);border-radius:8px;box-shadow:inset 0 0 0 3px var(--woodL),0 3px 0 var(--woodX)}
+html[data-theme][data-skin=valley]:not([data-ranch]) .home-more>summary{color:var(--ink)}
 html[data-theme][data-skin=valley] .dlg-face{width:64px;height:64px;border:3px solid var(--woodX);border-radius:4px;box-shadow:inset 0 0 0 2px #fff6;background:#f6d8a8}
 html[data-theme][data-skin=valley] .dlg-name{position:absolute;top:-14px;left:12px;background:linear-gradient(#ffd27a,#e8a54a);color:var(--ink);border:2px solid var(--woodX);border-radius:4px;padding:1px 8px;font-size:13px;box-shadow:0 2px 0 var(--woodX)}
 html[data-theme][data-skin=valley] .dlg-text{color:var(--ink);font-size:15px}
