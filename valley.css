@@ -541,3 +541,4 @@ html[data-skin=valley] .gr-stars i.on{filter:none}html[data-skin=valley] .gr-sta
 html[data-skin=valley] .gr-score{font-weight:400;color:#8a4b2a}
 html[data-skin=valley] .gr-author{font-weight:400;color:#2f6aa8}
 html[data-skin=valley] .gr-rev,html[data-skin=valley] .gr-foot{border-top:2px dashed #e0c58e}
+html[data-skin=valley]:not([data-ranch]) a.go-here{background:linear-gradient(#8ed65e,#3f7a28);color:#fffbe8;border:3px solid #2c4a18;text-shadow:1px 1px 0 #244016;box-shadow:inset 0 2px 0 #c6e89a,inset 0 -3px 0 #2f6a1c,0 3px 0 rgba(30,50,10,.35)}

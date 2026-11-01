@@ -1,0 +1,14 @@
+/* 💛 one feeling question after a cafe check-in */
+.psy-dlg{position:fixed;inset:0;z-index:1800;display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(84px + env(safe-area-inset-bottom));background:rgba(28,18,10,.46)}
+.psy-card{width:min(420px,100%);padding:16px 16px calc(14px + env(safe-area-inset-bottom));border-radius:16px 16px 12px 12px;background:#fff8ee;color:#3a2414;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.psy-k{font-size:12px;letter-spacing:.14em;opacity:.7}
+.psy-card h3{margin:4px 0 8px;font-size:18px;line-height:1.45}
+.psy-opt{display:block;width:100%;margin:0 0 8px;padding:10px 12px;text-align:left;font:inherit;font-size:15px;line-height:1.45;border-radius:10px;border:1.5px solid rgba(90,60,30,.35);background:#fff;color:inherit;cursor:pointer}
+.psy-opt:active{transform:translateY(1px)}
+.psy-skip{display:block;width:100%;margin-top:4px;background:transparent;border:0;font:inherit;font-size:13px;opacity:.7;cursor:pointer}
+html[data-skin=valley]:not([data-ranch]) .psy-card{background:linear-gradient(#fff8e4,#f3e0b4);border:4px solid #3a2414;border-radius:8px;box-shadow:inset 0 0 0 3px #e2b06a,0 4px 0 #3a2414}
+html[data-skin=valley]:not([data-ranch]) .psy-opt{background:#fff6d6;border:3px solid #3a2414;border-radius:6px}
+html[data-xuan] .psy-card{background:#f6edd8;border:1px solid #8a6a3a;border-radius:4px;color:#2a2018}
+html[data-xuan] .psy-opt{background:#fffaf0;border-color:#cbb892;border-radius:3px}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) .psy-card{background:#10185c;color:#fff;border:3px solid #c8d0ff;border-radius:8px}
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) .psy-opt{background:#1a2060;color:#fff;border-color:#8a98ff}

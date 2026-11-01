@@ -354,7 +354,7 @@ function openCheckinForm(ci, isNew) {
       const i = checkins.findIndex(c => c.id === draft.id);
       if (i >= 0) checkins[i] = draft; else checkins.unshift(draft);
       if (!saveCheckins()) return;
-      closeSheet(); if (isNew) celebrate(before, draft.cafeId); else { let tip = '已保存'; try { const r = window.Loyalty && Loyalty.sync(loyaltyCtx()); if (r && r.stamps.length) tip += ' · 已盖印'; } catch (e) {} toast(tip); checkBadges(); render(); }
+      closeSheet(); if (isNew) landCheckin(before, draft.cafeId); else { let tip = '已保存'; try { const r = window.Loyalty && Loyalty.sync(loyaltyCtx()); if (r && r.stamps.length) tip += ' · 已盖印'; } catch (e) {} toast(tip); checkBadges(); render(); }
     };
     const del = $('#fDel', el);
     if (del) del.onclick = () => {
@@ -627,6 +627,35 @@ function celebrate(before, cafeId, extra = '') {
   $('#celOk').onclick = close; clearTimeout(celebrate._t); celebrate._t = setTimeout(() => !el.classList.contains('hidden') && close(), 6000);
   drawHud();
 }
+// One feeling question after a new check-in, then the usual celebration. Skip does not consume it.
+function landCheckin(before, cafeId, extra = '') {
+  if (!cafeId || !window.Psy || !Psy.due(cafeId)) return celebrate(before, cafeId, extra);
+  const q = Psy.pick(cafeId);
+  const old = document.getElementById('psyDlg'); if (old) old.remove();
+  const d = document.createElement('div'); d.id = 'psyDlg'; d.className = 'psy-dlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true');
+  d.innerHTML = `<div class="psy-card"><div class="psy-k">一杯之间</div><h3>${esc(q.ask)}</h3>${q.opts.map((o, i) => `<button type="button" class="psy-opt" data-i="${i}">${esc(o.t)}</button>`).join('')}<button type="button" class="psy-skip">先不答</button></div>`;
+  document.body.appendChild(d);
+  const finish = (i) => {
+    if (!d.isConnected) return;
+    d.remove();
+    let line = extra || '';
+    if (i != null) {
+      const res = Psy.answer(cafeId, i);
+      if (res) {
+        const cid = 'psy-' + cafeId;
+        if (res.c && !questLog.claims.some(x => x.id === cid)) { questLog.claims.push({d: today(), id: cid, c: res.c}); save(QK, questLog); }
+        const cls = isV() ? 'vl-line' : 'cel-reg';
+        line += `<div class="${cls}">💛 ${esc(res.line)}${res.c ? ' · 🪙 +' + res.c : ''}</div>`;
+      }
+    }
+    celebrate(before, cafeId, line);
+  };
+  d.onclick = e => {
+    const b = e.target.closest('.psy-opt');
+    if (b) return finish(+b.dataset.i);
+    if (e.target.closest('.psy-skip') || e.target === d) finish(null);
+  };
+}
 
 // ---------- 🍽️ recognise item + rate it (after photo check-in) ----------
 function openRateSheet(ci, before) {
@@ -670,7 +699,7 @@ function openRateSheet(ci, before) {
         const r = await Integrations.submitToGoogleForm({cafe: c.name, suburb: c.suburb, item: x.drink, rating: x.rating || '', taste: x.taste || '', look: x.look || '', value: x.value || '', note: x.note, date: x.date});
         x.formStatus = r; extra = r === 'sent' ? '<div class="cel-reg">📨 已提交到 Google 表单</div>' : '<div class="cel-reg">⚠️ 表单提交失败，已保存在本地</div>';
       }
-      saveCheckins(); closeSheet(); celebrate(before, ci.cafeId, extra);
+      saveCheckins(); closeSheet(); landCheckin(before, ci.cafeId, extra);
     };
     $('#rDone', el).onclick = () => finish(true);
     $('#rSkip', el).onclick = () => finish(false);
@@ -716,11 +745,12 @@ let map3dFailed = false, map3dMod = null;
 mapState.mode = load('mcc.mapMode', null) || (can3D ? '3d' : '2d');
 mapState.jmode = load('mcc.mapMode.jrpg', null) || 'px';
 mapState.fmode = load('mcc.mapMode.f', null) || (can3D ? '3d' : '2d');
+mapState.vmode = load('mcc.mapMode.valley', null) || (can3D ? '3d' : 'px'); // 田园 only; 古风/牧场 keep their own keys
 let pxFailed = false; const heroAt = {};
 const dynImport = (() => { try { return new Function('u', 'return import(u)'); } catch (e) { return () => Promise.reject(new Error('dynamic import unsupported')); } })();
 function loadMap3d() {
   if (map3dMod) return Promise.resolve(map3dMod);
-  const url = new URL('map3d.js?v=9', document.baseURI).href;
+  const url = new URL('map3d.js?v=11', document.baseURI).href;
   return Promise.race([dynImport(url), new Promise((_, rej) => setTimeout(() => rej(new Error('3D 模块加载超时')), 15000))]).then(m => (map3dMod = m));
 }
 const app = $('#app');
@@ -1141,7 +1171,7 @@ function npcFestName() { const t = npcFest(today())[0]; if (t) return t.zh; cons
 const npcLine = (n, t) => t.replace('{fest}', (Npc.state.met[n.id] && Npc.state.met[n.id].fest) || npcFestName());
 let npcTimer = null, npcHold = false; // npcHold: after an encounter closes, wait for the next navigation before another one
 function npcSchedule(ms = 700) { if (!NPC_ON()) return; clearTimeout(npcTimer); npcTimer = setTimeout(npcTick, ms); }
-const npcBlocked = () => !!document.querySelector('#celebrate:not(.hidden), #eduDlg, #eduRankUp, #npcDlg, #storyDlg, #pgDlg, #fdSplash, #vlSplash, #shModal') || !($('#sheetWrap') || {classList: {contains: () => true}}).classList.contains('hidden') || /^#\/(edu\/q|add)/.test(location.hash);
+const npcBlocked = () => !!document.querySelector('#celebrate:not(.hidden), #eduDlg, #eduRankUp, #npcDlg, #storyDlg, #pgDlg, #fdSplash, #vlSplash, #shModal, #psyDlg') || !($('#sheetWrap') || {classList: {contains: () => true}}).classList.contains('hidden') || /^#\/(edu\/q|add)/.test(location.hash);
 function npcTick() { if (!NPC_ON() || npcHold) return; const p = Npc.pending(npcCtx()); if (!p.length) return; if (npcBlocked() || storyDue()) return npcSchedule(1500); npcEncounter(p[0]); }
 // one encounter per page view: met + reward are recorded when the dialogue opens, so closing early never loses them
 function npcEncounter(id, replay) { const n = Npc.byId(id); if (!n) return; let d = $('#npcDlg'); if (d) d.remove(); { const g = $('#dlg'); if (g) g.classList.remove('show'); } // the encounter takes over the barista's speech bubble
@@ -1356,7 +1386,9 @@ function loyaltyView() {
     if (st) {
       const c = M.cafes.find(x => x.id === st.dataset.cafe); if (!c) return;
       if (!c.owned) return loyaltyOpen(`<h3>未盖印</h3><p>${esc(c.short)} 还没有到访印。去店里打一次卡，这一格才会亮。</p><a class="btn" href="#/cafe/${esc(c.id)}">去这家店</a>`);
-      return loyaltyOpen(`<h3>${esc(c.short)}</h3><p>${esc(c.regionName || '')} · 到访 ${c.n} 次 · ${'★'.repeat(c.stars)}${'☆'.repeat(3 - c.stars)}</p><p>${c.n >= 10 ? '心级已满，这枚印亮得像常客。' : c.stars ? '再去几次，星会再亮一点。' : '第 3、5、10 次会把这枚印升星。'}</p>`, {name: c.short, kicker: xuan ? '江湖通行印' : '到访印', sub: (c.regionName || '') + ' · ' + c.n + ' 次', mark: '★'.repeat(c.stars) || '到访', line: '今天的巷口也亮着。'});
+      const remembered = window.Psy && Psy.recall(c.id);
+      const mood = remembered ? `<p>💛 ${esc(remembered.line)}</p>` : '';
+      return loyaltyOpen(`<h3>${esc(c.short)}</h3><p>${esc(c.regionName || '')} · 到访 ${c.n} 次 · ${'★'.repeat(c.stars)}${'☆'.repeat(3 - c.stars)}</p><p>${c.n >= 10 ? '心级已满，这枚印亮得像常客。' : c.stars ? '再去几次，星会再亮一点。' : '第 3、5、10 次会把这枚印升星。'}</p>${mood}`, {name: c.short, kicker: xuan ? '江湖通行印' : '到访印', sub: (c.regionName || '') + ' · ' + c.n + ' 次', mark: '★'.repeat(c.stars) || '到访', line: remembered ? remembered.line : '今天的巷口也亮着。'});
     }
     const cd = e.target.closest('[data-card]');
     if (cd) {
@@ -1366,6 +1398,16 @@ function loyaltyView() {
     }
   };
 }
+// Directions. iOS opens Apple Maps; Android and desktop open Google Maps. Coords when we have them.
+function navHere(c) {
+  const lat = c && +c.lat, lng = c && +c.lng;
+  const has = Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
+  const label = [c && c.name, c && c.address, c && c.suburb].filter(Boolean).join(', ') || 'Melbourne';
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (ios) return has ? 'https://maps.apple.com/?daddr=' + lat + ',' + lng + '&q=' + encodeURIComponent((c && c.name) || label) : 'https://maps.apple.com/?daddr=' + encodeURIComponent(label);
+  return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(has ? (lat + ',' + lng) : label);
+}
+window.navHere = navHere;
 const views = {
   calendar(arg) { return calendarV(arg); },
   loyalty() { if (!window.Loyalty) { location.hash = '#/list'; return; } return loyaltyView(); },
@@ -1430,7 +1472,8 @@ const views = {
       const R = mapRegion(REGIONS.find(r => r.id === ms.region) || REGIONS[0]);
       const prog = regions().find(r => r.id === R.id);
       const J = isJ();
-      const FDm = isF(), use3d = (J ? ms.jmode : FDm ? ms.fmode : ms.mode) === '3d' && can3D && !map3dFailed;
+      const valleyWorld = isV() && !isR();
+      const FDm = isF(), use3d = (valleyWorld ? ms.vmode : J ? ms.jmode : FDm ? ms.fmode : ms.mode) === '3d' && can3D && !map3dFailed;
       const usePx = J && !use3d && window.PixelMap && !pxFailed;
       const {svg, meIn} = SketchMap.render(R, {visited: v, cafeById, me: lastPos, rangeM: NEAR_M});
       const ids = Object.keys(R.cafes);
@@ -1451,14 +1494,14 @@ const views = {
         <div class="sk-tools">${toggle}<button id="zOut">－</button><button id="zIn">＋</button>${use3d || usePx ? '<button id="m3dReset" aria-label="重置视角">⟲</button>' : ''}<button id="skLoc">🎯 ${lastPos ? (meIn ? '我在这里' : '不在此区') : '定位我'}</button></div>
         <div class="sk-list">${ids.map(id => cafeById(id)).filter(Boolean).map(cafeCard).join('')}</div>`;
       $('#dimT').onclick = e => { const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; SFXplay('blip');
-        if (J) { ms.jmode = b.dataset.m; save('mcc.mapMode.jrpg', ms.jmode); } else if (FDm) { ms.fmode = b.dataset.m; save('mcc.mapMode.f', ms.fmode); } else { ms.mode = b.dataset.m; save('mcc.mapMode', ms.mode); }
+        if (valleyWorld) { ms.vmode = b.dataset.m; save('mcc.mapMode.valley', ms.vmode); } else if (J) { ms.jmode = b.dataset.m; save('mcc.mapMode.jrpg', ms.jmode); } else if (FDm) { ms.fmode = b.dataset.m; save('mcc.mapMode.f', ms.fmode); } else { ms.mode = b.dataset.m; save('mcc.mapMode', ms.mode); }
         if (b.dataset.m === '3d') map3dFailed = false; if (b.dataset.m === 'px') pxFailed = false; render(); };
       const focusId = ms.focusId; ms.focusId = null;
       if (use3d) {
         const token = ++mapToken, wrap = $('#m3d');
-        const fail = e => { console.warn('3D map failed, falling back', e); if (token !== mapToken) return; map3dFailed = true; if (mapRef && mapRef.kind === '3d') { try { mapRef.remove(); } catch (x) {} mapRef = null; } toast(e && e.slow ? '这台设备上 3D 有点慢，已切换为 2D 地图（可随时点 3D 再试）' : J ? '3D 地图暂不可用，已切换为像素地图' : '3D 地图暂不可用，已切换为 2D 手绘地图'); render(); };
+        const fail = e => { console.warn('3D map failed, falling back', e); if (token !== mapToken) return; map3dFailed = true; if (mapRef && mapRef.kind === '3d') { try { mapRef.remove(); } catch (x) {} mapRef = null; } toast(e && e.slow ? ((valleyWorld || J) ? '这台设备上 3D 有点慢，已切换为像素地图（可随时点 3D 再试）' : '这台设备上 3D 有点慢，已切换为 2D 地图（可随时点 3D 再试）') : J ? '3D 地图暂不可用，已切换为像素地图' : '3D 地图暂不可用，已切换为 2D 手绘地图'); render(); };
         const seen = new Set(load('mcc.seen3d', [])), pop = new Set([...v].filter(id => R.cafes[id] && !seen.has(id)));
-        loadMap3d().then(mod => mod.create(wrap, R, {theme: J ? 'jrpg' : FDm ? 'foundation' : 'sketch', xuan: isXuan(), season: FK ? FK.season : null, onSlow: FDm ? () => fail(Object.assign(new Error('slow'), {slow: true})) : null, visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
+        loadMap3d().then(mod => mod.create(wrap, R, {theme: J ? 'jrpg' : FDm ? 'foundation' : 'sketch', xuan: isXuan(), valley: valleyWorld, season: FK ? FK.season : (valleyWorld && VK ? VK.season : null), phase: (valleyWorld && VK) ? VK.phase : (FK ? FK.phase : null), wx: (valleyWorld && VK && VK.wx) ? VK.wx.id : (FK && FK.wx ? FK.wx.id : null), onSlow: (FDm || valleyWorld) ? () => fail(Object.assign(new Error('slow'), {slow: true})) : null, visited: v, cafeById, me: lastPos, rangeM: NEAR_M, pop, fitAffine: SketchMap.fitAffine, onOpen: id => { location.hash = '#/cafe/' + id; }, onLost: () => fail(new Error('WebGL context lost'))}))
           .then(m => {
             if (token !== mapToken) return m.remove();
             mapRef = m; const ld = wrap.querySelector('.m3d-loading'); if (ld) ld.remove();
@@ -1579,6 +1622,7 @@ const views = {
     const FDd = isF() && window.FD && window.Valley;
     app.innerHTML = `${hero ? `<img class="hero-photo" src="${hero.photo}" alt="">` : PXI() ? PixUI.sceneHtml(c, {closed: isClosed(c)}) : FDd ? `<div class="fd-scene${cis.length ? ' built' : ''}"><div class="fd-scene-sky"></div><img class="fd-scene-b" src="${FD.url(c.id, cis.length > 0 && !isClosed(c), {flag: cis.length >= 5})}" alt=""><div class="fd-scene-cap">${isClosed(c) ? '已关店' : cis.length ? `已建成 · 打卡 ${cis.length} 次` : '蓝图 · 打卡后建成'}</div></div>` : ''}
       <div class="hero${isClosed(c) ? ' closed' : ''}"><div class="hero-reg">${regionOf(c.id).no ? `<span class="num">${regionOf(c.id).no}</span> ` : ''}${esc(regionOf(c.id).r.name)}${isClosed(c) ? ' ' + closedBadge : ''}</div><h2>${esc(c.name)}</h2><div class="addr">📍 ${esc(c.address)}</div><div class="addr" style="margin-top:4px">${esc(c.suburb)}${d ? ' · 距你 ' + d : ''}${avg ? ' · 我的评分 ' + avg + ' ★' : ''}</div></div>
+      <a class="btn go-here" id="goHere" target="_blank" rel="noopener" href="${esc(navHere(c))}">${ic('boot', '🧭')} 去这里<small>打开地图导航</small></a>
       <div>${(c.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${c.custom ? '<span class="tag">我添加的</span>' : ''}</div>
       ${isClosed(c) ? `<div class="closed-note">🚪 这家店已永久关闭，以前的打卡记录都还在。</div>` : ''}${sigBox(c)}
       ${FDd ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="fd-panel fd-barista"><div class="fdb-ava">${esc([...vg.name][0] || '咖')}</div><div class="fdb-main"><div class="fdb-name">${esc(vg.title)} <b>${esc(vg.name)}</b> <small>好感 ${h}/10</small></div>${Valley.heartsHtml(h)}<div class="fdb-say" id="fdbSay">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="fdb-talk" id="talkBtn" aria-label="聊天">💬</button></div>`; })() : ''}
@@ -1821,7 +1865,7 @@ function render() {
   if (window.Npc) { try { paintNpc(app); if (v === 'cafe' && arg === 'hash') Npc.flag('hash', today()); if (v === 'map') npcVisitor(); npcSchedule(); } catch (e) { console.warn('npc', e); } }
   if (window.Story) { try { storySchedule(); } catch (e) { console.warn('story', e); } }
 }
-window.addEventListener('hashchange', () => { npcHold = false; storyHold = false; closeSheet(); ['eduDlg', 'eduRankUp', 'npcDlg', 'storyDlg', 'pgDlg', 'lyDlg'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
+window.addEventListener('hashchange', () => { npcHold = false; storyHold = false; closeSheet(); ['eduDlg', 'eduRankUp', 'npcDlg', 'storyDlg', 'pgDlg', 'lyDlg', 'psyDlg'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
 render();
 if (window.Idle) setTimeout(idleAwayTry, 1200);
 // quietly fetch location if already permitted (for distances), never prompt on load
