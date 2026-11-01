@@ -417,6 +417,22 @@ export async function create(el, region, opt) {
     }));
     const sky = new THREE.Mesh(track(new THREE.PlaneGeometry(GW * 2.6, GD * 1.15)), track(new THREE.MeshBasicMaterial({map: skyTex, fog: false, depthWrite: false})));
     sky.position.set(0, GD * 0.18, -GD * 0.55 - 1.3); sky.renderOrder = -1; scene.add(sky);
+    const cloudTex = track(canvasTex(64, 32, (g) => {
+      g.clearRect(0, 0, 64, 32); g.fillStyle = 'rgba(255,255,255,.9)';
+      g.beginPath(); g.ellipse(22, 20, 16, 9, 0, 0, Math.PI * 2); g.ellipse(38, 18, 14, 8, 0, 0, Math.PI * 2); g.fill();
+    }));
+    const skyClouds = [];
+    const nCloud = (Md.wx === 'sun' || Md.wx === 'hot') ? 2 : 4;
+    for (let i = 0; i < nCloud; i++) {
+      const s = new THREE.Sprite(track(new THREE.SpriteMaterial({map: cloudTex, transparent: true, depthWrite: false, opacity: Md.rain ? .45 : .82, fog: false})));
+      s.position.set(-GW * 0.45 + i * (GW * 0.28), 2.35 + (i % 2) * 0.38, -GD * 0.4);
+      s.scale.set(1.5 + (i % 2) * 0.4, 0.55, 1);
+      s.userData.sp = (0.18 + i * 0.06) * (Md.wind ? 1.8 : 1);
+      scene.add(s); skyClouds.push(s);
+    }
+    const orbCol = Md.phase === 'night' ? '#d5e4ff' : Md.phase === 'dusk' || Md.phase === 'dawn' ? '#ff8a4a' : '#ffe08a';
+    const orb = new THREE.Sprite(track(new THREE.SpriteMaterial({color: orbCol, transparent: true, depthWrite: false, opacity: .9, fog: false})));
+    orb.position.set(-GW * 0.12, 2.85, -GD * 0.46); orb.scale.setScalar(Md.phase === 'night' ? 0.28 : 0.42); scene.add(orb);
     const water = new THREE.Mesh(track(new THREE.PlaneGeometry(GW * 1.08, 0.72)), track(new THREE.MeshBasicMaterial({color: Md.water, transparent: true, opacity: 0.88})));
     water.rotation.x = -Math.PI / 2; water.position.set(0, 0.012, GD / 2 + 0.2); scene.add(water);
 
@@ -504,6 +520,16 @@ export async function create(el, region, opt) {
     anims.push(now => {
       if (document.hidden) return true;
       const t = now * 0.001;
+      const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!calm) {
+        skyClouds.forEach(s => {
+          s.position.x += s.userData.sp * 0.016;
+          if (s.position.x > GW * 0.7) s.position.x = -GW * 0.7;
+        });
+        orb.position.x = -GW * 0.12 + Math.sin(t * 0.18) * 0.7;
+        orb.position.y = 2.85 + Math.sin(t * 0.22) * 0.1;
+        if (Md.phase === 'dusk') orb.material.opacity = 0.55 + Math.sin(t * 2.1) * 0.28;
+      }
       wheel.rotation.z = t * 0.22;
       leaves.forEach(s => {
         const b = s.userData.base, sp = s.userData.sp * windK, ph = s.userData.ph, fall = (t * sp * .12 + ph) % 1.8;

@@ -753,7 +753,7 @@ let pxFailed = false; const heroAt = {};
 const dynImport = (() => { try { return new Function('u', 'return import(u)'); } catch (e) { return () => Promise.reject(new Error('dynamic import unsupported')); } })();
 function loadMap3d() {
   if (map3dMod) return Promise.resolve(map3dMod);
-  const url = new URL('map3d.js?v=12', document.baseURI).href;
+  const url = new URL('map3d.js?v=13', document.baseURI).href;
   return Promise.race([dynImport(url), new Promise((_, rej) => setTimeout(() => rej(new Error('3D 模块加载超时')), 15000))]).then(m => (map3dMod = m));
 }
 const app = $('#app');
@@ -824,7 +824,7 @@ function liveWxCard() {
   const hours = (L.hourly || []).map(h => `<span><b>${esc(h.hh)}</b><em>${h.temp == null ? '—' : Math.round(h.temp) + '°'}</em><small>${esc(h.zh)}</small></span>`).join('');
   const days = (L.daily || []).map(d => `<span><b>${esc(d.label)}</b><em>${d.min == null ? '—' : Math.round(d.min) + '–' + Math.round(d.max) + '°'}</em><small>${esc(d.zh)}</small></span>`).join('');
   const note = L.src === 'game' ? '暂时连不上墨尔本实况，先用小镇里的天气' : (L.src === 'cache' ? '上次实况 · ' : '墨尔本实况 · ') + (L.ago || '');
-  return `<section class="live-wx" id="liveWx" data-wx="${esc(L.id || 'sun')}" data-phase="${esc(phase)}" data-src="${esc(L.src)}"><div class="lw-sky" aria-hidden="true"></div><div class="lw-body"><div class="lw-now"><b class="lw-temp">${temp}</b><div><div class="lw-zh">${L.icon || ''} ${esc(L.zh || '')}</div><small>今日温度 · 墨尔本</small></div></div>${hours ? `<div class="lw-h">${hours}</div>` : ''}${days ? `<div class="lw-d">${days}</div>` : ''}<small class="lw-note">${esc(note)}</small></div></section>`;
+  return `<section class="live-wx" id="liveWx" data-wx="${esc(L.id || 'sun')}" data-phase="${esc(phase)}" data-src="${esc(L.src)}"><div class="lw-sky" aria-hidden="true"><i class="lw-glow"></i><i class="lw-orb"></i><i class="lw-cloud c1"></i><i class="lw-cloud c2"></i><i class="lw-drop"></i></div><div class="lw-body"><div class="lw-now"><b class="lw-temp">${temp}</b><div><div class="lw-zh">${L.icon || ''} ${esc(L.zh || '')}</div><small>今日温度 · 墨尔本</small></div></div>${hours ? `<div class="lw-h">${hours}</div>` : ''}${days ? `<div class="lw-d">${days}</div>` : ''}<small class="lw-note">${esc(note)}</small></div></section>`;
 }
 function todayCard() {
   const p = todayPlan();
