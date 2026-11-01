@@ -51,19 +51,22 @@ const melDate = ms => { try { return MEL_FMT.format(new Date(ms)); } catch (e) {
 const today = () => melDate(nowMs());
 const stars = n => n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '';
 
-// ---------- 🎨 theme: 🌾 田园 valley is the default. valley + JRPG share the pixel engine (data-theme=jrpg); valley adds data-skin=valley on top.
+// ---------- 🎨 theme: ⚔️ 古风 jrpg is the default. valley + JRPG share the pixel engine (data-theme=jrpg); valley adds data-skin=valley, 古风 adds data-xuan.
 // Skin attributes follow the saved theme id, not whether valley.js / xuan.js finished. Missing kits must not fall through to the blue JRPG shell.
-// v38 one-shot: legacy blue ids (classic, blue, pixel…) are rewritten to valley. jrpg stays 古风. Picker clicks stamp mcc.themePick.
-// 🏰 foundation · 🐄 ranch · 🌾 valley (default) · ⚔️ jrpg · ✏️ sketch
+// v40: no theme, a legacy blue id, or valley without an explicit picker stamp becomes 古风.
+// mcc.themePick (set only by the theme buttons) keeps valley / ranch / the rest. A saved ranch, foundation, sketch, or jrpg is also kept.
+// 🏰 foundation · 🐄 ranch · 🌾 valley · ⚔️ jrpg (default) · ✏️ sketch
 const THEMES = ['foundation', 'ranch', 'valley', 'jrpg', 'sketch'];
-const LEGACY_BLUE = {classic: 1, blue: 1, pixel: 1, 'jrpg-pixel': 1, 'jrpg-blue': 1, default: 1};
 function migrateTheme(raw) {
   let mig = null; try { mig = localStorage.getItem('mcc.themeMig'); } catch (e) {}
-  if (mig !== 'v38') {
-    try { localStorage.setItem('mcc.themeMig', 'v38'); } catch (e) {}
-    if (raw == null || raw === '' || LEGACY_BLUE[raw]) { raw = 'valley'; save('mcc.theme', 'valley'); }
+  if (mig !== 'v40') {
+    try { localStorage.setItem('mcc.themeMig', 'v40'); } catch (e) {}
+    const pick = load('mcc.themePick', null);
+    if (THEMES.includes(pick)) { raw = pick; save('mcc.theme', pick); }
+    else if (raw === 'ranch' || raw === 'foundation' || raw === 'sketch' || raw === 'jrpg') { /* chosen, not the old silent default */ }
+    else { raw = 'jrpg'; save('mcc.theme', 'jrpg'); }
   }
-  return THEMES.includes(raw) ? raw : 'valley';
+  return THEMES.includes(raw) ? raw : 'jrpg';
 }
 let THEME = migrateTheme(load('mcc.theme', null));
 const isJ = () => (THEME === 'jrpg' || THEME === 'valley' || THEME === 'ranch') && !!window.JRPG;

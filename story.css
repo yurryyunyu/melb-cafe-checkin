@@ -74,8 +74,8 @@ html[data-theme=sketch] #storyDlg .edu-ava.st-ava{border:2px solid #222;border-r
 html[data-xuan] #storyDlg .sd-bg{background:linear-gradient(180deg,rgba(20,12,6,.35),rgba(20,12,6,.7)),var(--sdbg) center/cover no-repeat;backdrop-filter:none;-webkit-backdrop-filter:none}
 html[data-xuan] #storyDlg[data-place=city]{--sdbg:url(img/xuan/bg-city.webp)}html[data-xuan] #storyDlg[data-place=richmond]{--sdbg:url(img/xuan/bg-richmond.webp)}
 html[data-xuan] #storyDlg[data-place=northmel]{--sdbg:url(img/xuan/bg-northmel.webp)}html[data-xuan] #storyDlg[data-place=brunswick],html[data-xuan] #storyDlg[data-place=more]{--sdbg:url(img/xuan/bg-brunswick.webp)}
-html[data-xuan] #storyDlg .ed-box{background:linear-gradient(180deg,rgba(255,251,242,.98),rgba(244,235,215,.98));border:1px solid rgba(138,106,58,.7);border-radius:8px;box-shadow:inset 0 0 0 3px rgba(255,253,247,.85),inset 0 0 0 4px rgba(160,122,62,.28),0 10px 28px rgba(40,26,10,.4);color:#2a2018;padding:14px 16px 12px;gap:12px}
-html[data-xuan] #storyDlg .edu-ava.st-ava{width:76px;height:76px;border-radius:50%;border:2px solid #c9a45a;box-shadow:0 0 0 2px #fffaf0,0 0 0 3px rgba(63,122,99,.65),0 3px 8px rgba(40,26,10,.25);background:#efe4cc;overflow:hidden;padding:0}
+html[data-xuan] #storyDlg .ed-box{background:linear-gradient(180deg,rgba(255,252,246,.98),rgba(247,232,204,.97));border:1px solid rgba(201,164,90,.75);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,252,245,.9),inset 0 0 28px rgba(255,210,140,.35),0 14px 32px rgba(40,22,8,.35);color:#2a2018;padding:14px 16px 12px;gap:12px}
+html[data-xuan] #storyDlg .edu-ava.st-ava{width:76px;height:76px;border-radius:50%;border:2px solid #e7cf8e;box-shadow:0 0 0 3px #fffaf0,0 0 0 5px #c9a45a,0 0 16px rgba(255,176,80,.5);background:#efe4cc;overflow:hidden;padding:0}
 html[data-xuan] #storyDlg .edu-ava.st-ava img{width:100%;height:100%;object-fit:cover;display:block}
 html[data-xuan] #storyDlg .edu-ava.st-ava.px canvas{width:100%;height:100%;image-rendering:pixelated}
 html[data-xuan] #storyDlg .edu-ava.st-seal{background:#fdf0d8;font-size:34px}
@@ -141,7 +141,7 @@ html[data-theme=foundation] #storyDlg .sd-opt{background:#f8ecc8;border-color:#a
 html[data-theme=sketch] .pg-card{background:#fffefa;border:2px solid #222;box-shadow:5px 5px 0 #222;border-radius:3px 12px 3px 12px;color:#222}
 html[data-theme][data-skin=valley] .pg-card{border:4px solid var(--woodX,#5a3418);border-radius:6px;box-shadow:var(--winb,0 6px 0 rgba(0,0,0,.35))}
 /* ---- 🏮 古风: painted backdrops, standing figures, silk frame ---- */
-html[data-xuan] #storyDlg .sd-shade{background:linear-gradient(180deg,rgba(14,8,4,.42) 0%,rgba(14,8,4,.05) 28%,rgba(14,8,4,.05) 52%,rgba(14,8,4,.62) 100%)}
+html[data-xuan] #storyDlg .sd-shade{background:linear-gradient(180deg,rgba(48,28,16,.22) 0%,rgba(255,220,170,.06) 26%,rgba(20,12,8,.04) 54%,rgba(28,16,10,.58) 100%)}
 html[data-xuan] #storyDlg #sdScenes{position:absolute;inset:0;overflow:hidden}
 html[data-xuan] #storyDlg .sd-scene{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transform:scale(1.04);transition:opacity .8s ease,transform 6s ease-out}
 html[data-xuan] #storyDlg .sd-scene.in{opacity:1;transform:scale(1)}
