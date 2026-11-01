@@ -130,6 +130,10 @@ export async function create(el, region, opt) {
     }
     if (wx === 'hot' && phase === 'day') valleyMood = {...valleyMood, sky: ['#f0c878', '#ffe6b0', '#c6e090'], sun: 0xffc86a, sunI: 1.02, fog: 0xe6d090};
     valleyMood.phase = phase; valleyMood.wx = wx; valleyMood.wind = wx === 'wind'; valleyMood.rain = wx === 'rain';
+    if (opt.cloud != null && !valleyMood.rain) {
+      const k = Math.max(0, Math.min(1, +opt.cloud / 100));
+      valleyMood.fogD = valleyMood.fogD * (1 + k * 0.4);
+    }
     const Md = valleyMood;
     scene.background = new THREE.Color(Md.sky[0]);
     scene.add(new THREE.HemisphereLight(Md.hemi, Md.hemG, Md.hemI));

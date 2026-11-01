@@ -78,6 +78,27 @@ a{color:inherit}
 html[data-theme] a.go-here,html[data-theme=jrpg] a.go-here,html[data-xuan] a.go-here,html[data-skin=valley] a.go-here{position:fixed;left:12px;right:12px;bottom:calc(74px + var(--safe-b, env(safe-area-inset-bottom, 0px)));z-index:640;width:auto;margin:0}
 a.go-here small{display:block;margin-top:2px;font-size:12px;font-weight:650;letter-spacing:.04em;opacity:.9}
 #app[data-view=cafe]{padding-bottom:calc(168px + var(--safe-b))}
+.live-wx{position:relative;margin:0 0 12px;border-radius:16px;overflow:hidden;border:1px solid rgba(90,70,40,.28);background:#fffaf2;color:#2a2018;box-shadow:0 8px 18px rgba(40,24,8,.08)}
+.lw-sky{height:72px}
+.live-wx[data-wx=sun] .lw-sky{background:linear-gradient(#7ec8f4,#d7f3c4)}
+.live-wx[data-wx=cloud] .lw-sky{background:linear-gradient(#8e9aaa,#d5dde6)}
+.live-wx[data-wx=rain] .lw-sky{background:linear-gradient(#667480,#c5d0d8)}
+.live-wx[data-wx=wind] .lw-sky{background:linear-gradient(#9ec4de,#e7f2c8)}
+.live-wx[data-wx=hot] .lw-sky{background:linear-gradient(#f0c878,#ffe6b0 55%,#c6e090)}
+.live-wx[data-phase=dawn] .lw-sky{background:linear-gradient(#ffb08a,#ffe4c0 60%,#d5e4b0)}
+.live-wx[data-phase=dusk] .lw-sky{background:linear-gradient(#ff5c3c,#ffb07a 58%,#6a4a78)}
+.live-wx[data-phase=dusk][data-wx=rain] .lw-sky,.live-wx[data-phase=dusk][data-wx=cloud] .lw-sky{background:linear-gradient(#c46a58,#d0a090 52%,#4a3a58)}
+.live-wx[data-phase=night] .lw-sky{background:linear-gradient(#0c1224,#24304e 62%,#3a2840)}
+.lw-body{padding:0 12px 12px;margin-top:-22px}
+.lw-now{display:flex;align-items:flex-end;gap:10px}
+.lw-temp{font-size:40px;line-height:.9;font-weight:700}
+.lw-zh{font-size:16px;font-weight:700}
+.lw-now small,.lw-note{display:block;font-size:12px;opacity:.75}
+.lw-h,.lw-d{display:flex;gap:6px;overflow:auto;margin-top:8px}
+.lw-h span,.lw-d span{flex:none;min-width:58px;text-align:center;background:rgba(255,255,255,.62);border-radius:10px;padding:4px 4px 6px;font-size:12px}
+.lw-h b,.lw-d b{display:block;font-size:11px;font-weight:650}
+.lw-h em,.lw-d em{display:block;font-style:normal;font-weight:700}
+.lw-note{margin-top:8px}
 .btn.ghost{background:#fffdf8;color:var(--ink);text-shadow:none}
 .btn.danger{background:#fffdf8;color:#b23;border-color:#b23;box-shadow:3px 3px 0 #b23}
 .row{display:flex;gap:10px}.row>*{flex:1}
