@@ -75,7 +75,9 @@ a{color:inherit}
 .btn{display:block;width:100%;padding:10px;font-size:23px;font-weight:700;font-family:var(--hand);background:var(--slate);color:#fff;cursor:pointer;margin-top:12px;text-align:center;text-decoration:none;box-shadow:3px 3px 0 var(--pencil);text-shadow:0 1px 0 rgba(0,0,0,.15)}
 .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--pencil)}
 .game-btn{background:var(--hatch-pink),var(--pink)}
+html[data-theme] a.go-here,html[data-theme=jrpg] a.go-here,html[data-xuan] a.go-here,html[data-skin=valley] a.go-here{position:fixed;left:12px;right:12px;bottom:calc(74px + var(--safe-b, env(safe-area-inset-bottom, 0px)));z-index:640;width:auto;margin:0}
 a.go-here small{display:block;margin-top:2px;font-size:12px;font-weight:650;letter-spacing:.04em;opacity:.9}
+#app[data-view=cafe]{padding-bottom:calc(168px + var(--safe-b))}
 .btn.ghost{background:#fffdf8;color:var(--ink);text-shadow:none}
 .btn.danger{background:#fffdf8;color:#b23;border-color:#b23;box-shadow:3px 3px 0 #b23}
 .row{display:flex;gap:10px}.row>*{flex:1}
