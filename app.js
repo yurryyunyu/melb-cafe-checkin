@@ -51,11 +51,10 @@ const melDate = ms => { try { return MEL_FMT.format(new Date(ms)); } catch (e) {
 const today = () => melDate(nowMs());
 const stars = n => n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '';
 
-// ---------- 🎨 theme: cozy valley (default) · JRPG · sketch ----------
-// valley + JRPG share the pixel engine (data-theme=jrpg); valley adds data-skin=valley on top.
-// 🏰 foundation (default, warm painterly town) · 🐄 ranch (牧场: bright SNES-era farm life, built on the valley engine) · 🌾 valley · ⚔️ jrpg · ✏️ sketch
+// ---------- 🎨 theme: ⚔️ 古风 jrpg is the default. valley + JRPG share the pixel engine (data-theme=jrpg); valley adds data-skin=valley on top.
+// 🏰 foundation · 🐄 ranch · 🌾 valley · ⚔️ jrpg (default) · ✏️ sketch
 const THEMES = ['foundation', 'ranch', 'valley', 'jrpg', 'sketch'];
-let THEME = load('mcc.theme', 'foundation'); if (!THEMES.includes(THEME)) THEME = 'foundation';
+let THEME = load('mcc.theme', 'jrpg'); if (!THEMES.includes(THEME)) THEME = 'jrpg';
 const isJ = () => (THEME === 'jrpg' || THEME === 'valley' || THEME === 'ranch') && !!window.JRPG;
 const isV = () => (THEME === 'valley' || THEME === 'ranch') && isJ() && !!window.Valley;
 const isR = () => THEME === 'ranch' && isV();
@@ -68,7 +67,7 @@ function applyTheme() {
   if (isR()) h.dataset.ranch = '1'; else delete h.dataset.ranch;
   if (isXuan()) h.dataset.xuan = '1'; else delete h.dataset.xuan;
   if (window.Valley && Valley.setStyle) Valley.setStyle(isR() ? 'ranch' : 'valley');
-  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = isR() ? '#e07a2a' : isV() ? '#7a4a25' : isF() ? '#3e2c1e' : isXuan() ? '#2a1910' : t === 'jrpg' ? '#0b0f2a' : '#f7f4ec';
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = isR() ? '#e07a2a' : isV() ? '#7a4a25' : isF() ? '#3e2c1e' : isXuan() ? '#e8dcc0' : t === 'jrpg' ? '#0b0f2a' : '#f7f4ec';
 }
 applyTheme();
 function setTheme(t) { THEME = t; save('mcc.theme', t); if (t === 'sketch' && window.__sketchFonts) window.__sketchFonts(); applyTheme(); const d = $('#dlg'); if (d) d.classList.remove('show'); render(); }
@@ -342,7 +341,7 @@ function openCheckinForm(ci, isNew) {
       const i = checkins.findIndex(c => c.id === draft.id);
       if (i >= 0) checkins[i] = draft; else checkins.unshift(draft);
       if (!saveCheckins()) return;
-      closeSheet(); if (isNew) celebrate(before, draft.cafeId); else { toast('已保存'); checkBadges(); render(); }
+      closeSheet(); if (isNew) celebrate(before, draft.cafeId); else { let tip = '已保存'; try { const r = window.Loyalty && Loyalty.sync(loyaltyCtx()); if (r && r.stamps.length) tip += ' · 已盖印'; } catch (e) {} toast(tip); checkBadges(); render(); }
     };
     const del = $('#fDel', el);
     if (del) del.onclick = () => {
@@ -538,8 +537,24 @@ function drawHud() {
 function snapshot() { return {n: checkins.length, st: stamina(), xp: totalXP(), lv: levelInfo().lv, badges: new Set(BADGES.filter(b => b.test(stats())).map(b => b.id)), visited: new Set(visitedIds()), coins: totalCoins(), tried: new Set(collection().keys())}; }
 setInterval(() => { if (isV() && $('#vlClock')) { const k = Valley.clock(), el = $('#vlClock'); el.querySelector('.vc-time').textContent = k.hhmm; el.querySelector('.vc-sky').textContent = k.sky; }
   if (isF() && $('#fdDay')) { const t = $('#fdDay .fd-time'); if (t) t.textContent = Valley.clock().hhmm; } }, 20000);
+function loyaltyCtx() {
+  const counts = {};
+  checkins.forEach(ci => { if (ci.cafeId && cafeById(ci.cafeId)) counts[ci.cafeId] = (counts[ci.cafeId] || 0) + 1; });
+  const cafes = allCafes().map(c => ({id: c.id, name: c.name, short: c.short || c.name, region: regionOf(c.id).r.id, regionName: regionOf(c.id).r.name, closed: !!c.closed, seed: !c.custom}));
+  const st = window.Story, unique = new Set(checkins.filter(ci => ci.cafeId && cafeById(ci.cafeId)).map(ci => ci.cafeId)).size;
+  return {counts, cafes, story: st ? {pro: st.seen('pro'), chapters: st.CH.filter(ch => st.done(ch.n)).map(ch => ch.n), sides: st.sideIds.filter(id => st.seen(id)), ending: st.ending(), unique: storyCtx().cafes} : {pro: false, chapters: [], sides: [], ending: null, unique}};
+}
+function lyCelebrateBits(name) {
+  if (!window.Loyalty) return [];
+  try {
+    const r = Loyalty.sync(loyaltyCtx()), bits = [];
+    if (r.stamps.length) bits.push((isXuan() ? '🧧 通行印 +1' : '🎴 集卡盖印') + (name ? ' · ' + name : ''));
+    r.cards.slice(0, 2).forEach(card => bits.push('🎴 ' + card.name));
+    return bits;
+  } catch (e) { return []; }
+}
 function celebrate(before, cafeId, extra = '') {
-  const after = snapshot(), c = cafeById(cafeId);
+  const after = snapshot(), c = cafeById(cafeId), lyBits = lyCelebrateBits(c && c.name);
   const isNew = c && !before.visited.has(cafeId);
   const gain = after.xp - before.xp, lvUp = after.lv > before.lv;
   const newBadges = BADGES.filter(b => after.badges.has(b.id) && !before.badges.has(b.id));
@@ -553,7 +568,7 @@ function celebrate(before, cafeId, extra = '') {
     const coins = after.coins - before.coins, vg = c && villagerOf(cafeId), hTo = c ? heartsOf(cafeId) : 0, hFrom = c ? Math.min(10, Math.max(0, checkinsOf(cafeId).length - 1)) : 0;
     const newEntry = !!(last.drink && !before.tried.has(itemKey(last.drink)));
     const lines = [reg ? `<div class="vl-line">🗺️ ${esc(reg.name)} 探索 ${reg.done}/${reg.total}${reg.done === reg.total ? ' 👑 全区制霸！' : ''}</div>` : '',
-      ...newBadges.map(b => `<div class="vl-line">🎒 放入背包：${b.e} ${b.name}</div>`), stLine ? `<div class="vl-line st-line">❤️ ${stLine}</div>` : '', extra];
+      ...newBadges.map(b => `<div class="vl-line">🎒 放入背包：${b.e} ${b.name}</div>`), ...lyBits.map(t => `<div class="vl-line">${esc(t)}</div>`), stLine ? `<div class="vl-line st-line">❤️ ${stLine}</div>` : '', extra];
     let stage = 'harvest';
     const done = () => { clearTimeout(celebrate._t); el.className = 'hidden'; el.innerHTML = ''; render(); if (coins > 0) setTimeout(() => coinBurst(null, coins, after.coins - coins), 120); };
     const next = () => { clearTimeout(celebrate._t);
@@ -570,7 +585,7 @@ function celebrate(before, cafeId, extra = '') {
   if (isJ()) {
     const last = checkins.filter(x => x.cafeId === cafeId).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
     const lines = [reg ? `<div class="cel-reg">🗺️ ${esc(reg.name)} 巡礼 ${reg.done}/${reg.total}${reg.done === reg.total ? ' 👑 区域制霸！' : ''}</div>` : '',
-      ...newBadges.map(b => `<div class="cel-badge">🎒 获得装备：${b.e} ${b.name}</div>`), stLine ? `<div class="cel-reg st-line">💥 ${stLine}</div>` : '', extra];
+      ...newBadges.map(b => `<div class="cel-badge">🎒 获得装备：${b.e} ${b.name}</div>`), ...lyBits.map(t => `<div class="cel-reg">${esc(t)}</div>`), stLine ? `<div class="cel-reg st-line">💥 ${stLine}</div>` : '', extra];
     let stage = 'chest';
     const done = () => { clearTimeout(celebrate._t); el.classList.add('hidden'); el.className = 'hidden'; el.innerHTML = ''; render(); };
     const next = () => { clearTimeout(celebrate._t); if (lvUp && stage === 'chest') { stage = 'lv'; JRPG.levelUp(el, {from: before.lv, to: after.lv, title: levelInfo().title}, done); celebrate._t = setTimeout(done, 9000); } else done(); };
@@ -589,6 +604,7 @@ function celebrate(before, cafeId, extra = '') {
       ${lvUp ? `<div class="cel-lv">⬆️ 升级到 Lv.${after.lv} · ${levelInfo().title}</div>` : ''}
       ${reg ? `<div class="cel-reg">🗺️ ${esc(reg.name)} 区域 ${reg.done}/${reg.total}${reg.done === reg.total ? ' 👑 全部收集！' : ''}</div>` : ''}
       ${newBadges.map(b => `<div class="cel-badge">🏆 新成就：${b.e} ${b.name}</div>`).join('')}
+      ${lyBits.map(t => `<div class="cel-reg">${esc(t)}</div>`).join('')}
       ${stLine ? `<div class="cel-reg st-line">❤️ ${stLine}</div>` : ''}
       ${extra}
       <button class="btn game-btn" id="celOk">太棒了！</button></div>`;
@@ -851,12 +867,24 @@ const stGoalText = g => `${g.t}${g.need > 1 ? `　${g.have}/${g.need}` : ''}`;
 function stTargets(g) { if (!g.id.startsWith('a-')) return ''; const r = g.id.slice(2), v = visitedIds(), L = allCafes().filter(c => !isClosed(c) && regionOf(c.id).r.id === r && !v.has(c.id)), show = L.slice(0, 5);
   return L.length ? `<div class="edu-tg"><small>这个街区还没去过的店（共 ${L.length} 家，哪几家都行）：</small>${show.map(c => `<a class="chip" href="#/cafe/${c.id}">${esc(c.short || c.name)}</a>`).join('')}</div>` : ''; }
 const stSideDue = () => window.Story ? Story.sides(storyCtx()).filter(s => s.due).length : 0;
+function loyaltyEntry() { if (!window.Loyalty) return ''; let s = {stamped: 0, cards: 0, cardTotal: 0, readySet: false}; try { s = Loyalty.summary(loyaltyCtx()); } catch (e) {}
+  const xuan = (typeof isXuan === 'function') && isXuan();
+  return `<a class="edu-entry vwin jwin ly-entry" href="#/loyalty" id="loyaltyEntry"><span class="ee-ic">${xuan ? '🧧' : '🎴'}</span><span class="ee-t"><b>${xuan ? '江湖通行印 · 豆籍卡' : '集卡册'}</b><small>已盖 ${s.stamped} 印 · 故事卡 ${s.cards}/${s.cardTotal}${s.readySet ? ' · 有套卡可兑换' : ''}</small></span><span class="ee-go">›</span></a>`; }
+function stMem(id) {
+  if (id === 'lamp') return '江湖的颜色淡了，可巷口的灯还亮着。打卡、地图和小铺，都还热着。';
+  if (id === 'first') return '「第一颗」重新开了门。澈和小豆在店里，老焙坐在窗边。以后的打卡，还会把故事带回去。';
+  return '老焙、澈、小豆，和这条江湖里的每一间铺子，如今都只在回忆里。你的打卡、地图和小铺，还会一直走下去。';
+}
 function storyEntry() { if (!window.Story) return ''; const x = storyCtx(), n = Story.cur(), N = Story.CH.length, p = Story.progress(), sd = stSideDue(), sdTag = sd ? ' · 🧭有新的支线' : '';
   if (n === 0) return `<a class="edu-entry vwin jwin story-entry" href="#/story" id="storyEntry"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 序章《巷口的灯》</b><small>一杯雨后的咖啡，一本失落的食谱簿……</small></span><span class="ee-go">›</span></a>`;
-  if (n > N) return `<a class="edu-entry vwin jwin story-entry done" href="#/story" id="storyEntry"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 第一颗豆　${Story.finished() ? '已完结' : '终章在等你'}</b><small>称号：${esc(Story.title())}${Story.finished() && Story.ending() ? ' · 结局「' + esc(Story.ENDINGS[Story.ending()].name) + '」' : ''}${sdTag}</small></span><span class="ee-go">›</span></a>`;
+  if (n > N) { const end = Story.finished() && Story.ending() ? Story.ENDINGS[Story.ending()] : null;
+    const wait = !end && !Story.epiReady(x) ? `再去打卡，凑满 ${Story.EPI_NEED} 家不同的店，结局才会到来（${x.cafes}/${Story.EPI_NEED}）` : '';
+    return `<a class="edu-entry vwin jwin story-entry done" href="#/story" id="storyEntry"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 第一颗豆　${end ? '已完结' : '结局未至'}</b><small>${end ? `结局「${esc(end.name)}」 · 称号：${esc(Story.title())}` : wait || '终章在等你'}${sdTag}</small></span><span class="ee-go">›</span></a>`; }
   const c = Story.CH[n - 1], gs = Story.goals(n, x).filter(g => !g.opt), ready = Story.complete(n, x), g = gs.find(q => !q.ok), o = !Story.seen('c' + n + 'o');
   return `<a class="edu-entry vwin jwin story-entry${ready ? ' ready' : ''}" href="#/story" id="storyEntry" data-ch="${n}"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 第 ${n} 章《${esc(c.name)}》</b><small>${o ? '新的一章在等你翻开' : ready ? '目标达成！点开听这一章的结局' : esc('目标：' + stGoalText(g))}${sdTag}</small></span><span class="ee-bar"><i style="width:${Math.round(p / N * 100)}%"></i></span><span class="ee-go">›</span></a>`; }
-function storyBar() { if (!window.Story) return ''; const n = Story.cur(), N = Story.CH.length; if (n > N) return '';
+function storyBar() { if (!window.Story) return ''; const n = Story.cur(), N = Story.CH.length;
+  if (n > N) { if (Story.finished()) return ''; const x = storyCtx(); if (Story.epiReady(x)) return `<a class="edu-entry vwin jwin story-bar ready" href="#/story" id="storyBar"><span class="ee-ic">📜</span><span class="ee-t"><small>终章在等你 · 今天的巷口也亮着</small></span><span class="ee-go">›</span></a>`;
+    return `<a class="edu-entry vwin jwin story-bar" href="#/story" id="storyBar"><span class="ee-ic">📜</span><span class="ee-t"><small>再去打卡，凑满 ${Story.EPI_NEED} 家不同的店（${x.cafes}/${Story.EPI_NEED}）</small></span><span class="ee-go">›</span></a>`; }
   if (n === 0) return `<a class="edu-entry vwin jwin story-bar" href="#/story" id="storyBar"><span class="ee-ic">📜</span><span class="ee-t"><small>主线 · 序章《巷口的灯》</small></span><span class="ee-go">›</span></a>`;
   const x = storyCtx(), c = Story.CH[n - 1], g = Story.goals(n, x).filter(q => !q.opt && !q.ok)[0], o = !Story.seen('c' + n + 'o');
   return `<a class="edu-entry vwin jwin story-bar${!g ? ' ready' : ''}" href="#/story" id="storyBar" data-ch="${n}"><span class="ee-ic">📜</span><span class="ee-t"><small>第 ${n} 章《${esc(c.name)}》· ${o ? '新的一章在等你翻开' : g ? esc(stGoalText(g)) : '目标达成，点开听结局'}</small></span><span class="ee-go">›</span></a>`; }
@@ -866,7 +894,7 @@ function stFavCard() { const who = [['laobei', '老焙']]; if (Story.seen('c2c')
   const idle = !!window.Idle, bn = idle ? Idle.beans() : 0;
   return `<div class="edu-notes vwin jwin st-fav-card" id="storyFav"><div class="en-h">❤ 好感</div>${who.map(([w, nm]) => { const t = Story.tier(w), g = Story.state.gifts[w] || 0, can = Story.canGift(w);
     return `<div class="st-fav" data-who="${w}"><b>${esc(nm)}</b><span class="st-fbar"><i style="width:${Math.round(t.v / Story.FAV_MAX * 100)}%"></i></span><em>${esc(t.name)} · ${t.v}/${Story.FAV_MAX}</em>${idle && !Story.finished() ? `<button class="chip st-gift" data-gift="${w}"${can && bn >= Story.GIFT_BEANS ? '' : ' disabled'}>🎁 送 ${Story.GIFT_BEANS} 生豆 <small>${g}/${Story.GIFT_MAX}</small></button>` : ''}</div>`; }).join('')}
-    <small class="hint">${Story.finished() ? '好感停在了最后一幕的那一刻。他们说过的话，你都记得。' : `好感来自你的选择、支线，也可以用「老焙的小铺」里的生豆送礼（每人最多 ${Story.GIFT_MAX} 次）。好感高了，有些话他们才肯说。${idle ? ` 你现在有 🫘${bn}。` : ''}`}</small></div>`; }
+    <small class="hint">${Story.finished() ? (Story.ending() === 'first' ? '好感停在重开的那一天。他们还在店里。' : Story.ending() === 'lamp' ? '好感停在灯还亮着的那一刻。' : '好感停在了最后一幕的那一刻。他们说过的话，你都记得。') : `好感来自你的选择、支线，也可以用「老焙的小铺」里的生豆送礼（每人最多 ${Story.GIFT_MAX} 次）。好感高了，有些话他们才肯说。选择不会替你打卡。${idle ? ` 你现在有 🫘${bn}。` : ''}`}</small></div>`; }
 function stPagesCard() { const P = Story.pages(), got = P.filter(p => p.got).length;
   return `<div class="section-title">📖 食谱簿的散页 <small>${got}/${P.length}</small></div><div class="st-pages" id="storyPages">${P.map(p => p.got ? `<button class="st-pg got vwin jwin" data-page="${p.id}">${isXuan() ? `<span class="pg-th" style="background-position:${(p.sp % 3) * 50}% ${p.sp >= 3 ? 100 : 0}%"></span>` : `<span class="pg-em">${p.ic}</span>`}<b>${esc(p.name)}</b></button>` : `<div class="st-pg lock vwin jwin"><span class="pg-em">？</span><b>第 ${p.n} 页</b></div>`).join('')}</div>`; }
 function pgOpen(id) { const p = Story.pages().find(q => q.id === id); if (!p || !p.got) return; const old = $('#pgDlg'); if (old) old.remove();
@@ -891,21 +919,24 @@ function storyView() { const x = storyCtx(), n = Story.cur(), N = Story.CH.lengt
     cur = `<div class="edu-notes vwin jwin story-cur${ready ? ' ready' : ''}" id="storyCur" data-ch="${n}"><div class="en-h">📖 第 ${n} 章 · 《${esc(c.name)}》</div><div class="en-l">${esc(c.sum)}</div>
       ${o ? `<div class="section-title">🎯 本章目标 <small>${req.filter(g => g.ok).length}/${req.length}</small></div><div class="edu-tasks" id="storyTasks">${gs.map(goalRow).join('')}</div>` : ''}
       <div class="st-acts">${!o ? `<button class="btn" id="stGo" data-play="c${n}o">▶ 翻开这一章</button>` : ready ? `<button class="btn" id="stGo" data-play="c${n}c">📖 目标达成 · 听这一章的结局</button>` : `<small class="hint">做完目标，这一章的结局会自动播放。以前的记录也算数。</small>`}</div></div>`;
-  } else cur = Story.finished() ? `<div class="edu-notes vwin jwin story-cur story-fin" id="storyCur"><div class="en-h">📕 第一颗豆 · 已完结</div><div class="en-l">结局：「${esc(Story.ENDINGS.tea.name)}」——${esc(Story.ENDINGS.tea.sum)}</div><div class="en-l st-mem">老焙、澈、小豆，和这条江湖里的每一间铺子，如今都只在回忆里。你的打卡、地图和小铺，还会一直走下去。</div><button class="btn" id="stGo" data-play="epi" data-replay="1">🔁 重温最后一幕</button></div>`
-    : `<div class="edu-notes vwin jwin story-cur" id="storyCur"><div class="en-h">📖 第一颗豆 · 全部章节完成</div><div class="en-l">簿子的每一页都找回来了。最后一幕，在等你。</div><button class="btn" id="stGo" data-play="epi">▶ 听尾声</button></div>`;
+  } else { const end = Story.finished() && Story.ending() ? Story.ENDINGS[Story.ending()] : null, ready = Story.epiReady(x);
+    cur = end ? `<div class="edu-notes vwin jwin story-cur story-fin" id="storyCur"><div class="en-h">📕 第一颗豆 · 已完结</div><div class="en-l">结局：「${esc(end.name)}」——${esc(end.sum)}</div><div class="en-l st-mem">${esc(stMem(Story.ending()))}</div><button class="btn" id="stGo" data-play="epi" data-replay="1">🔁 重温最后一幕</button></div>`
+    : !ready ? `<div class="edu-notes vwin jwin story-cur" id="storyCur"><div class="en-h">📖 章节都走完了</div><div class="en-l">再去打卡，凑满 ${Story.EPI_NEED} 家不同的店，结局才会到来。</div><div class="en-l">现在 ${x.cafes} / ${Story.EPI_NEED}。支线还可以听。选择不能代替打卡。</div><a class="btn" href="#/map">去地图打卡</a></div>`
+    : Story.chosen('k7') == null ? `<div class="edu-notes vwin jwin story-cur ready" id="storyCur"><div class="en-h">📖 终章 · 最后一页</div><div class="en-l">五十一家不同的店，你都坐下喝过了。最后一页怎么处理，由你来选。</div><button class="btn" id="stGo" data-play="fin">▶ 翻开最后一页</button></div>`
+    : `<div class="edu-notes vwin jwin story-cur ready" id="storyCur"><div class="en-h">📖 尾声在等你</div><div class="en-l">最后一页已经选定。去听这一杯怎么收场。</div><button class="btn" id="stGo" data-play="epi">▶ 听尾声</button></div>`; }
   const row = (icon, name, sub, plays, cls) => `<div class="edu-ch vwin jwin story-ch ${cls}"><span class="ec-n">${icon}</span><span class="ec-t"><b>${name}</b><small>${sub}</small>${plays ? `<span class="st-acts">${plays}</span>` : ''}</span></div>`;
   const pb = (id, t) => Story.seen(id) ? `<button class="chip" data-play="${id}" data-replay="1">${t}</button>` : '';
   const list = [row(Story.seen('pro') ? '✔' : '📖', '序章 · 巷口的灯', Story.seen('pro') ? '已读' : '尚未翻开', pb('pro', '🔁 重看'), Story.seen('pro') ? 'passed' : 'open')]
     .concat(Story.CH.map(c => { const st = Story.done(c.n) ? 'passed' : Story.unlocked(c.n) ? 'open' : 'locked';
       return st === 'locked' ? row('🔒', `第 ${c.n} 章 · ？？？`, '完成上一章后翻开', '', 'locked')
         : row(st === 'passed' ? '✔' : '📖', `第 ${c.n} 章 · ${esc(c.name)}`, st === 'passed' ? `称号「${esc(c.reward.title)}」· 🪙${c.reward.c}${c.reward.item ? ' · 🎁' : ''}` : esc(c.sum), pb('c' + c.n + 'o', '🔁 开场') + pb('c' + c.n + 'c', '🔁 结局'), st); }))
-    .concat([Story.done(N) ? row(Story.seen('epi') ? '✔' : '📖', '尾声 · ' + (Story.seen('epi') && Story.ending() ? esc(Story.ENDINGS[Story.ending()].name) : '天亮之前'), Story.seen('epi') ? `称号「${esc(Story.EPI.reward.title)}」` : '最后一幕', pb('epi', '🔁 重看'), Story.seen('epi') ? 'passed' : 'open') : row('🔒', '尾声 · ？？？', '完成全部章节后翻开', '', 'locked')]);
-  const ts = Story.titles();
-  app.innerHTML = `<div class="edu-head vwin jwin story-head"><span class="edu-ava big st-book">📜</span><div><small>主线 · 第一颗豆</small><b class="edu-rank" id="storyTitle">${t ? esc(t) : '尚无称号'}</b><div class="edu-ladder">${pips}</div><small>已完成 ${p}/${N} 章${Story.finished() ? ' · 已完结 · ' + esc(Story.ENDINGS.tea.name) : ''}</small></div></div>
+    .concat([Story.done(N) ? row(Story.seen('epi') ? '✔' : '📖', '尾声 · ' + (Story.seen('epi') && Story.ending() ? esc(Story.ENDINGS[Story.ending()].name) : '天亮之前'), Story.seen('epi') ? `称号「${esc((Story.ENDINGS[Story.ending()] || Story.ENDINGS.tea).reward.title)}」` : (Story.epiReady(x) ? '最后一幕' : `再去打卡，凑满 ${Story.EPI_NEED} 家不同的店，结局才会到来`), Story.seen('epi') ? pb('epi', '🔁 重看') : (Story.epiReady(x) ? (Story.chosen('k7') == null ? '<button class="chip" data-play="fin">▶ 最后一页</button>' : '<button class="chip" data-play="epi">▶ 听尾声</button>') : ''), Story.seen('epi') || Story.epiReady(x) ? (Story.seen('epi') ? 'passed' : 'open') : 'locked') : row('🔒', '尾声 · ？？？', '完成全部章节后翻开', '', 'locked')]);
+  const ts = Story.titles(), endName = Story.finished() && Story.ending() ? Story.ENDINGS[Story.ending()].name : '';
+  app.innerHTML = `<div class="edu-head vwin jwin story-head"><span class="edu-ava big st-book">📜</span><div><small>主线 · 第一颗豆</small><b class="edu-rank" id="storyTitle">${t ? esc(t) : '尚无称号'}</b><div class="edu-ladder">${pips}</div><small>已完成 ${p}/${N} 章${endName ? ' · 已完结 · ' + esc(endName) : ''}</small></div></div>
     ${cur}${Story.seen('pro') ? stFavCard() : ''}<div class="section-title">📚 章节</div><div class="edu-list" id="storyList">${list.join('')}</div>
     ${Story.seen('pro') ? stPagesCard() + stSidesCard(x) : ''}${stChoicesCard()}
     ${ts.length ? `<div class="section-title">🏷️ 已获得的称号</div><div class="chips st-titles">${ts.map(q => `<span class="chip on">${esc(q.title)}</span>`).join('')}</div>` : ''}
-    <div class="hint edu-foot">主线把「咖啡课、打卡、豆子笔记」串成一个故事。每章的目标都看你<b>已有的记录</b>（以前打过的卡也算），不要求去某一家特定的店。完成目标后，这一章的结局会自动播放，并送金币、XP、称号和林的一页手写笔记；部分章节还送装扮（在像素主题的杂货店里装备）。路上有三次选择，会改变之后的对话，也会改变最后一幕里，谁说了什么、怎样告别。</div>`;
+    <div class="hint edu-foot">主线把「咖啡课、打卡、豆子笔记」串成一个故事。每章的目标都看你<b>已有的记录</b>（以前打过的卡也算），不要求去某一家特定的店。只点选项不会跳章。全部章节走完后，还要在 <b>${Story.EPI_NEED}</b> 家不同的店打过卡，尾声才会到来。路上的选择关乎旧情、信任，也关乎你怎么守这条巷子；它们决定尾声是哪一种，不决定你能不能进下一章。<a href="#/loyalty">集卡册 ›</a></div>`;
   app.onclick = e => { const g = e.target.closest('[data-gift]'); if (g && !g.disabled) { const w = g.dataset.gift; if (Story.canGift(w) && Idle.spendBeans(Story.GIFT_BEANS) && Story.gift(w)) { SFXplay('harvest'); toast(`❤ ${Story.nameOf(w)} 好感 +1`); render(); } return; }
     const pg = e.target.closest('[data-page]'); if (pg) return pgOpen(pg.dataset.page);
     const b = e.target.closest('[data-play]'); if (!b) return; const id = b.dataset.play; storyPlay(id, {replay: !!b.dataset.replay}); }; }
@@ -932,7 +963,7 @@ function storyPlay(id, opt = {}) { if (!window.Story) return; const sc = Story.s
   const favPop = g => { const t = Object.entries(g || {}).map(([w, n]) => `❤ ${Story.nameOf(w)} +${n}`).join('　'); const el = $('#sdFav'); if (!t || !el) return; el.textContent = t; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); };
   const pagesOf = () => (sc.kind === 'close' ? Story.pages().filter(p => p.ch === sc.n) : []);
   const rwHtml = () => { const xp = Math.round(rw.c / 2), isEpi = sc.kind === 'epi', isSide = sc.kind === 'side', pg = pagesOf(), fv = isSide && sc.side.fav ? Object.entries(sc.side.fav).map(([w, n]) => `❤ ${Story.nameOf(w)} 好感 +${n}`) : [];
-    return `<div class="np-rw" id="sdReward"><b>${isEpi ? `📖 尾声 · ${esc(Story.ENDINGS.tea.name)}` : isSide ? `🧭 支线完成 · ${esc(sc.title)}` : `📖 第 ${sc.n} 章 完成`}</b><span>🪙 +${rw.c}</span><span>⭐ +${xp} XP</span>${rw.title ? `<span>🏷️ 称号：${esc(rw.title)}</span>` : ''}${fv.map(t => `<span>${t}</span>`).join('')}${rw.item ? `<span>🎁 ${esc(npcItemName(rw.item))}</span>` : ''}
+    return `<div class="np-rw" id="sdReward"><b>${isEpi ? `📖 尾声 · ${esc((sc.ending && sc.ending.name) || '')}` : isSide ? `🧭 支线完成 · ${esc(sc.title)}` : `📖 第 ${sc.n} 章 完成`}</b><span>🪙 +${rw.c}</span><span>⭐ +${xp} XP</span>${rw.title ? `<span>🏷️ 称号：${esc(rw.title)}</span>` : ''}${fv.map(t => `<span>${t}</span>`).join('')}${rw.item ? `<span>🎁 ${esc(npcItemName(rw.item))}</span>` : ''}
       ${pg.map(p => `<button class="chip st-getpg" data-page="${p.id}">📖 找回：${esc(p.name)} · 读林的笔记</button>`).join('')}${rw.item ? `<small>${isV() ? '装扮已经放进杂货店，可以免费装备。' : '装扮会出现在像素主题（田园 / 牧场）的杂货店里。'}</small>` : ''}</div>`; };
   // ---- finale (尾声): map dissolves into ink, portraits fade to blank paper, music thins to one note, ending card + credits
   const INK_POS = [[.14, .29], [.76, .19], [.82, .38], [.36, .68], [.80, .58], [.80, .79]]; let inkN = 0, inkT = [];
@@ -944,8 +975,8 @@ function storyPlay(id, opt = {}) { if (!window.Story) return; const sc = Story.s
   const goneFade = who => { const R = d.querySelector('#sdStage .r'); if (R && R.dataset.k === who) R.classList.add('gone'); const ii = i; setTimeout(() => { const a = $('#sdAva'); if (a && i === ii) a.classList.add('blank'); }, 600); };
   const finaleBeat = b => { d.dataset.fin = b.bg || ''; if (b.map >= 0 && b.map !== inkN) inkSet(b.map); if (b.gone) goneFade(b.gone); if (b.snd && window.Music && Music[b.snd]) { try { Music[b.snd](); } catch (e) {} } };
   const musicBack = () => { try { if (window.Music && Music.resume) Music.resume(); } catch (e) {} };
-  const showEnding = () => { const E = $('#sdEnd'), e = Story.ENDINGS.tea; d.classList.add('ending'); d.classList.remove('alone'); clearInterval(tm); tm = null; if (!E) return;
-    E.innerHTML = `<div class="se-roll"><div class="se-card"><small>尾声</small><b>${esc(e.name)}</b><i></i><p>${esc(e.sum)}</p></div><div class="se-cred"><p>《第一颗豆》</p><p class="s">一个关于咖啡的小故事</p><p>老焙　·　林　·　澈　·　小豆　·　金远</p><p class="s">渡口茶亭的掌柜　铁匠铺的掌柜　巷尾面馆的老板娘<br>集市的卖花人　烘豆房的老师傅</p><p class="s">以及这条江湖里，每一间铺子，每一位掌柜</p><p class="s">故事、画面与音乐，均为原创。<br>墨尔本的咖啡馆，和你的每一次打卡，是故事之外的真实。</p><p>谢谢你，喝完了这一杯。</p></div></div><button class="btn" id="seDone">回到咖啡地图</button>`;
+  const showEnding = () => { const E = $('#sdEnd'), e = sc.ending || Story.ENDINGS[Story.ending()] || Story.ENDINGS.tea; d.classList.add('ending'); d.classList.remove('alone'); clearInterval(tm); tm = null; if (!E) return;
+    E.innerHTML = `<div class="se-roll"><div class="se-card"><small>尾声</small><b>${esc(e.name)}</b><i></i><p>${esc(e.sum)}</p></div><div class="se-cred"><p>《第一颗豆》</p><p class="s">一个关于咖啡、旧情与守巷的小故事</p><p>老焙　·　林　·　澈　·　小豆　·　金远</p><p class="s">渡口茶亭的掌柜　铁匠铺的掌柜　巷尾面馆的老板娘<br>集市的卖花人　烘豆房的老师傅</p><p class="s">以及这条江湖里，每一间铺子，每一位掌柜</p><p class="s">故事、画面与音乐，均为原创。<br>墨尔本的咖啡馆，和你的每一次打卡，是故事之外的真实。</p><p>${esc(e.bye || '谢谢你，喝完了这一杯。')}</p></div></div><button class="btn" id="seDone">回到咖啡地图</button>`;
     E.classList.remove('on'); void E.offsetWidth; E.classList.add('on'); $('#sdSkip').classList.add('hidden'); };
   const isChoice = () => !!pages[i] && pages[i].w === 'choice';
   const show = () => { const b = pages[i], last = i === pages.length - 1, box = d.querySelector('.ed-box'); SFXplay('blip'); box.classList.remove('choosing');
@@ -958,7 +989,8 @@ function storyPlay(id, opt = {}) { if (!window.Story) return; const sc = Story.s
     d.style.setProperty('--sd-box', (box.offsetHeight + 26) + 'px'); $('#sdPage').textContent = b === null ? '' : `${i + 1}/${L.length}`; $('#sdNext').textContent = last ? (b === null ? '✔ 收下' : '✔ 完') : '▼ 继续'; $('#sdSkip').classList.toggle('hidden', !replay && b === null); };
   const end = () => { clearInterval(tm); inkT.forEach(clearTimeout); window.removeEventListener('resize', inkLayout); if (isEp) musicBack(); d.remove(); if (!replay) { storyHold = true; npcHold = true; SFXplay(rw ? 'harvest' : 'blip'); drawHud();
       if (rw) { coinBurst(null, rw.c, before); xpPop(null, Math.round(rw.c / 2), L0); const L1 = levelInfo(); if (L1.lv > L0.lv) setTimeout(() => toast(`⬆️ 升级！Lv.${L1.lv} ${L1.title}`, 2600), 1300); }
-      if (mk && (mk.kind === 'pro' || (mk.kind === 'close' && mk.n < Story.CH.length))) setTimeout(() => storyTick(true), 1100); }
+      if (mk && mk.first && window.Loyalty) { try { const r = Loyalty.sync(loyaltyCtx()); if (r.cards.length) setTimeout(() => toast('🎴 ' + r.cards.slice(0, 2).map(c => c.name).join('、')), 900); } catch (e) {} }
+      if (mk && (mk.kind === 'pro' || mk.kind === 'fin' || (mk.kind === 'close' && mk.n < Story.CH.length))) setTimeout(() => storyTick(true), 1100); }
     if (['story', 'list', 'map'].includes(app.dataset.view)) render(); };
   const next = () => { if (tm) { clearInterval(tm); tm = null; $('#sdText').textContent = full; return; } if (++i >= pages.length) return end(); show(); };
   const pickOpt = k => { const b = pages[i]; if (!b || b.w !== 'choice') return; const r = Story.choose(b.id, k); SFXplay('harvest'); if (r) favPop(r.fav); refresh(); show(); };
@@ -982,7 +1014,7 @@ const idIc = (sp, ic) => isXuan() ? `<span class="idle-sp" style="--c:${sp % 3};
 const idNum = n => (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, '');
 const mem = () => !!(window.Story && Story.finished());
 const MEM_LINES = ['（回忆）小豆：「杯子我都洗好了，放在最上面那一格。」', '（回忆）老焙：「早上要先闻，再喝。」', '（回忆）窗台上的旧斗笠，落了一点点烘豆的香灰。', '（回忆）铺子里还有焦糖的香味，像谁刚走。', '（回忆）渡口茶亭的灯，在记忆里，今天也亮了一小会儿。'];
-const IDLE_LINES = ['小豆：「今天来了好多客人，烘豆机一直在响！」', '老焙：「（翻着账本）嗯，没偷懒。」', '阿满：「豆袋我都码好啦，您点点？」', '铺子里有股焦糖的香味，一直没散。', '窗台上的旧斗笠，落了一点点烘豆的香灰。', '老焙在柜台后面打了个盹，杯子还冒着热气。'];
+const IDLE_LINES = ['小豆：「杯子洗好了，放在最上面那一格。明天还热。」', '老焙：「今天的巷口也亮着。你要是累了，就闻一闻再走。」', '阿满：「豆袋码好了。不急，一袋一袋来。」', '铺子里有股焦糖的香味，一直没散。', '窗台上的旧斗笠，落了一点点烘豆的香灰。', '老焙在柜台后面打了个盹，杯子还冒着热气。'];
 let idleBy = 'laobei', idleTimer = null, idleAwayShown = false, idleAwayTries = 0;
 function idleSummary() { const now = nowMs(), x = idleCtx(), P = Idle.pending(now, x); return {P, x, now, E: Idle.expInfo(now)}; }
 function idleEntry() { if (!window.Idle) return ''; const {P, E} = idleSummary(), ready = P.c >= 10 || (E && E.done), R = Idle.rates(idleCtx());
@@ -1001,9 +1033,10 @@ function idleView() { const now = nowMs(), x = idleCtx(); Idle.sync(now); const 
     : `<div class="idle-by" id="idleBy"><button class="chip${idleBy === 'laobei' ? ' on' : ''}" data-by="laobei">${mem() ? '老焙的旧影去' : '老焙去'}（更爱捡到旧物）</button><button class="chip${idleBy === 'you' ? ' on' : ''}" data-by="you">你去（带回更多金币）</button></div>
       <div class="idle-dests">${Idle.DESTS.map((D, i) => { const g = Idle.canGo(i, idleBy, now, x); return `<button class="idle-dest vwin jwin" data-go="${i}"${g.ok ? '' : ' disabled'}><span class="idle-em">${D.ic}</span><b>${esc(D.name)}</b><small>${D.min >= 60 ? D.min / 60 + ' 小时' : D.min + ' 分钟'} · 🫘${D.beans}</small><small>🪙${D.c[0]}–${D.c[1]}${g.ok ? '' : g.why === 'beans' ? ' · 生豆不够' : g.why === 'daily' ? ' · 今天走够了' : ''}</small></button>`; }).join('')}</div>`;
   const rel = Idle.RELICS, rs = Idle.relics();
-  app.innerHTML = `<div class="idle-hero vwin jwin"><div class="ih-art"></div><div class="ih-t"><b>老焙的小铺</b><small>${mem() ? '铺子里没有人了。炉火，是回忆里的。' : '不在的时候，铺子也在慢慢烘豆'}</small></div></div>
+  const idleMood = mem() ? '铺子里没有人了。炉火，是回忆里的。' : (window.Story && Story.ending() === 'lamp' ? '江湖淡了些。巷口的灯，今天也亮着。' : (window.Story && Story.ending() === 'first' ? '「第一颗」重新开了门。今天的第一锅，已经在响。' : '今天的巷口也亮着。不在的时候，炉火替你守着。'));
+  app.innerHTML = `<div class="idle-hero vwin jwin"><div class="ih-art"></div><div class="ih-t"><b>老焙的小铺</b><small>${idleMood}</small></div></div>
     <div class="edu-notes vwin jwin idle-sum${P.full ? ' full' : ''}" id="idleSum"><div class="is-row"><span>待收</span><b id="idPendC">🪙 ${fmtN(P.c)}</b><b id="idPendB">🫘 ${fmtN(P.b)}</b></div><div class="xpbar idle-bar"><i style="width:${Math.min(100, Math.round(P.hours / P.capH * 100))}%"></i></div>
-      <small id="idPendH">已累积 ${idHM(P.hours * 3600000)} / 上限 ${P.capH} 小时${P.full ? ' · 仓库满了，快去收一收' : ''}</small>
+      <small id="idPendH">已累积 ${idHM(P.hours * 3600000)} / 上限 ${P.capH} 小时${P.full ? ' · 仓库满了，有空来收一收。今天的巷口也亮着' : ''}</small>
       <small id="idRate">每小时：🪙 ${idNum(R.c)}${B.n ? `（打卡加成后 ${idNum(R.c * B.mult)}）` : ''} · 🫘 ${idNum(R.b)}${chips.length ? ' · ' + chips.join(' · ') : ''}</small>
       <small class="idle-boost${B.n ? ' on' : ''}" id="idBoost">⚡ 打卡加成 ×${idNum(B.mult)}${B.n ? `（${B.n} 次打卡，还剩 ${idHM(B.left)}）` : '：今天出门真的打一次卡，铺子的产出 +50%（6 小时，最多 ×3）'}</small>
       <button class="btn" id="idleCollect"${P.c + P.b > 0 ? '' : ' disabled'}>领取 🪙${fmtN(P.c)} · 🫘${fmtN(P.b)}</button></div>
@@ -1030,7 +1063,7 @@ function idleAwayTry(force) { if (!window.Idle || (!force && !IDLE_ON())) return
   if (!force && (idleAwayShown || a.mins < 30 || (a.c < 5 && !a.exp))) { if (!idleAwayShown) Idle.touch(now); return; }
   if (document.querySelector('#storyDlg') || npcBlocked() || storyDue()) { if (idleAwayTries++ < 12) setTimeout(() => idleAwayTry(force), 1500); return; }
   idleAwayShown = true; const h = Math.floor(a.mins / 60), LN = mem() ? MEM_LINES : IDLE_LINES, line = LN[(h + a.c) % LN.length];
-  idleModal(`<div class="id-h">🌙 你不在时…</div><div>离开了 <b>${idHM(a.mins * 60000)}</b>，铺子里一直在忙。</div><div class="np-rw" id="idleAway"><span>🪙 +${fmtN(a.c)}</span><span>🫘 +${fmtN(a.b)}</span>${a.capped ? '<span>⌛ 仓库满了</span>' : ''}</div><div class="id-line">${esc(line)}</div>${a.exp ? `<div class="id-line">🧭 ${esc(a.exp.dest.name)}那边，${a.exp.by === 'you' ? '你' : '老焙'}已经回来了。</div>` : ''}`,
+  idleModal(`<div class="id-h">🌙 你不在时…</div><div>离开了 <b>${idHM(a.mins * 60000)}</b>。今天的巷口也亮着，铺子替你守着这一小会儿。</div><div class="np-rw" id="idleAway"><span>🪙 +${fmtN(a.c)}</span><span>🫘 +${fmtN(a.b)}</span>${a.capped ? '<span>⌛ 仓库满了，有空来收一收</span>' : ''}</div><div class="id-line">${esc(line)}</div>${a.exp ? `<div class="id-line">🧭 ${esc(a.exp.dest.name)}那边，${a.exp.by === 'you' ? '你' : '老焙'}已经回来了。</div>` : ''}`,
     {look: true, take: '收下', bg: 'oldshop', done: () => { const before = totalCoins(), r = Idle.collect(nowMs(), idleCtx()); SFXplay('harvest'); drawHud(); if (r.c) coinBurst(null, r.c, before); if (['list', 'idle'].includes(app.dataset.view)) render(); }}); }
 function idleClaimTrip() { const n = nowMs(), before = totalCoins(), r = Idle.claimExp(n, idleCtx()); if (!r) return; SFXplay('harvest'); drawHud(); if (r.c) coinBurst(null, r.c, before);
   idleModal(`<div class="id-h">${r.dest.ic} ${esc(r.dest.name)} · 回来了</div><div class="id-snip" id="idleSnip">${esc(r.snippet)}</div><div class="np-rw" id="idleLoot"><span>🪙 +${fmtN(r.c)}</span><span>🫘 +${r.b}</span>${r.relic ? `<span>🎒 旧物：${esc(r.relic.name)}</span>` : r.bonus ? '<span>🎒 旧物都找齐了，多得一份礼</span>' : ''}</div>${r.relic ? `<div class="id-line">${esc(r.relic.lore)}（全铺产出 +1%）</div>` : ''}`, {take: '收好', bg: ['alley', 'river', 'dawn'][Idle.DESTS.indexOf(r.dest)], done: () => render()}); }
@@ -1208,8 +1241,72 @@ function scaView(arg) { if (!window.SCAQ) { location.hash = '#/list'; return; } 
   const mt = /^([pt])-([fi])-(\w+)$/.exec(a);
   if (mt && (mt[3] === 'all' ? mt[1] === 't' : SCAQ.mods(mt[2]).some(x => x.id === mt[3]))) return mt[1] === 'p' ? scaPractice(mt[2], mt[3]) : scaMockSetup(mt[2], mt[3]);
   return scaHub(/^[fi]$/.test(a) ? a : null); }
+let lyFilter = 'all';
+function loyaltyShare(info) {
+  let url = '';
+  try { url = Loyalty.paint({...info, xuan: isXuan()}); } catch (e) { url = ''; }
+  if (!url) return toast('这张卡现在画不出来');
+  const name = (info.name || 'card').replace(/[^\w\u4e00-\u9fff]+/g, '-').slice(0, 40);
+  fetch(url).then(r => r.blob()).then(async blob => {
+    const file = new File([blob], name + '.png', {type: 'image/png'});
+    if (navigator.canShare && navigator.canShare({files: [file]})) { try { await navigator.share({files: [file], title: info.name, text: info.line || info.name}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+    const a = document.createElement('a'); a.href = url; a.download = name + '.png'; a.click(); toast('已保存这张卡的图片');
+  }).catch(() => toast('分享失败'));
+}
+function loyaltyOpen(html, shareInfo) {
+  const old = $('#lyDlg'); if (old) old.remove();
+  const d = document.createElement('div'); d.id = 'lyDlg'; d.className = 'ly-dlg'; d.setAttribute('role', 'dialog');
+  d.innerHTML = `<div class="ly-sheet">${html}<div class="row">${shareInfo ? '<button class="btn" id="lyShare">分享这张卡</button>' : ''}<button class="btn ghost" id="lyClose">合上</button></div></div>`;
+  d.onclick = e => { if (e.target === d || e.target.id === 'lyClose') d.remove(); };
+  document.body.appendChild(d);
+  const s = $('#lyShare'); if (s && shareInfo) s.onclick = ev => { ev.stopPropagation(); loyaltyShare(shareInfo); };
+}
+function loyaltyView() {
+  const ctx = loyaltyCtx(), M = Loyalty.model(ctx), xuan = isXuan();
+  setTop(xuan ? '江湖通行印' : '集卡册', '', true);
+  const regions = [];
+  M.cafes.forEach(c => { if (!regions.some(r => r.id === c.region)) regions.push({id: c.region, name: c.regionName || c.region}); });
+  const filters = [['all', '店章'], ['miss', '未盖'], ...regions.map(r => [r.id, r.name]), ['story', '故事'], ['sets', xuan ? '套印' : '套卡']];
+  const showCafes = lyFilter !== 'story' && lyFilter !== 'sets';
+  const cafes = M.cafes.filter(c => lyFilter === 'miss' ? !c.owned : (lyFilter === 'all' || lyFilter === 'story' || lyFilter === 'sets' || c.region === lyFilter));
+  const stamp = c => `<button class="ly-stamp${c.owned ? '' : ' miss'}" data-cafe="${esc(c.id)}"><span class="ly-seal" aria-hidden="true">${c.owned ? '印' : ''}</span><small>${esc(c.short)}</small>${c.owned ? `<span class="stars">${'★'.repeat(c.stars)}${'☆'.repeat(3 - c.stars)}</span>` : '<small>未盖</small>'}</button>`;
+  const story = c => `<button class="ly-story${c.owned ? '' : ' miss'}" data-card="${esc(c.id)}"><span class="ly-seal ${c.tag || ''}">${c.owned ? (c.tag === 'hero' ? '侠' : '情') : ''}</span><small>${esc(c.face)}</small></button>`;
+  const setRow = s => `<div class="ly-set"><div class="top"><b>${esc(s.name)}</b><span>${s.have}/${s.need}</span></div><small>${esc(s.line)}${s.claimed ? ' · 已兑换「' + esc(s.title) + '」' : ''}</small>${s.ready && !s.claimed ? `<button class="btn" data-set="${esc(s.id)}">兑换 🪙${s.c} · ${esc(s.title)}</button>` : ''}</div>`;
+  app.innerHTML = `<div class="ly-cover"><div class="ly-kicker">${xuan ? '豆籍卡 · 江湖通行印' : 'LOYALTY · 集卡册'}</div><b>${xuan ? '墨尔本通行印' : '墨尔本咖啡集卡'}</b><p>${xuan ? '每到一家店，盖一枚到访印。再去，印上加星。故事走到的地方，会多一张卡。没有抽卡。' : '每家店第一次打卡盖一印，再去升星。故事卡跟着章节、支线和结局来。不抽卡，不付费。'}</p>
+    <div class="ly-stats"><span><b>${M.stamped}</b>已盖印</span><span><b>${M.cards.filter(c => c.owned).length}/${M.cards.length}</b>故事卡</span><span><b>${M.sets.filter(s => s.claimed).length}/${M.sets.length}</b>套卡</span></div></div>
+    <div class="ly-tabs" id="lyTabs">${filters.map(([id, name]) => `<button class="chip${lyFilter === id ? ' on' : ''}" data-ly="${id}">${esc(name)}</button>`).join('')}</div>
+    ${showCafes ? `<div class="ly-grid" id="lyStamps">${cafes.map(stamp).join('') || '<div class="hint">这个筛选下还没有店。</div>'}</div>` : ''}
+    ${lyFilter === 'story' || lyFilter === 'all' ? `<div class="section-title">${xuan ? '故事页' : '故事卡'}</div><div class="ly-grid">${M.cards.map(story).join('')}</div>` : ''}
+    ${lyFilter === 'sets' || lyFilter === 'all' ? `<div class="section-title">${xuan ? '区域套印' : '区域套卡'}</div><div class="ly-sets">${M.sets.map(setRow).join('')}</div><p class="hint">凑齐一个区域里还在营业的店章，可以兑换一次称号和金币。成就和图鉴还是原来的，这里只记店和故事。</p>` : ''}
+    ${lyFilter !== 'all' && lyFilter !== 'story' && lyFilter !== 'sets' ? '' : ''}`;
+  $('#lyTabs').onclick = e => { const b = e.target.closest('[data-ly]'); if (!b) return; lyFilter = b.dataset.ly; loyaltyView(); };
+  app.onclick = e => {
+    const set = e.target.closest('[data-set]');
+    if (set) {
+      const r = Loyalty.claim(set.dataset.set, loyaltyCtx());
+      if (!r) return;
+      const cid = 'loyal-' + r.id;
+      if (!questLog.claims.some(x => x.id === cid)) { questLog.claims.push({d: today(), id: cid, c: r.c}); save(QK, questLog); }
+      toast(`🪙 +${r.c} · 称号「${r.title}」`); SFXplay('harvest'); drawHud(); loyaltyView(); return;
+    }
+    if (e.target.closest('#lyTabs')) return;
+    const st = e.target.closest('[data-cafe]');
+    if (st) {
+      const c = M.cafes.find(x => x.id === st.dataset.cafe); if (!c) return;
+      if (!c.owned) return loyaltyOpen(`<h3>未盖印</h3><p>${esc(c.short)} 还没有到访印。去店里打一次卡，这一格才会亮。</p><a class="btn" href="#/cafe/${esc(c.id)}">去这家店</a>`);
+      return loyaltyOpen(`<h3>${esc(c.short)}</h3><p>${esc(c.regionName || '')} · 到访 ${c.n} 次 · ${'★'.repeat(c.stars)}${'☆'.repeat(3 - c.stars)}</p><p>${c.n >= 10 ? '心级已满，这枚印亮得像常客。' : c.stars ? '再去几次，星会再亮一点。' : '第 3、5、10 次会把这枚印升星。'}</p>`, {name: c.short, kicker: xuan ? '江湖通行印' : '到访印', sub: (c.regionName || '') + ' · ' + c.n + ' 次', mark: '★'.repeat(c.stars) || '到访', line: '今天的巷口也亮着。'});
+    }
+    const cd = e.target.closest('[data-card]');
+    if (cd) {
+      const c = M.cards.find(x => x.id === cd.dataset.card); if (!c) return;
+      if (!c.owned) return loyaltyOpen(`<h3>${esc(c.face)}</h3><p>这张还是剪影。走到那一步，卡会自己来。不靠抽，也不靠付钱。</p>`);
+      return loyaltyOpen(`<h3>${esc(c.name)}</h3><p>${esc(c.line)}</p>`, {name: c.name, kicker: c.tag === 'hero' ? '侠' : '情', sub: xuan ? '豆籍 · 故事页' : '故事卡', mark: c.tag === 'hero' ? '守' : '念', line: c.line});
+    }
+  };
+}
 const views = {
   calendar(arg) { return calendarV(arg); },
+  loyalty() { if (!window.Loyalty) { location.hash = '#/list'; return; } return loyaltyView(); },
   sca(arg) { return scaView(arg); },
   story() { if (!window.Story) { location.hash = '#/list'; return; } return storyView(); },
   idle() { if (!window.Idle) { location.hash = '#/list'; return; } return idleView(); },
@@ -1220,7 +1317,7 @@ const views = {
     $('#addCafeBtn').onclick = () => location.hash = '#/add';
     const subs = [...new Set(allCafes().map(c => c.suburb))].sort();
     const v = visitedIds();
-    app.innerHTML = `${festBanner()}${storyEntry()}${idleEntry()}${eduEntry()}${scaEntry()}${npcEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
+    app.innerHTML = `${festBanner()}${storyEntry()}${loyaltyEntry()}${idleEntry()}${eduEntry()}${scaEntry()}${npcEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
       <select id="sub"><option value="">全部区域</option>${[...REGIONS, REGION_MORE].map(r => `<option value="${r.id}" ${r.id === listState.suburb ? 'selected' : ''}>${esc(r.name)}${r.zh && r.id !== 'more' ? ' ' + r.zh : ''}</option>`).join('')}</select></div>
       <div class="chips">${[['all', '全部'], ['todo', '未解锁'], ['done', '已解锁'], ['near', '离我最近']].map(([k, t]) => `<button class="chip ${listState.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
       <div class="hint">已解锁 ${v.size} / ${allCafes().length} 家</div><div id="cards"></div>`;
@@ -1348,7 +1445,7 @@ const views = {
       const ed = e.target.closest('[data-edit]'), as = e.target.closest('[data-assign]');
       if (ed) openCheckinForm(checkins.find(c => c.id === ed.dataset.edit), false);
       if (as) { const ci = checkins.find(c => c.id === as.dataset.assign);
-        openPicker(id => { ci.cafeId = id; saveCheckins(); checkBadges(); closeSheet(); toast('✅ 已更新'); render(); }, {allowLater: false}); }
+        openPicker(id => { ci.cafeId = id; saveCheckins(); checkBadges(); closeSheet(); let tip = '✅ 已更新'; try { const r = window.Loyalty && Loyalty.sync(loyaltyCtx()); if (r && r.stamps.length) tip += ' · 已盖印'; } catch (e) {} toast(tip); render(); }, {allowLater: false}); }
     };
   },
 
@@ -1368,7 +1465,7 @@ const views = {
       <div class="section-title">成就</div><div class="badges">${BADGES.map(b => `<div class="bdg ${b.test(s) ? '' : 'off'}"><span class="e">${b.e}</span>${b.name}</div>`).join('')}</div>
       <div class="section-title">照片墙 <a href="#/records" style="font-size:13px;color:var(--brown);font-weight:600;text-decoration:none">全部记录 ›</a></div>
       ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : '<div class="hint">还没有照片，去拍一张吧 📷</div>'}
-      <div class="section-title">去过的咖啡馆</div>${[...v].map(cafeById).filter(Boolean).map(cafeCard).join('') || '<div class="hint">还没有去过的咖啡馆</div>'}${beansSection()}${settingsHtml()}`;
+      <div class="section-title">去过的咖啡馆</div>${[...v].map(cafeById).filter(Boolean).map(cafeCard).join('') || '<div class="hint">还没有去过的咖啡馆</div>'}${loyaltyEntry()}${beansSection()}${settingsHtml()}`;
     bindSettings();
     const top = regions().filter(r => r.id !== 'more').sort((x, y) => y.done - x.done)[0];
     const TR = REGIONS.find(r => r.id === (top && top.done ? top.id : 'city'));
@@ -1423,7 +1520,7 @@ const views = {
       ${isClosed(c) ? `<div class="closed-note">🚪 这家店已永久关闭，以前的打卡记录都还在。</div>` : ''}${sigBox(c)}
       ${FDd ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="fd-panel fd-barista"><div class="fdb-ava">${esc([...vg.name][0] || '咖')}</div><div class="fdb-main"><div class="fdb-name">${esc(vg.title)} <b>${esc(vg.name)}</b> <small>好感 ${h}/10</small></div>${Valley.heartsHtml(h)}<div class="fdb-say" id="fdbSay">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="fdb-talk" id="talkBtn" aria-label="聊天">💬</button></div>`; })() : ''}
       ${isV() ? (() => { const vg = villagerOf(id), h = heartsOf(id); return `<div class="jwin vl-barista"><div class="vb-face" id="vbFace"></div><div class="vb-main"><div class="vb-name">${esc(vg.title)} <b>${esc(vg.name)}</b></div>${Valley.heartsHtml(h)}<div class="vb-h">好感 ${h}/10${h >= 10 ? ' · 挚友' : h >= 5 ? ' · 好朋友' : h ? ' · 熟客' : ' · 初次见面'}</div><div class="vb-say">「${esc(Valley.greeting(vg, h, id))}」</div></div><button class="vb-talk" id="talkBtn">💬</button></div>`; })() : ''}
-      ${window.Websites && Websites.of(c) ? `<div class="web-box">${Websites.btnHtml(c)}</div>` : ''}<div class="gr-box">${window.GReviews ? GReviews.btnHtml(c, 'btn ghost', '在 Google 地图看评价', 'gmLink') : `<a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图看评价</a>`}<div id="grPanelBox"></div></div>
+      ${window.Websites && Websites.of(c) ? `<div class="web-box">${Websites.btnHtml(c)}</div>` : ''}<div class="gr-box">${window.GReviews ? GReviews.btnHtml(c, 'btn ghost', '在 Google 地图看评价', 'gmLink') : `<a class="btn ghost" target="_blank" rel="noopener" id="gmLink" href="${MapKit.gmapsLink(c)}">${ic('boot', '🧭')} 在 Google 地图看评价</a>`}<small class="hint gr-note">在 Google 地图打开这家店的评价。config.js 里的 key 留空时不会请求 Google，离线也保留这个链接（点开地图才需要网络）。评价正文不会存进本机。</small><div id="grPanelBox"></div></div>
       <button class="btn${isClosed(c) ? ' ghost' : ''}" id="ciBtn">${isClosed(c) ? ic('quill', '📝') + ' 补记一次以前的打卡' : ic('cup', '☕') + ' 在这里打卡'}</button>
       ${isClosed(c) ? '' : `<button class="btn ghost" id="mapBtn">${ic('map', '🗺️')} 地图上看</button>`}
       <div class="section-title">我的打卡（${cis.length}）</div>
@@ -1557,7 +1654,7 @@ function diaryV(sorted) {
   app.onclick = e => {
     const ed = e.target.closest('[data-edit]'), as = e.target.closest('[data-assign]');
     if (ed) openCheckinForm(checkins.find(c => c.id === ed.dataset.edit), false);
-    if (as) { const ci = checkins.find(c => c.id === as.dataset.assign); openPicker(id => { ci.cafeId = id; saveCheckins(); checkBadges(); closeSheet(); toast('✅ 已更新'); render(); }, {allowLater: false}); }
+    if (as) { const ci = checkins.find(c => c.id === as.dataset.assign); openPicker(id => { ci.cafeId = id; saveCheckins(); checkBadges(); closeSheet(); let tip = '✅ 已更新'; try { const r = window.Loyalty && Loyalty.sync(loyaltyCtx()); if (r && r.stamps.length) tip += ' · 已盖印'; } catch (e) {} toast(tip); render(); }, {allowLater: false}); }
   };
 }
 function footprintJ() {
@@ -1576,6 +1673,7 @@ function footprintJ() {
     <div class="dex">${allCafes().map((c, i) => `<a class="dex-item ${v.has(c.id) ? 'seen' : 'unk'}" href="#/cafe/${c.id}"><span class="dex-no">No.${String(i + 1).padStart(3, '0')}</span><canvas data-spr="${c.id}" width="24" height="24"></canvas><span class="dex-name">${v.has(c.id) ? esc(c.short || c.name) : '？？？'}</span></a>`).join('')}</div>
     <div class="section-title">🎒 道具栏</div>
     <div class="jwin inv">${BADGES.map(b => `<div class="inv-item ${owned.has(b.id) ? 'own' : 'off'}"><span class="ii">${owned.has(b.id) ? b.e : '？'}</span><span class="in">${owned.has(b.id) ? esc(b.name) : '？？？'}</span>${owned.has(b.id) ? '<em>E</em>' : ''}</div>`).join('')}</div>
+    ${loyaltyEntry()}
     <div class="section-title">🖼️ 冒险相册 <a href="#/records" style="text-decoration:none">全部记录 ›</a></div>
     ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : '<div class="hint">还没有照片，去拍一张吧 📷</div>'}
     ${beansSection()}
@@ -1619,6 +1717,7 @@ function footprintV() {
     <div class="jwin st-stats"><div>打卡<b>${s.count}</b></div><div>店铺<b>${s.open}/${s.total}</b></div><div>收藏<b>${col.size}</b></div><a href="#/shop" class="st-shop">金币<b>${fmtN(totalCoins())}</b><small>🛒 商店 ›</small></a></div>
     <div class="vl-tabs" id="fpTabs">${tabs.map(([t, n]) => `<button class="chip ${fpTab === t ? 'on' : ''}" data-vt="${t}">${n}</button>`).join('')}</div>
     <div id="fpBody" data-tab="${fpTab}">${body[fpTab]()}</div>
+    ${loyaltyEntry()}
     <div class="section-title">${ic('photo', '🖼️')} 相册 <a href="#/records" style="text-decoration:none">全部记录 ›</a></div>
     ${photos.length ? `<div class="grid3">${photos.map(p => `<img src="${p.photo}" alt="" data-edit="${p.id}">`).join('')}</div>` : `<div class="vl-album-empty">${Array.from({length: 3}, (_, i) => `<span class="vae-slot">${i ? '' : ic('camera', '📷')}</span>`).join('')}<small>相册还空着 · 打卡时拍张照，就会贴在这里</small></div>`}
     ${settingsHtml()}`;
@@ -1658,7 +1757,7 @@ function render() {
   if (window.Npc) { try { paintNpc(app); if (v === 'cafe' && arg === 'hash') Npc.flag('hash', today()); if (v === 'map') npcVisitor(); npcSchedule(); } catch (e) { console.warn('npc', e); } }
   if (window.Story) { try { storySchedule(); } catch (e) { console.warn('story', e); } }
 }
-window.addEventListener('hashchange', () => { npcHold = false; storyHold = false; closeSheet(); ['eduDlg', 'eduRankUp', 'npcDlg', 'storyDlg', 'pgDlg'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
+window.addEventListener('hashchange', () => { npcHold = false; storyHold = false; closeSheet(); ['eduDlg', 'eduRankUp', 'npcDlg', 'storyDlg', 'pgDlg', 'lyDlg'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); const d = $('#dlg'); if (d && Date.now() - (d._at || 0) > 800) d.classList.remove('show'); render(); });
 render();
 if (window.Idle) setTimeout(idleAwayTry, 1200);
 // quietly fetch location if already permitted (for distances), never prompt on load

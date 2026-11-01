@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="咖啡打卡">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>墨尔本咖啡打卡</title>
-<script>try{var __t=JSON.parse(localStorage.getItem("mcc.theme"))}catch(e){}var __h=document.documentElement,__p=__t==="jrpg"||__t==="valley"||__t==="ranch";__h.setAttribute("data-theme",__t==="sketch"?"sketch":__p?"jrpg":"foundation");if(__t==="valley"||__t==="ranch")__h.setAttribute("data-skin","valley");if(__t==="ranch")__h.setAttribute("data-ranch","1");if(__t==="jrpg")__h.setAttribute("data-xuan","1");</script>
+<script>try{var __t=JSON.parse(localStorage.getItem("mcc.theme"))}catch(e){}if(!__t)__t="jrpg";var __h=document.documentElement,__p=__t==="jrpg"||__t==="valley"||__t==="ranch";__h.setAttribute("data-theme",__t==="sketch"?"sketch":__p?"jrpg":"foundation");if(__t==="valley"||__t==="ranch")__h.setAttribute("data-skin","valley");if(__t==="ranch")__h.setAttribute("data-ranch","1");if(__t==="jrpg")__h.setAttribute("data-xuan","1");</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -41,6 +41,7 @@
 <link rel="stylesheet" href="xuan.css">
 <link rel="stylesheet" href="story.css">
 <link rel="stylesheet" href="idle.css">
+<link rel="stylesheet" href="loyalty.css">
 </head>
 <body>
 <div id="boot"><div class="cup">☕</div><div>墨尔本咖啡打卡 加载中…</div><div class="err" id="bootErr">加载有点慢或出错了，请检查网络后重试。</div><button id="bootRetry" style="display:none" onclick="location.reload()">重新加载</button></div>
@@ -72,6 +73,7 @@
 <script src="edu.js"></script>
 <script src="npc.js"></script>
 <script src="story.js"></script>
+<script src="loyalty.js"></script>
 <script src="idle.js"></script>
 <script src="sca.js"></script>
 <script src="signatures.js"></script>

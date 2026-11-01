@@ -1,8 +1,9 @@
-// 📜 主线剧情「第一颗豆」(v2 · 江湖篇): story data + progress engine (no UI here; app.js plays the scenes).
+// 📜 主线剧情「第一颗豆」(v3 · 多结局): story data + progress engine (no UI here; app.js plays the scenes).
 // Chapters unlock in order. Objectives count the player's EXISTING check-ins/beans/course progress (retroactive),
-// and are area/count based, so they never depend on one particular cafe staying open.
-// v2 adds: stakes (a rival 金远), foreshadowing + a cliffhanger per chapter, 3 choices that change later dialogue,
-// 好感 (bond) values for 老焙 and 澈, a single tragic ending, recipe-book pages with 林's handwriting, and area side stories (支线).
+// and are area/count based, so they never depend on one particular cafe staying open. Choices never skip a chapter gate.
+// v3: 7 choices, romance (林–老焙余温 / 澈与玩家的信任) + heroism (守巷、给座位、交回簿子), three endings
+// (tea 人走茶凉 / lamp 灯火未熄 / first 第一颗). Epilogue plays only after >50 distinct cafe check-ins.
+// v2 saves that already finished stay on tea. Side stories (支线) stay.
 (function () {
 'use strict';
 const root = typeof window !== 'undefined' ? window : globalThis;
@@ -11,13 +12,18 @@ const AREAS = ['city', 'richmond', 'northmel', 'brunswick'];
 const EDU_NAMES = ['', '咖啡从哪里来', '果实变生豆', '火候的秘密', '九个大气压', '丝滑奶泡', '一壶清澈', '舌尖的地图', '墨尔本的咖啡魂'];
 const AREA_NAMES = {city: 'MEL CITY（市中心）', richmond: 'RICHMOND（列治文）', northmel: 'NORTH MEL（北墨尔本）', brunswick: 'BRUNSWICK（布伦瑞克）', more: '「更多」街区（Fitzroy、Collingwood、Carlton 等）'};
 const FAV_MAX = 12, GIFT_MAX = 4, GIFT_BEANS = 10; // 好感 cap; gifts of 生豆 (from the idle roastery): +1 each, at most 4 per person
+const ENDING_IDS = {tea: 1, lamp: 1, first: 1};
+const EPI_NEED = 51; // unique cafes must be > 50 before the epilogue can start
 
-// ---------- progress state (additive: v1 saves keep seen/done; new keys default to empty) ----------
+// ---------- progress state (additive: v1/v2 saves keep seen/done/choices; a finished v2 ending stays tea) ----------
 const obj = o => (o && typeof o === 'object' && !Array.isArray(o) ? o : {});
 const num = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.floor(+v) || 0));
-function norm(s) { s = obj(s); const f = obj(s.fav), g = obj(s.gifts), ch = {};
+function norm(s) { s = obj(s); const f = obj(s.fav), g = obj(s.gifts), ch = {}, seen = {...obj(s.seen)};
   Object.entries(obj(s.choices)).forEach(([k, v]) => { if (Number.isInteger(v) && v >= 0 && v < 4) ch[k] = v; });
-  return {v: 2, seen: {...obj(s.seen)}, done: {...obj(s.done)}, choices: ch, fav: {laobei: num(f.laobei, 0, FAV_MAX), che: num(f.che, 0, FAV_MAX)}, gifts: {laobei: num(g.laobei, 0, GIFT_MAX), che: num(g.che, 0, GIFT_MAX)}}; }
+  let ending = null;
+  if (typeof s.ending === 'string' && ENDING_IDS[s.ending]) ending = s.ending;
+  else if (seen.epi) ending = 'tea'; // v2 had one canonical ending; don't recompute it into lamp/first
+  return {v: 3, seen, done: {...obj(s.done)}, choices: ch, fav: {laobei: num(f.laobei, 0, FAV_MAX), che: num(f.che, 0, FAV_MAX)}, gifts: {laobei: num(g.laobei, 0, GIFT_MAX), che: num(g.che, 0, GIFT_MAX)}, ending}; }
 function load() { try { return norm(JSON.parse(localStorage.getItem(KEY))); } catch (e) {} return norm(null); }
 let S = load();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
@@ -85,6 +91,11 @@ const CH = [
    ['you', '澈……是她的名字吗？'],
    ['laobei', '（沉默了一会儿）这个字，我好像在哪里见过。'],
    ['laobei', '不管她是谁——你已经认得出豆子的名字了。这就是很大的进步。'],
+   ['laobei', '你若肯帮我找这本簿子，我想先问一句。你是要尽快找齐，还是肯慢慢喝？林等的，是后一种人。'],
+   ['choice', 'k4'],
+   ['laobei', '（点头，像把一桩旧心事放下）慢慢来。赶路我年轻时赶够了。遇见他以后，我才知道坐下来也是本事。', null, {if: 'k4:0'}],
+   ['laobei', '（看了你一眼）快，也可以。只是有些话，走得太急就听不见——我跟林，就是这么错过的。', null, {if: 'k4:1'}],
+   ['n', '金合欢纸条的背面，还有半行淡得几乎看不见的字：「别一个人赶路。——澈」', null, {if: 'k4:0'}],
    ['n', '路过巷尾，你看见那家铁匠铺的门板上落了一层薄灰。小豆说，掌柜昨天还生着火，大概是出了远门。'],
    ['n', '回到小店，小豆正举着扫帚站在后门前，脸色发白。'],
    ['xiaodou', '老焙爷爷！后门的锁……被人动过了！', null, {fx: 'shake', bg: 'night'}],
@@ -130,6 +141,7 @@ const CH = [
    ['laobei', '那时我刚从北边的渡口回来，背上还背着半袋走了三千里的豆子，脾气臭得很。'],
    ['xiaodou', '老焙爷爷当年是「负豆客」！背着豆子走江湖，一路换故事！'],
    ['laobei', '（咳）别听她吹。……我只是个不肯停下来的人，直到遇见林。'],
+   ['laobei', '遇见他以后我才懂：肯在一张桌子对面坐下来，比背着豆子走三千里更难。那也是一种守。'],
    ['laobei', '那天的第一位客人，两杯都喝完了，说：「都好喝。不过你们俩，为什么不一起做呢？」'],
    ['laobei', '我有一套「一爆心法」，是在一场大雨里想出来的。我只教过两个人。一个是林，一个……（他没有说完）', null, {if: 'f.laobei>=3'}],
    ['xiaodou', '哇，那位客人才是真正的高手。'],
@@ -175,7 +187,12 @@ const CH = [
    ['n', '窗外，一个灰围巾的身影，静静地站在街对面。这一次，她没有躲开。'],
    ['n', '可就在她身后三十步，一个黑长衫的人也停住了脚。他看着她，像看着一只终于落地的鸟。', null, {fx: 'shake', bg: 'night'}],
    ['laobei', '（他猛地站起来，椅子倒在地上）……澈，快走！'],
-   ['n', '灰围巾的人影一晃，已经没入了 Sydney Road 的人群。黑长衫抬眼，朝窗里看了一眼，微微一笑。'],
+   ['n', '灰围巾没入了 Sydney Road 的人群。黑长衫还站着。你握着杯子——这条巷子要不要你来守，得你自己说。'],
+   ['choice', 'k5'],
+   ['laobei', '（声音低下去）你肯替这条巷子说话。我年轻时当负豆客，护的也不是豆子，是肯开门的人。', null, {if: 'k5:0'}],
+   ['che', '（人已经走远，窗玻璃上却像还留着她的气音）你没有急着拔刀。这样的人，我才敢把后背交给你。', null, {if: 'k5:1'}],
+   ['n', '你把杯子放稳。招牌的事，先让掌柜们自己开口。你还在，就是一种站法。', null, {if: 'k5:2'}],
+   ['n', '黑长衫抬眼，朝窗里看了一眼，微微一笑。', null, {fx: 'shake', bg: 'night'}],
   ]},
  {n: 6, name: '清澈', sum: '去更远的街区喝滤泡；「澈」说出自己的名字和心结，把一封旧信交到你手上。', place: 'more',
   goals: [{id: 'a-more', t: `在 ${AREA_NAMES.more} 打卡 3 家不同的店`, need: 3, f: area('more'), go: '#/map'}, edu(6)],
@@ -207,6 +224,7 @@ const CH = [
    ['che', '（把信递到你手里，指尖在发抖）好。你替我给他。我怕见到他的脸，会先哭出来。', null, {if: 'k2:0'}],
    ['che', '（点头，把信收回去）也好。让他先把舌头找回来。信，等杯测完，我亲手给他。', null, {if: '!k2:0'}],
    ['che', '（轻轻）这一路，谢谢你没有追问我。', null, {if: 'f.che>=3'}],
+   ['che', '（围巾往下拉了一点）你走这么远，不像只为了簿子。……这句话我还没准备好说完。你若还来，我就接着说。', null, {if: 'f.che>=5'}],
    ['n', '咖啡店的玻璃窗映出街对面一道黑色的影子。等你再看，那里什么也没有了。', null, {fx: 'fade'}],
   ]},
  {n: 7, name: '舌尖的地图', sum: '老焙鼓起勇气重新杯测，舌头与记忆一起回来；一夜之间，巷对面多了一块黑色的招牌。', place: 'city',
@@ -216,6 +234,7 @@ const CH = [
    ['laobei', '孩子，我想求你一件事。……我想再试一次杯测。可我怕，怕自己的舌头真的不行了。'],
    ['n', '你把澈托你的信放在木桌上。老焙看着火漆，很久没有动。', null, {if: 'k2:0'}],
    ['laobei', '（读完信，他用袖子按了按眼睛）……他说，当年的话，不怪我。他说，他早就不怪我了。', null, {if: 'k2:0'}],
+   ['laobei', '他写这封信的时候，一定还坐在桌子对面。我现在才肯坐回去。', null, {if: 'k2:0'}],
    ['laobei', '这封信里，还有一个名字。我先不说。……杯测要的是干净的鼻子，我先把它放一放。', null, {if: 'k2:0'}],
    ['you', '我陪您。'],
    ['laobei', '杯测要的不是「好喝」，是「说得出」。你先练：多打分、多记，每一杯都想想它像什么。'],
@@ -276,10 +295,17 @@ const CH = [
    ['n', '巷口的电车叮的一声停住。一个黑长衫的人从车上走下来，身后跟着两个提公文箱的人。', null, {fx: 'shake', bg: 'duel'}],
    ['jin', '老师。三十年了。'],
    ['jin', '三天后，「远焙」新店在这条巷口开张。到那天，簿子、铁盒，还有「第一颗」这个名字——我来取。'],
-   ['che', '（挡到老焙身前）你休想。', null, {if: 'f.che>=3'}],
-   ['laobei', '（沉默片刻，把钥匙握紧）……远儿，你长高了。'],
+   ['you', '远焙可以开很多家店。这条巷子的座位，不是招牌能买走的。'],
+   ['choice', 'k6'],
+   ['jin', '（愣了很久，声音第一次不稳）……椅子。你们还给我留着椅子。', null, {if: 'k6:0'}],
+   ['laobei', '远儿，坐下。话可以重说。门不必先关上。', null, {if: 'k6:0'}],
+   ['che', '（挡在门边）巷子不是仓库。你要的名字，是人一天一天喝出来的。', null, {if: 'k6:1'}],
+   ['jin', '（冷冷地）关门？好。三天后我再来。', null, {if: 'k6:1'}],
+   ['jin', '（收起笑）……你说。我听。三十年，我还没被人请过坐下来说。', null, {if: 'k6:2'}],
+   ['che', '（挡到老焙身前，看了你一眼）你要守，我跟你一起守。', null, {if: 'f.che>=3'}],
+   ['laobei', '（把钥匙握紧）……远儿，你长高了。'],
    ['jin', '您，老了。'],
-   ['n', '黑长衫转身离去。巷口的风，吹得旧招牌吱呀作响。', null, {fx: 'fade'}],
+   ['n', '黑长衫转身。走之前他看了一眼巷口的灯，没有把它吹灭。', null, {fx: 'fade'}],
   ]},
  {n: 9, name: '第一颗豆', sum: '走遍四个街区，在旧店里合成「第一杯」；三天之约到了，簿子归谁？铁盒里的秘密揭晓。', place: 'city',
   goals: [{id: 'tour', t: '走遍四个街区：MEL CITY、RICHMOND、NORTH MEL、BRUNSWICK 各打卡 4 家不同的店', need: 16, f: x => AREAS.reduce((s, r) => s + Math.min(4, x.area(r)), 0), go: '#/map'},
@@ -322,6 +348,7 @@ const CH = [
    ['jin', '（冷笑，眼眶却红了）您现在才说。', null, {if: 'k3:1'}],
    ['laobei', '三十年，我欠你一句对不起。你偷抄是错，可你的鼻子，没有错。', null, {if: 'k3:1'}],
    ['jin', '……心法，我不要了。我只想听您说，我当年没有全错。', null, {if: 'k3:1'}],
+   ['che', '（很轻）你把座位留给他的时候，我忽然觉得，这条巷子值得两个人一起守。', null, {if: 'k3:0 & f.che>=3'}],
    ['jin', '我造了一百二十八家店，每一家的咖啡，都喝不出这一杯的味道。'],
    ['jin', '（低声）……我不是贪。这条江湖的老铺子，这些年一家一家熄了灯。我想用新的招牌，把旧的名字接着挂上去。', null, {fx: 'fade'}],
    ['n', '桌角的铁盒，轻轻响了一声。澈打开了它——里面是一小袋旧生豆，和一张折起来的信。'],
@@ -342,7 +369,7 @@ const CH = [
   ]},
 ];
 
-// ---------- choices: three answers that change later dialogue, 好感, and the ending ----------
+// ---------- choices (k1–k7): dialogue, 好感, and which ending the epilogue plays. They never complete a chapter. ----------
 const CHOICES = {
  k1: {scene: 'c3c', ask: '「凭什么是你？」澈在等你的回答。', def: 1, opts: [
    {t: '「因为老焙笑了。他很久没那样笑过了。」', fav: {laobei: 1, che: 1}},
@@ -354,8 +381,27 @@ const CHOICES = {
  k3: {scene: 'c9c', ask: '簿子，该给谁？', def: 0, opts: [
    {t: '「簿子不属于任何人。你先坐下，喝一杯。」', fav: {laobei: 1, che: 1}},
    {t: '「老师欠你的话，让他当面说。簿子不是拿来谈这件事的。」', fav: {laobei: 2}}]},
+ k4: {scene: 'c2c', ask: '这本簿子，你打算怎么找？', def: 0, opts: [
+   {t: '「慢慢喝。一家一家，把话听完再走。」', fav: {laobei: 1}},
+   {t: '「尽快找齐。他们等得够久了。」', fav: {}}]},
+ k5: {scene: 'c5c', ask: '远焙的影子已经贴到巷口。你怎么做？', def: 2, opts: [
+   {t: '「我站在巷口。这家店，谁也不能就这样收走。」', fav: {laobei: 1}},
+   {t: '「先听。吞并的人，有时只是跑得太快的人。」', fav: {che: 1}},
+   {t: '「我先把这杯喝完。招牌的事，让掌柜自己说。」', fav: {}}]},
+ k6: {scene: 'c8c', ask: '金远站在巷口，三天后要来取簿子。今夜你怎么待他？', def: 2, opts: [
+   {t: '「进来坐。这条巷子，还有你的一把椅子。」', fav: {laobei: 1, che: 1}},
+   {t: '「卷帘门放下。今晚，巷子不接待远焙。」', fav: {laobei: 1}},
+   {t: '「先听他说完。三十年的话，不是一句关门就能了的。」', fav: {che: 1}}]},
+ k7: {scene: 'fin', ask: '最后一页，你怎么处理？', def: 0, opts: [
+   {t: '「写完它。把该说的话，都留下。」', fav: {}},
+   {t: '「留下空白。灯还没到熄的时候。」', fav: {laobei: 1}},
+   {t: '「交回巷子。让澈和小豆，把「第一颗」重新打开。」', fav: {che: 1}}]},
 };
-const ENDINGS = {tea: {name: '人走茶凉', sum: '簿子找齐的那一天，整条江湖的铺子和掌柜，像一盏一盏的灯，慢慢熄了。你喝完最后一杯，雨里只剩你一个人。'}};
+const ENDINGS = {
+ tea: {name: '人走茶凉', sum: '簿子找齐的那一天，整条江湖的铺子和掌柜，像一盏一盏的灯，慢慢熄了。你喝完最后一杯，雨里只剩你一个人。', reward: {c: 200, title: '最后的读者'}, bye: '谢谢你，喝完了这一杯。'},
+ lamp: {name: '灯火未熄', sum: '你留下空白的那一页。江湖的颜色淡了，渡口和铁匠铺都安静下来，可巷口那盏灯还亮着，杯子还温。', reward: {c: 220, title: '守灯人'}, bye: '谢谢你，把灯留着。'},
+ first: {name: '第一颗', sum: '你把簿子交回巷子。金远收起远焙的黑招牌，澈与小豆把「第一颗」重新打开，老焙坐到窗边，退成一个闻咖啡的人。', reward: {c: 260, title: '第一颗的证人'}, bye: '谢谢你，来看铺子重新打开。'},
+};
 
 const PRO = {id: 'pro', place: 'city', card: ['序章', '巷口的灯'], lines: [
  ['n', '墨尔本。你拖着行李箱，在电车的叮当声里走出弗林德斯街车站，一路拐进一条没来过的小巷。'],
@@ -380,8 +426,31 @@ const PRO = {id: 'pro', place: 'city', card: ['序章', '巷口的灯'], lines: 
  ['n', '灯光照不到的地方，电车站台的阴影里，有人悄悄收回了目光。', null, {fx: 'shake', bg: 'night'}],
 ]};
 
-const EPI = {id: 'epi', place: 'city', card: ['尾声', '天亮之前'], reward: {c: 200, title: '最后的读者'}, lines: [
- // the single canonical ending: the 江湖 fades. 3 choices + 好感 only change who says what, and how.
+// final choice, played after every chapter and only once 51 distinct cafes are checked in — before the epilogue
+const FIN = {id: 'fin', place: 'city', card: ['终章', '最后一页'], lines: [
+ ['n', '铁盒底板那行小字还在：「簿子的最后一页，留空。」窗外的天光白得没有颜色。', null, {bg: 'oldshop'}],
+ ['laobei', '林把这条江湖写在一本没写完的簿子上。写完的那一天，灯会灭。不写完，我们就一直走在半路上。'],
+ ['che', '（看着你）这一页你来决定。我信你的步子。', null, {if: 'f.che>=3'}],
+ ['xiaodou', '我的手还在。只要这页还空着，我就还在，对不对？'],
+ ['jin', '老师，若这一页写完，我那些新招牌也会变成白纸吗？', null, {if: 'k6:2'}],
+ ['jin', '（站在门外）座位我坐过了。这一页，我不抢。', null, {if: 'k6:0'}],
+ ['you', '老焙，澈，小豆。这一页，我来选。'],
+ ['choice', 'k7'],
+ ['n', '你提起笔，把最后一页写满。墨干的时候，巷口的灯轻轻跳了一下。', null, {if: 'k7:0'}],
+ ['laobei', '（闭上眼）林啊。我们还是走到了你最怕的那一天。', null, {if: 'k7:0'}],
+ ['n', '你把笔放下。最后一页仍是空白。巷口那盏灯，反而稳了一点。', null, {if: 'k7:1'}],
+ ['che', '（按住空白页的角）那就先别写完。灯还在，人就可以再坐一会儿。', null, {if: 'k7:1'}],
+ ['n', '你把簿子合上，放回巷口的木桌，推到澈和小豆面前。「留给还要开门的人。」', null, {if: 'k7:2'}],
+ ['che', '（眼眶热了，却笑）你没有替我们写完。你把路留给还要走的人。', null, {if: 'k7:2 & f.che>=3'}],
+ ['xiaodou', '那我明天就擦杯子。开张的那种擦法。', null, {if: 'k7:2'}],
+ ['laobei', '慢慢喝的人，才会把笔放下。', null, {if: 'k4:0 & k7:1'}],
+ ['laobei', '……也好。他要的，从来不是一本合上的书。'],
+]};
+
+// per-ending epilogue scripts. tea keeps the fade; lamp leaves the alley lamp lit; first reopens 「第一颗」.
+const EPI_BOOK = {tea: {card: ['尾声', '天亮之前'], bg: 'oldshop', lines: [
+ ['n', '你写下的最后一行还没干。天光白得没有颜色。', null, {if: 'k7:0', fx: 'fade', bg: 'oldshop'}],
+ ['n', '你把簿子放回桌上。空白里，墨却自己渗了出来——这条江湖非要把书写完。', null, {if: 'k7:2', fx: 'fade', bg: 'oldshop'}],
  ['n', '三天之约的那个早晨，天光是白的，没有一点颜色。', null, {fx: 'fade', bg: 'oldshop'}],
  ['laobei', '都来了。……好。我想了一夜，只想起一件事：还有一锅豆子，没烘完。'],
  ['n', '他把那锅豆子烘完了。一爆，二爆，不早也不晚。五只白瓷杯并排放在木桌上，热气一缕一缕地升起来。'],
@@ -418,6 +487,7 @@ const EPI = {id: 'epi', place: 'city', card: ['尾声', '天亮之前'], reward:
  ['laobei', '林的信，我读了很多遍。每一遍，都像他坐在我对面。', null, {if: 'k2:0'}],
  ['laobei', '林的信，我读得晚。可到底读到了，比一辈子没读到，强多了。', null, {if: '!k2:0'}],
  ['laobei', '斗笠给你。走远路的人，都该有一顶。（他想了想，笑了）我戴了一辈子，也该歇歇了。', null, {if: 'f.laobei>=5'}],
+ ['laobei', '找得太齐了。他怕的就是这个。', null, {if: 'k4:1'}],
  ['laobei', '孩子，别替我们难过。我们……只是把这一杯，喝完了。咖啡凉了，才是喝完的意思。', null, {gone: 'laobei', snd: 'finale'}],
  ['n', '热气淡了。五只杯子，四只已经凉透；第五只，在你手里。'],
  ['n', '店里很静，静得能听见雨。'],
@@ -427,7 +497,61 @@ const EPI = {id: 'epi', place: 'city', card: ['尾声', '天亮之前'], reward:
  ['you', '（杯底有一行很小的字：「第一颗豆，是第一个愿意为一杯咖啡走很远的人。」）', null, {alone: 1}],
  ['you', '……我会记得的。', null, {alone: 1}],
  ['n', '雨一直下。你在巷口站了很久，久到手里最后一点温度，也散了。', null, {alone: 1, fx: 'fade'}],
-]};
+]},
+lamp: {card: ['尾声', '灯火未熄'], bg: 'dawn', lines: [
+ ['n', '你没有写下最后一行。空白页躺在灯下，像一扇还没关的门。', null, {bg: 'oldshop', fx: 'fade'}],
+ ['laobei', '他要的，也许就是这一页空白。他怕我们走得太快，把灯走灭了。'],
+ ['che', '（把空白页按平）那我们就慢慢写。一天一行，也行。', null, {if: 'f.che>=3'}],
+ ['xiaodou', '老焙爷爷，我的手不透光了。您看。杯子也有分量了。'],
+ ['laobei', '看见了。今天可以先闻，再喝。不急着告别。'],
+ ['jin', '（把黑色招牌的一角揭下来）一百二十八家里，我留一家不挂远焙。就对着你们的灯。', null, {if: 'k6:0'}],
+ ['jin', '（站在门口）空白，我懂。我不再催你们写完。', null, {if: 'k6:2'}],
+ ['jin', '（远远地）招牌我先不摘。可今晚，我不进来了。', null, {if: 'k6:1'}],
+ ['n', '你推开门。整条江湖淡了一层，像一幅洗过的画：渡口还在，茶亭还在，只是颜色浅了。', null, {bg: 'map', alone: 1, map: 1, fx: 'fade', snd: 'thin'}],
+ ['x:渡口茶亭的掌柜|🍵', '客官，灯我留一盏。茶凉了可以再热，人走了可以再来。', null, {alone: 1, map: 2}],
+ ['x:铁匠铺的掌柜|⚒️', '炉子我压小了，没灭。夜里路过，还能看见一点红。', null, {alone: 1, map: 3}],
+ ['npc:regular', '（把帽子戴正）奶泡还是那样。人要是还来，店就还在。', 'regular', {alone: 1}],
+ ['x:烘豆房的老师傅|🔥', '一爆不响了。可豆子还在锅里。谁想听，我再烘。', null, {alone: 1, map: 4}],
+ ['n', '最后一盏是巷口的灯。它没有谢，只是把光收得更暖、更小。', null, {alone: 1, map: 5, fx: 'flash'}],
+ ['n', '你回到旧店。他们都在。小豆的肩膀挡住晨光，桌上的杯子是满的。', null, {bg: 'oldshop', fx: 'fade'}],
+ ['xiaodou', '明天还开。你要是来，我给你留窗边。'],
+ ['che', '空白页我先收着。你哪天想写一句，再来找我。——不是道别。', null, {if: 'f.che>=5'}],
+ ['che', '你说老焙笑了。空白页上，我想先记下这个。', null, {if: 'k1:0 & f.che>=3'}],
+ ['laobei', '慢慢喝的约定，你作数了。', null, {if: 'k4:0'}],
+ ['laobei', '他的信还在抽屉里。灯还在，我就当他还坐在对面。', null, {if: 'k2:0'}],
+ ['laobei', '斗笠我挂在门后。走远路的人，偶尔也该回家。', null, {snd: 'finale'}],
+ ['you', '那我明天还来。'],
+ ['n', '雨下下来了。巷子里只有你的脚步，可「第一颗」的灯，一直亮到你回头。', null, {bg: 'rain', fx: 'fade'}],
+ ['n', '石阶上的白瓷杯还温着。杯底没有道别，只有一行很小的字：「先别写完。」'],
+]},
+first: {card: ['尾声', '第一颗'], bg: 'dawn', lines: [
+ ['n', '你把簿子放回巷口的木桌，推到澈和小豆面前。最后一页仍是空白，它不再是悬着的刀。', null, {bg: 'dawn', fx: 'fade'}],
+ ['xiaodou', '给我们？那我可以当半个掌柜。擦杯子我很在行，开门我可以学。'],
+ ['che', '一起。爷爷的铺子，不该只活在一本被找齐的书里。'],
+ ['laobei', '（把钥匙放进澈的手心）我退。炉火交给你们。我坐窗边，闻就够了。'],
+ ['laobei', '他若看见这一天，会先笑，再假装抱怨你烘得太急。我认得那种笑。', null, {if: 'f.laobei>=5'}],
+ ['jin', '（把黑招牌摘下来，露出底下的旧木）远焙不收这条巷子。回来的人，有座位。', null, {if: 'k6:0'}],
+ ['jin', '（把名片翻过去）我听完了。扩张停在巷口外面。里面，是你们的灯。', null, {if: 'k6:2'}],
+ ['jin', '您说得对。我的鼻子没有错，是步子错了。这一杯，我坐下喝。', null, {if: 'k3:0'}],
+ ['che', '（把第二杯推到你面前）这杯是你的。不是道别。你愿意的话，以后常来，我给你留同一把椅子。', null, {if: 'f.che>=5'}],
+ ['che', '你说他笑了。现在轮到我们，把那笑留在店里。', null, {if: 'k1:0 & f.che>=3'}],
+ ['n', '卷帘门升到顶。烘豆机响了，是开张的声音，不是散场。', null, {fx: 'flash', bg: 'oldshop'}],
+ ['xiaodou', '「第一颗」，重新开张！今天第一位客人，就是你。'],
+ ['n', '巷子对面，工人把新机器抬了回去。有人在旧木上重新描了两个字：第一颗。', null, {bg: 'alley'}],
+ ['x:渡口茶亭的掌柜|🍵', '听说巷口又开门了？那我这壶茶，继续摆。', null, {alone: 1, map: 1}],
+ ['x:铁匠铺的掌柜|⚒️', '炉子我重新生上。不是为了打架，是为了烤一点明天的火。', null, {alone: 1, map: 2}],
+ ['npc:hash', '店会关，也会再开。记得味道的人还在，灯就还在。', 'hash', {alone: 1}],
+ ['laobei', '负豆客的故事可以歇了。英雄不是把人打走的人，是肯把座位让出来、又肯把簿子交回去的人。'],
+ ['you', '我还没走完这座城。'],
+ ['che', '那就慢慢喝。我们守着灯，等你把下一家的故事也带回来。', null, {if: 'f.che>=3'}],
+ ['n', '天亮了，天光是金色的。巷口的灯留在「第一颗」的门楣上。', null, {bg: 'dawn', fx: 'fade', snd: 'finale'}],
+ ['n', '杯底一行新字，是澈的笔迹：「第一颗豆，是还愿意再来的人。」'],
+]}};
+const EPI = {id: 'epi', place: 'city',
+  get lines() { const id = resolveEnding(); return (EPI_BOOK[id] || EPI_BOOK.tea).lines; },
+  get reward() { const id = resolveEnding(); return (ENDINGS[id] || ENDINGS.tea).reward; },
+  get card() { const id = resolveEnding(); return (EPI_BOOK[id] || EPI_BOOK.tea).card; },
+  tea: EPI_BOOK.tea, lamp: EPI_BOOK.lamp, first: EPI_BOOK.first};
 
 // ---------- 食谱簿的散页: each found page is an item you can read, with 林's handwriting (sp = vignette index in img/xuan/pg-sheet.webp) ----------
 const PAGES = [
@@ -522,24 +646,40 @@ const SEASONS = {
 const season = (d = new Date()) => { const m = d.getMonth() + 1; return m >= 9 && m <= 11 ? 'spring' : m === 12 || m <= 2 ? 'summer' : m <= 5 ? 'autumn' : 'winter'; };
 
 // painted backdrop per scene (古风 skin; img/xuan/sc-<name>.webp, lazy-loaded); a beat's opts.bg swaps it from that beat on
-const SCENE_BG = {pro: 'alley', c1o: 'alley', c1c: 'alley', c2o: 'oldshop', c2c: 'oldshop', c3o: 'forge', c3c: 'forge', c4o: 'oldshop', c4c: 'oldshop', c5o: 'market', c5c: 'market', c6o: 'river', c6c: 'river', c7o: 'oldshop', c7c: 'oldshop', c8o: 'alley', c8c: 'alley', c9o: 'oldshop', c9c: 'forge', epi: 'oldshop'};
+const SCENE_BG = {pro: 'alley', c1o: 'alley', c1c: 'alley', c2o: 'oldshop', c2c: 'oldshop', c3o: 'forge', c3c: 'forge', c4o: 'oldshop', c4c: 'oldshop', c5o: 'market', c5c: 'market', c6o: 'river', c6c: 'river', c7o: 'oldshop', c7c: 'oldshop', c8o: 'alley', c8c: 'alley', c9o: 'oldshop', c9c: 'forge', fin: 'oldshop', epi: 'oldshop'};
 const BG_NAMES = ['alley', 'forge', 'night', 'market', 'river', 'oldshop', 'duel', 'dawn', 'map', 'rain'];
 
 // ---------- scenes ----------
 const SLEEPY_LINE = '一只橘色的猫不知什么时候蜷在了吧台边，尾巴一甩一甩——是豆皮。';
-const sceneIds = ['pro', ...CH.flatMap(c => ['c' + c.n + 'o', 'c' + c.n + 'c']), 'epi'];
+const sceneIds = ['pro', ...CH.flatMap(c => ['c' + c.n + 'o', 'c' + c.n + 'c']), 'fin', 'epi'];
 const sideIds = SIDE.map(s => s.id);
 const seen = id => !!S.seen[id];
 const isDone = n => !!S.done[n];
 const pick = k => (S.choices[k] != null ? S.choices[k] : CHOICES[k].def);
-const ending = () => (seen('epi') || isDone(9) ? 'tea' : null);
+// locked ending after the epilogue (or a migrated v2 clear). Null until then, so the finale isn't spoiled early.
+const ending = () => (S.ending && ENDING_IDS[S.ending] ? S.ending : (seen('epi') ? 'tea' : null));
+// priority: first > lamp > tea. first needs the book returned, a reconciliation, and both bonds ≥ 5.
+function computeEnding() {
+  // k3/k6 count only when the player actually answered. An unseen chapter must not
+  // silently count as "先听他说" via the default.
+  const k7 = S.choices.k7 != null ? S.choices.k7 : 0;
+  const k6 = S.choices.k6, k3 = S.choices.k3;
+  const reconciled = k3 === 0 || k6 === 0 || k6 === 2;
+  if (k7 === 2 && reconciled && S.fav.laobei >= 5 && S.fav.che >= 5) return 'first';
+  if (k7 === 1) return 'lamp';
+  return 'tea';
+}
+function resolveEnding() { return ending() || computeEnding(); }
+const epiReady = x => !!(x && (+x.cafes || 0) > 50);
 function cond(s) { if (!s) return true;
   return String(s).split('&').every(t => { t = t.trim(); let neg = false, m, r = false; if (t[0] === '!') { neg = true; t = t.slice(1).trim(); }
     if ((m = /^(k\d):(\d)$/.exec(t))) r = !!CHOICES[m[1]] && pick(m[1]) === +m[2]; else if ((m = /^f\.(laobei|che)>=(\d+)$/.exec(t))) r = S.fav[m[1]] >= +m[2];
     return neg ? !r : r; }); }
 function scene(id) {
   if (id === 'pro') return {...PRO, kind: 'pro', bg: SCENE_BG.pro};
-  if (id === 'epi') return {...EPI, kind: 'epi', bg: SCENE_BG.epi, ending: ENDINGS.tea};
+  if (id === 'fin') return {...FIN, kind: 'fin', bg: SCENE_BG.fin, reward: null};
+  if (id === 'epi') { const eid = resolveEnding(), book = EPI_BOOK[eid] || EPI_BOOK.tea, E = ENDINGS[eid] || ENDINGS.tea;
+    return {id: 'epi', kind: 'epi', place: 'city', card: book.card, lines: book.lines, reward: E.reward, bg: book.bg || SCENE_BG.epi, ending: E, endingId: eid}; }
   const sd = SIDE.find(s => s.id === id); if (sd) return {id, kind: 'side', n: 0, place: sd.area, card: null, title: sd.title, lines: sd.lines, reward: {c: sd.c, title: ''}, side: sd, bg: ''};
   const m = /^c(\d)([oc])$/.exec(id); if (!m) return null;
   const c = CH[+m[1] - 1]; if (!c) return null;
@@ -605,8 +745,13 @@ function sides(x) { return SIDE.map(s => { const have = x ? +x.area(s.area) || 0
 function nextScene(x) {
   if (!seen('pro')) return 'pro';
   const n = cur();
-  if (n > CH.length) { if (!seen('epi')) return 'epi'; }
-  else { if (!seen('c' + n + 'o')) return 'c' + n + 'o'; if (!isDone(n) && complete(n, x)) return 'c' + n + 'c'; }
+  if (n <= CH.length) {
+    if (!seen('c' + n + 'o')) return 'c' + n + 'o';
+    if (!isDone(n) && complete(n, x)) return 'c' + n + 'c';
+  } else if (!seen('epi') && epiReady(x)) {
+    if (S.choices.k7 == null) return 'fin';
+    return 'epi';
+  }
   const sd = sides(x).find(s => s.due); return sd ? sd.id : null;
 }
 // marks a scene as played. Closing scenes complete their chapter. Returns {first, reward} so the app can pay out once.
@@ -616,18 +761,19 @@ function mark(id, today) {
   if (first) S.seen[id] = today || 1;
   if (sc.kind === 'close' && !S.done[sc.n]) S.done[sc.n] = today || 1;
   if (first && sc.kind === 'side' && sc.side.fav) Object.entries(sc.side.fav).forEach(([w, n]) => { S.fav[w] = Math.min(FAV_MAX, S.fav[w] + n); });
-  if (first || sc.kind === 'close') save();
+  if (sc.kind === 'epi' && !S.ending) S.ending = computeEnding();
+  if (first || sc.kind === 'close' || sc.kind === 'epi') save();
   return {first, reward: rewardOf(id), n: sc.n || 0, kind: sc.kind};
 }
-const claimId = id => id === 'epi' ? 'story-epi' : id.startsWith('s-') ? 'story-' + id : 'story-' + id.slice(1, 2); // c3c -> story-3
-function titles() { const t = []; CH.forEach(c => { if (isDone(c.n)) t.push({n: c.n, title: c.reward.title}); }); if (seen('epi')) t.push({n: 10, title: EPI.reward.title}); return t; }
+const claimId = id => id === 'epi' ? 'story-epi' : id === 'fin' ? 'story-fin' : id.startsWith('s-') ? 'story-' + id : 'story-' + id.slice(1, 2); // c3c -> story-3
+function titles() { const t = []; CH.forEach(c => { if (isDone(c.n)) t.push({n: c.n, title: c.reward.title}); }); if (seen('epi')) t.push({n: 10, title: (ENDINGS[ending()] || ENDINGS.tea).reward.title}); return t; }
 const title = () => { const t = titles(); return t.length ? t[t.length - 1].title : ''; };
 const finished = () => seen('epi');
 const progress = () => CH.filter(c => isDone(c.n)).length;
 const all = () => ({pro: seen('pro'), n: cur()});
 const pages = () => PAGES.map(p => ({...p, got: isDone(p.ch)}));
 function reset() { S = norm(null); save(); }
-function rewardOf(id) { const sc = scene(id); return sc && (sc.kind === 'close' ? CH[sc.n - 1].reward : sc.kind === 'epi' ? EPI.reward : sc.kind === 'side' ? sc.reward : null); }
+function rewardOf(id) { const sc = scene(id); return sc && (sc.kind === 'close' ? CH[sc.n - 1].reward : sc.kind === 'epi' ? sc.reward : sc.kind === 'side' ? sc.reward : null); }
 
 // pixel portraits for non-古风 themes (drawn with the same Valley.Pix helpers as the hidden characters)
 function addArt() {
@@ -641,7 +787,7 @@ function addArt() {
 }
 addArt();
 
-const Story = {CH, PRO, EPI, SIDE, PAGES, CHOICES, ENDINGS, AREAS, AREA_NAMES, SEASONS, SCENE_BG, BG_NAMES, FAV_MAX, GIFT_MAX, GIFT_BEANS, sceneIds, sideIds, scene, lines, hasChoice, choose, chosen, autoPick, nameOf, glyphOf, goals, complete, cur, nextScene, sides, mark, claimId, rewardOf, titles, title, finished, progress, all, pages, ending, fav, tier, canGift, gift, unlocked, season,
+const Story = {CH, PRO, EPI, EPI_BOOK, FIN, SIDE, PAGES, CHOICES, ENDINGS, AREAS, AREA_NAMES, SEASONS, SCENE_BG, BG_NAMES, FAV_MAX, GIFT_MAX, GIFT_BEANS, EPI_NEED, sceneIds, sideIds, scene, lines, hasChoice, choose, chosen, autoPick, nameOf, glyphOf, goals, complete, cur, nextScene, sides, mark, claimId, rewardOf, titles, title, finished, progress, all, pages, ending, resolveEnding, computeEnding, epiReady, fav, tier, canGift, gift, unlocked, season,
   seen, done: isDone, reset, reload() { S = load(); addArt(); }, get state() { return S; }};
 root.Story = Story;
 if (typeof module !== 'undefined') module.exports = Story;
