@@ -36,6 +36,16 @@ Story.mark('c1o', '2026-01-01');
 Story.choose('k4', 0);
 eq('gate still waits on goals', Story.nextScene(xOf(0)), null);
 eq('chapter 1 not done', Story.done(1), false);
+eq('epi need stays 51', Story.EPI_NEED, 51);
+const slow = Story.lines('c2c').map(b => b.t).join('\n');
+eq('slow shift', Story.CHOICES.k4.opts[0].shift, '你决定慢慢喝');
+fresh();
+Story.choose('k4', 1);
+const fast = Story.lines('c2c').map(b => b.t).join('\n');
+eq('pace lines diverge', slow !== fast, true);
+eq('slow mentions 放慢', /放慢/.test(slow), true);
+eq('fast mentions 跑着离开', /跑着离开/.test(fast), true);
+eq('shifts do not name endings', Object.values(Story.CHOICES).every(c => c.opts.every(o => !/人走茶凉|灯火未熄/.test(o.shift || ''))), true);
 
 // under 51 cafes: chapters done, no epilogue
 fresh();

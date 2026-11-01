@@ -51,10 +51,11 @@ const melDate = ms => { try { return MEL_FMT.format(new Date(ms)); } catch (e) {
 const today = () => melDate(nowMs());
 const stars = n => n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '';
 
-// ---------- 🎨 theme: ⚔️ 古风 jrpg is the default. valley + JRPG share the pixel engine (data-theme=jrpg); valley adds data-skin=valley on top.
-// 🏰 foundation · 🐄 ranch · 🌾 valley · ⚔️ jrpg (default) · ✏️ sketch
+// ---------- 🎨 theme: 🌾 田园 valley is the default. valley + JRPG share the pixel engine (data-theme=jrpg); valley adds data-skin=valley on top.
+// A saved mcc.theme is kept (古风 stays 古风). Only a missing or unknown value falls back to valley.
+// 🏰 foundation · 🐄 ranch · 🌾 valley (default) · ⚔️ jrpg · ✏️ sketch
 const THEMES = ['foundation', 'ranch', 'valley', 'jrpg', 'sketch'];
-let THEME = load('mcc.theme', 'jrpg'); if (!THEMES.includes(THEME)) THEME = 'jrpg';
+let THEME = load('mcc.theme', 'valley'); if (!THEMES.includes(THEME)) THEME = 'valley';
 const isJ = () => (THEME === 'jrpg' || THEME === 'valley' || THEME === 'ranch') && !!window.JRPG;
 const isV = () => (THEME === 'valley' || THEME === 'ranch') && isJ() && !!window.Valley;
 const isR = () => THEME === 'ranch' && isV();
@@ -726,10 +727,47 @@ function cafeCard(c) {
 }
 
 // 🎉 festival banner (today, or the next one within a week)
-function festBanner() { if (!window.Fests || !(isV() || isF())) return ''; const d = today(), f = Fests.on(d)[0];
-  if (f) return `<a class="fest-banner today" href="#/calendar/${d.slice(0, 7)}">${ic('flag', '🎉')}<span><b>${f.icon} 今天是 ${esc(f.zh)}${f.approx ? '（约）' : ''}</b><small>${esc(f.en)} · ${f.kind === 'ph' ? '维州公众假期' : '墨尔本活动'} · 节日委托 +${FEST_BONUS} 金币</small></span></a>`;
+function festBanner(mode) { if (!window.Fests || !(isV() || isF())) return ''; const d = today(), f = Fests.on(d)[0];
+  if (f && mode !== 'soon') return `<a class="fest-banner today" href="#/calendar/${d.slice(0, 7)}">${ic('flag', '🎉')}<span><b>${f.icon} 今天是 ${esc(f.zh)}${f.approx ? '（约）' : ''}</b><small>${esc(f.en)} · ${f.kind === 'ph' ? '维州公众假期' : '墨尔本活动'} · 节日委托 +${FEST_BONUS} 金币</small></span></a>`;
+  if (mode === 'today') return '';
   const n = Fests.upcoming(d, 1)[0]; if (!n) return ''; const days = Math.round((Date.parse(n.date) - Date.parse(d)) / 864e5);
   return days > 0 && days <= 7 ? `<a class="fest-banner soon" href="#/calendar/${n.date.slice(0, 7)}">${ic('cal', '📅')}<span><b>${days} 天后：${n.icon} ${esc(n.zh)}${n.approx ? '（约）' : ''}</b><small>${esc(n.en)} · ${n.date}</small></span></a>` : ''; }
+// One gentle action for the home screen. Story beats that are ready come first, then a new stamp
+// or a full region set, then today's check-in. Side stories wait until the cup is already logged.
+function todayPlan() {
+  const nToday = todayCheckins().length;
+  const storyGo = (title, sub, go) => ({href: '#/story', kicker: '今天就一件事', title, sub, go});
+  if (window.Story) {
+    const id = Story.nextScene(storyCtx()), sc = id && Story.scene(id);
+    if (sc && sc.kind !== 'side') {
+      if (sc.kind === 'pro') return storyGo('翻开序章', '一杯雨后的咖啡。今天只做这一件：把故事翻开。', '翻开序章');
+      if (sc.kind === 'open') return storyGo('去听这一章', `第 ${sc.n} 章在等你翻开。听完再走也行。`, '去听这一章');
+      if (sc.kind === 'close') return storyGo('听这一章', '这一章的目标已经够了。点开，听他们怎么接你的话。', '去听这一章');
+      if (sc.kind === 'fin') return storyGo('翻开最后一页', `不同的店凑满 ${Story.EPI_NEED} 家了。最后一页由你来选。`, '翻开最后一页');
+      if (sc.kind === 'epi') return storyGo('去听尾声', '最后一页已经选定。去听这一杯怎么收场。', '去听尾声');
+    }
+  }
+  let readySet = false;
+  try { if (window.Loyalty) readySet = !!Loyalty.summary(loyaltyCtx()).readySet; } catch (e) {}
+  const fresh = todayCheckins().some(c => c.cafeId && checkinsOf(c.cafeId).length === 1);
+  if (readySet || (fresh && load('mcc.loyaltySeen', '') !== today())) return {href: '#/loyalty', kicker: '今天就一件事', title: readySet ? '去兑换一套卡' : '看看今天的新印', sub: readySet ? '一个区域的店章凑齐了。不抽卡，兑一次称号就好。' : '这家店的印已经盖上。集卡册里能看见。', go: '打开集卡册'};
+  if (window.Story) {
+    const id = Story.nextScene(storyCtx()), sc = id && Story.scene(id);
+    if (sc && sc.kind === 'side' && nToday) return storyGo('听一条支线', '今天的卡已经打过。巷子里还有一小段故事。', '去听支线');
+  }
+  if (!nToday) return {act: 'checkin', kicker: '今天就一件事', title: checkins.length ? '打一次卡' : '打第一张卡', sub: checkins.length ? '今天还没坐下。一家就够。' : '拍一张，选一家店。就从这一杯开始。', go: checkins.length ? '去拍照打卡' : '拍下第一杯'};
+  return {href: '#/map', kicker: '今天可以歇一歇', title: '今天这一杯记下了', sub: '不急着再打。想再走一家，地图还开着。', go: '去看看地图'};
+}
+function todayCard() {
+  const p = todayPlan();
+  const btn = p.act === 'checkin' ? `<button class="btn" id="todayGo" data-act="checkin">${esc(p.go)}</button>` : `<a class="btn" id="todayGo" href="${esc(p.href)}">${esc(p.go)}</a>`;
+  return `<section class="today-card vwin jwin" id="todayCard"><small class="td-k">${esc(p.kicker)}</small><b class="td-t">${esc(p.title)}</b><p>${esc(p.sub)}</p>${btn}</section>`;
+}
+function homeMore() {
+  const bits = [storyEntry(), loyaltyEntry(), idleEntry(), eduEntry(), scaEntry(), npcEntry(), (isV() || isF()) ? questBoard(true) : '', festBanner('soon')].filter(Boolean).join('');
+  if (!bits) return '';
+  return `<details class="home-more vwin jwin" id="homeMore"><summary>发现 · 更多玩法</summary><div class="hm-body">${bits}</div></details>`;
+}
 const SEASON_ZH = {spring: ['🌸', '春'], summer: ['☀️', '夏'], autumn: ['🍂', '秋'], winter: ['❄️', '冬']};
 const seasonOfM = m => m >= 9 && m <= 11 ? 'spring' : (m === 12 || m <= 2) ? 'summer' : m <= 5 ? 'autumn' : 'winter';
 let calSel = null;
@@ -908,7 +946,7 @@ function stSidesCard(x) { const S2 = Story.sides(x), seenN = S2.filter(s => s.se
     : `<div class="edu-ch vwin jwin story-ch locked" data-side="${s.id}"><span class="ec-n">🔒</span><span class="ec-t"><b>？？？ · 支线</b><small>${s.need && !s.gate ? '主线走到更远的地方后才会出现' : `在 ${esc(Story.AREA_NAMES[s.area].split('（')[0])} 打卡 ${s.n} 家不同的店　${Math.min(s.have, s.n)}/${s.n}`}</small></span></div>`;
   return `<div class="section-title">🧭 支线 <small>${seenN}/${S2.length}</small></div><div class="edu-list" id="storySides">${S2.map(row).join('')}</div>`; }
 function stChoicesCard() { const C = Story.state.choices, ks = Object.keys(Story.CHOICES).filter(k => C[k] != null); if (!ks.length) return '';
-  return `<div class="section-title">🔀 你的选择</div><div class="edu-notes vwin jwin st-choices" id="storyChoices">${ks.map(k => `<div class="st-ch"><small>${esc(Story.CHOICES[k].ask)}</small><b>${esc(Story.CHOICES[k].opts[C[k]].t)}</b></div>`).join('')}</div>`; }
+  return `<div class="section-title">🔀 你的选择</div><div class="edu-notes vwin jwin st-choices" id="storyChoices">${ks.map(k => { const o = Story.CHOICES[k].opts[C[k]]; return `<div class="st-ch"><small>${esc(Story.CHOICES[k].ask)}</small><b>${esc(o.t)}</b>${o.shift ? `<em class="st-shift">${esc(o.shift)}</em>` : ''}</div>`; }).join('')}</div>`; }
 function storyView() { const x = storyCtx(), n = Story.cur(), N = Story.CH.length, p = Story.progress(), t = Story.title();
   setTop(isR() ? '主线 · 食谱簿' : isF() ? '主线 · 编年史' : '主线 · 第一颗豆');
   const pips = Array.from({length: N + 1}, (_, i) => `<i class="${i === 0 ? (Story.seen('pro') ? 'on' : '') : i <= N ? (Story.done(i) ? 'on' : '') : ''}${i === n ? ' cur' : ''}"></i>`).join('');
@@ -960,7 +998,8 @@ function storyPlay(id, opt = {}) { if (!window.Story) return; const sc = Story.s
   const still = navigator.webdriver || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   const typeIn = t => { const el = $('#sdText'); clearInterval(tm); tm = null; full = t; if (still || t.length < 2) { el.textContent = t; return; } let k = 0; el.textContent = ''; tm = setInterval(() => { el.textContent = t.slice(0, ++k); if (k >= t.length) { clearInterval(tm); tm = null; } }, 26); };
   const doFx = f => { if (!f) return; if (f === 'shake') { d.classList.remove('fx-shake'); void d.offsetWidth; d.classList.add('fx-shake'); setTimeout(() => d.classList.remove('fx-shake'), 700); } else { const fx = $('#sdFx'); fx.className = 'sd-fx ' + f; void fx.offsetWidth; fx.classList.add('go'); } };
-  const favPop = g => { const t = Object.entries(g || {}).map(([w, n]) => `❤ ${Story.nameOf(w)} +${n}`).join('　'); const el = $('#sdFav'); if (!t || !el) return; el.textContent = t; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); };
+  const favPop = (g, shift) => { const el = $('#sdFav'); if (!el) return; const fav = Object.entries(g || {}).filter(([, n]) => n).map(([w, n]) => `❤ ${Story.nameOf(w)} +${n}`).join('　'); const hint = shift || ''; if (!fav && !hint) return;
+    el.innerHTML = `${fav ? `<b>${esc(fav)}</b>` : ''}${hint ? `<small>${esc(hint)}</small>` : ''}`; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); };
   const pagesOf = () => (sc.kind === 'close' ? Story.pages().filter(p => p.ch === sc.n) : []);
   const rwHtml = () => { const xp = Math.round(rw.c / 2), isEpi = sc.kind === 'epi', isSide = sc.kind === 'side', pg = pagesOf(), fv = isSide && sc.side.fav ? Object.entries(sc.side.fav).map(([w, n]) => `❤ ${Story.nameOf(w)} 好感 +${n}`) : [];
     return `<div class="np-rw" id="sdReward"><b>${isEpi ? `📖 尾声 · ${esc((sc.ending && sc.ending.name) || '')}` : isSide ? `🧭 支线完成 · ${esc(sc.title)}` : `📖 第 ${sc.n} 章 完成`}</b><span>🪙 +${rw.c}</span><span>⭐ +${xp} XP</span>${rw.title ? `<span>🏷️ 称号：${esc(rw.title)}</span>` : ''}${fv.map(t => `<span>${t}</span>`).join('')}${rw.item ? `<span>🎁 ${esc(npcItemName(rw.item))}</span>` : ''}
@@ -993,7 +1032,7 @@ function storyPlay(id, opt = {}) { if (!window.Story) return; const sc = Story.s
       if (mk && (mk.kind === 'pro' || mk.kind === 'fin' || (mk.kind === 'close' && mk.n < Story.CH.length))) setTimeout(() => storyTick(true), 1100); }
     if (['story', 'list', 'map'].includes(app.dataset.view)) render(); };
   const next = () => { if (tm) { clearInterval(tm); tm = null; $('#sdText').textContent = full; return; } if (++i >= pages.length) return end(); show(); };
-  const pickOpt = k => { const b = pages[i]; if (!b || b.w !== 'choice') return; const r = Story.choose(b.id, k); SFXplay('harvest'); if (r) favPop(r.fav); refresh(); show(); };
+  const pickOpt = k => { const b = pages[i]; if (!b || b.w !== 'choice') return; const r = Story.choose(b.id, k); SFXplay('harvest'); if (r) favPop(r.fav, r.shift); refresh(); show(); };
   const card = $('#sdCard'); let cardT = null; const hideCard = () => { if (!d.classList.contains('carding')) return; clearTimeout(cardT); d.classList.remove('carding'); show(); };
   d.addEventListener('click', e => { const op = e.target.closest('.sd-opt'); if (op) { e.stopPropagation(); return pickOpt(+op.dataset.i); } const pgb = e.target.closest('[data-page]'); if (pgb) { e.stopPropagation(); return pgOpen(pgb.dataset.page); }
     if (d.classList.contains('ending')) { if (e.target.closest('#seDone')) { e.stopPropagation(); d.classList.remove('ending'); musicBack(); next(); } return; }
@@ -1244,7 +1283,7 @@ function scaView(arg) { if (!window.SCAQ) { location.hash = '#/list'; return; } 
 let lyFilter = 'all';
 function loyaltyShare(info) {
   let url = '';
-  try { url = Loyalty.paint({...info, xuan: isXuan()}); } catch (e) { url = ''; }
+  try { url = Loyalty.paint({...info, xuan: isXuan(), valley: isV() && !isR()}); } catch (e) { url = ''; }
   if (!url) return toast('这张卡现在画不出来');
   const name = (info.name || 'card').replace(/[^\w\u4e00-\u9fff]+/g, '-').slice(0, 40);
   fetch(url).then(r => r.blob()).then(async blob => {
@@ -1262,6 +1301,7 @@ function loyaltyOpen(html, shareInfo) {
   const s = $('#lyShare'); if (s && shareInfo) s.onclick = ev => { ev.stopPropagation(); loyaltyShare(shareInfo); };
 }
 function loyaltyView() {
+  save('mcc.loyaltySeen', today());
   const ctx = loyaltyCtx(), M = Loyalty.model(ctx), xuan = isXuan();
   setTop(xuan ? '江湖通行印' : '集卡册', '', true);
   const regions = [];
@@ -1275,6 +1315,7 @@ function loyaltyView() {
   app.innerHTML = `<div class="ly-cover"><div class="ly-kicker">${xuan ? '豆籍卡 · 江湖通行印' : 'LOYALTY · 集卡册'}</div><b>${xuan ? '墨尔本通行印' : '墨尔本咖啡集卡'}</b><p>${xuan ? '每到一家店，盖一枚到访印。再去，印上加星。故事走到的地方，会多一张卡。没有抽卡。' : '每家店第一次打卡盖一印，再去升星。故事卡跟着章节、支线和结局来。不抽卡，不付费。'}</p>
     <div class="ly-stats"><span><b>${M.stamped}</b>已盖印</span><span><b>${M.cards.filter(c => c.owned).length}/${M.cards.length}</b>故事卡</span><span><b>${M.sets.filter(s => s.claimed).length}/${M.sets.length}</b>套卡</span></div></div>
     <div class="ly-tabs" id="lyTabs">${filters.map(([id, name]) => `<button class="chip${lyFilter === id ? ' on' : ''}" data-ly="${id}">${esc(name)}</button>`).join('')}</div>
+    ${lyFilter === 'more' ? '<p class="hint ly-more">Fitzroy、Collingwood、Carlton 的咖啡馆还在「更多」这一格。到过一次，这里就多一枚印。</p>' : ''}
     ${showCafes ? `<div class="ly-grid" id="lyStamps">${cafes.map(stamp).join('') || '<div class="hint">这个筛选下还没有店。</div>'}</div>` : ''}
     ${lyFilter === 'story' || lyFilter === 'all' ? `<div class="section-title">${xuan ? '故事页' : '故事卡'}</div><div class="ly-grid">${M.cards.map(story).join('')}</div>` : ''}
     ${lyFilter === 'sets' || lyFilter === 'all' ? `<div class="section-title">${xuan ? '区域套印' : '区域套卡'}</div><div class="ly-sets">${M.sets.map(setRow).join('')}</div><p class="hint">凑齐一个区域里还在营业的店章，可以兑换一次称号和金币。成就和图鉴还是原来的，这里只记店和故事。</p>` : ''}
@@ -1317,7 +1358,7 @@ const views = {
     $('#addCafeBtn').onclick = () => location.hash = '#/add';
     const subs = [...new Set(allCafes().map(c => c.suburb))].sort();
     const v = visitedIds();
-    app.innerHTML = `${festBanner()}${storyEntry()}${loyaltyEntry()}${idleEntry()}${eduEntry()}${scaEntry()}${npcEntry()}${isV() || isF() ? questBoard(true) : ''}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
+    app.innerHTML = `${festBanner('today')}${todayCard()}${homeMore()}<div class="search"><input id="q" placeholder="${PXI() ? '搜索咖啡馆' : '🔍 搜索咖啡馆'}" value="${esc(listState.q)}" autocomplete="off">
       <select id="sub"><option value="">全部区域</option>${[...REGIONS, REGION_MORE].map(r => `<option value="${r.id}" ${r.id === listState.suburb ? 'selected' : ''}>${esc(r.name)}${r.zh && r.id !== 'more' ? ' ' + r.zh : ''}</option>`).join('')}</select></div>
       <div class="chips">${[['all', '全部'], ['todo', '未解锁'], ['done', '已解锁'], ['near', '离我最近']].map(([k, t]) => `<button class="chip ${listState.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
       <div class="hint">已解锁 ${v.size} / ${allCafes().length} 家</div><div id="cards"></div>`;
@@ -1330,6 +1371,7 @@ const views = {
       $('#cards').innerHTML = L.map(cafeCard).join('') || '<div class="empty"><div class="e">🫖</div>没有符合条件的咖啡馆</div>';
     };
     draw(); bindQuests();
+    const tg = $('#todayGo'); if (tg && tg.dataset.act === 'checkin') tg.onclick = () => { const c = $('#camBtn'); if (c) c.click(); };
     $('#q').oninput = e => { listState.q = e.target.value; draw(); };
     $('#sub').onchange = e => { listState.suburb = e.target.value; draw(); };
     app.querySelector('.chips').onclick = async e => {
@@ -1627,6 +1669,7 @@ function settingsHtml() {
   const on = window.JRPG && JRPG.SFX.on;
   return `<div class="section-title">${ic('gear', '⚙️')} 设置</div><div class="settings">
     <div class="set-row"><span>界面主题</span><span class="dim-toggle theme-sel" id="themeSel"><button data-theme="foundation" class="${THEME === 'foundation' ? 'on' : ''}" ${window.FD ? '' : 'disabled'}>🏰 城镇</button><button data-theme="ranch" class="${THEME === 'ranch' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🐄 牧场</button><button data-theme="valley" class="${THEME === 'valley' ? 'on' : ''}" ${window.JRPG && window.Valley ? '' : 'disabled'}>🌾 田园</button><button data-theme="jrpg" class="${THEME === 'jrpg' ? 'on' : ''}" ${window.JRPG ? '' : 'disabled'}>⚔️ 古风</button><button data-theme="sketch" class="${THEME === 'sketch' ? 'on' : ''}">✏️ 手绘</button></span></div>
+    <div class="set-row"><span>更多玩法</span><span class="set-links"><a href="#/story">主线</a><a href="#/loyalty">集卡</a><a href="#/idle">小铺</a><a href="#/edu">咖啡课</a><a href="#/sca">问答</a><a href="#/npc">图鉴</a></span></div>
     <div class="set-row"><span>📅 日历与节日</span><a class="btn ghost sm" href="#/calendar">打开日历 ›</a></div>
     <div class="set-row"><span>${isV() ? '🎵 小音效' : isXuan() ? '🎐 古风音效' : '8-bit 音效'}</span><button class="snd-btn" data-snd id="sndT" aria-pressed="${!!on}">${on ? '🔊' : '🔇'}</button></div>
     <div class="set-row"><span>${isV() ? '🎶 背景音乐' : isXuan() ? '🎶 古风背景音乐' : '🎶 像素背景音乐'} <small class="hint">${isXuan() ? '原创五声音阶拨弦小曲（似古筝），白天宫调、夜晚羽调' : isF() ? '原创拨弦小曲（像鲁特琴），白天温暖、夜晚安静' : isR() ? '原创 8-bit 小曲，春夏秋冬各一首，夜晚安静' : '原创 8-bit 小曲，白天轻快、夜晚安静'}</small></span><button class="snd-btn mus-set" data-music id="musT" aria-pressed="${musicOn()}">${musicOn() ? '开' : '关'}</button></div>
