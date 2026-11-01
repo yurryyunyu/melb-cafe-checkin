@@ -740,7 +740,7 @@ function todayPlan() {
   if (window.Story) {
     const id = Story.nextScene(storyCtx()), sc = id && Story.scene(id);
     if (sc && sc.kind !== 'side') {
-      if (sc.kind === 'pro') return storyGo('翻开序章', '一杯雨后的咖啡。今天只做这一件：把故事翻开。', '翻开序章');
+      if (sc.kind === 'pro') return storyGo('翻开序章', '雨停了。巷口的灯还亮着，有人怕它灭。今天只做这一件：把故事翻开。', '翻开序章');
       if (sc.kind === 'open') return storyGo('去听这一章', `第 ${sc.n} 章在等你翻开。听完再走也行。`, '去听这一章');
       if (sc.kind === 'close') return storyGo('听这一章', '这一章的目标已经够了。点开，听他们怎么接你的话。', '去听这一章');
       if (sc.kind === 'fin') return storyGo('翻开最后一页', `不同的店凑满 ${Story.EPI_NEED} 家了。最后一页由你来选。`, '翻开最后一页');
@@ -887,7 +887,13 @@ function storyCtx() { const by = {}, ids = new Set();
     rank: window.Edu ? Edu.rank() : 0, sca: window.SCAQ && SCAQ.state ? Object.keys(SCAQ.state.mastered || {}).length : 0, lv: levelInfo().lv}; }
 const stImg = f => `<img src="img/xuan/${f}.webp" alt="" decoding="async">`;
 // painted backdrops (古风): lazy — an image is only fetched when its beat plays; the new layer cross-fades in over the old one
-function sdBg(d, name) { if (!isXuan() || !name || d.dataset.bg === name) return; d.dataset.bg = name; const box = d.querySelector('#sdScenes'); if (!box) return; const im = new Image();
+function sdBg(d, name) {
+  if (isV() && !isR() && window.Valley && Valley.scenePlate && name) {
+    if (d.dataset.bg === name) return; d.dataset.bg = name;
+    const bg = d.querySelector('.sd-bg'); if (bg) bg.style.backgroundImage = 'url(' + Valley.scenePlate(name) + ')';
+    return;
+  }
+  if (!isXuan() || !name || d.dataset.bg === name) return; d.dataset.bg = name; const box = d.querySelector('#sdScenes'); if (!box) return; const im = new Image();
   im.onload = () => { if (d.dataset.bg !== name || !d.isConnected) return; const l = document.createElement('div'); l.className = 'sd-scene'; l.dataset.n = name; l.style.backgroundImage = `url(img/xuan/sc-${name}.webp)`; box.appendChild(l); void l.offsetWidth; l.classList.add('in');
     setTimeout(() => { [...box.children].slice(0, -1).forEach(o => o.remove()); }, 900); };
   im.src = `img/xuan/sc-${name}.webp`; }
@@ -914,7 +920,7 @@ function stMem(id) {
   return '老焙、澈、小豆，和这条江湖里的每一间铺子，如今都只在回忆里。你的打卡、地图和小铺，还会一直走下去。';
 }
 function storyEntry() { if (!window.Story) return ''; const x = storyCtx(), n = Story.cur(), N = Story.CH.length, p = Story.progress(), sd = stSideDue(), sdTag = sd ? ' · 🧭有新的支线' : '';
-  if (n === 0) return `<a class="edu-entry vwin jwin story-entry" href="#/story" id="storyEntry"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 序章《巷口的灯》</b><small>一杯雨后的咖啡，一本失落的食谱簿……</small></span><span class="ee-go">›</span></a>`;
+  if (n === 0) return `<a class="edu-entry vwin jwin story-entry" href="#/story" id="storyEntry"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 序章《巷口的灯》</b><small>雨后的第一句，像还没说完的爱。</small></span><span class="ee-go">›</span></a>`;
   if (n > N) { const end = Story.finished() && Story.ending() ? Story.ENDINGS[Story.ending()] : null;
     const wait = !end && !Story.epiReady(x) ? `再去打卡，凑满 ${Story.EPI_NEED} 家不同的店，结局才会到来（${x.cafes}/${Story.EPI_NEED}）` : '';
     return `<a class="edu-entry vwin jwin story-entry done" href="#/story" id="storyEntry"><span class="ee-ic">📜</span><span class="ee-t"><b>主线 · 第一颗豆　${end ? '已完结' : '结局未至'}</b><small>${end ? `结局「${esc(end.name)}」 · 称号：${esc(Story.title())}` : wait || '终章在等你'}${sdTag}</small></span><span class="ee-go">›</span></a>`; }
@@ -974,7 +980,7 @@ function storyView() { const x = storyCtx(), n = Story.cur(), N = Story.CH.lengt
     ${cur}${Story.seen('pro') ? stFavCard() : ''}<div class="section-title">📚 章节</div><div class="edu-list" id="storyList">${list.join('')}</div>
     ${Story.seen('pro') ? stPagesCard() + stSidesCard(x) : ''}${stChoicesCard()}
     ${ts.length ? `<div class="section-title">🏷️ 已获得的称号</div><div class="chips st-titles">${ts.map(q => `<span class="chip on">${esc(q.title)}</span>`).join('')}</div>` : ''}
-    <div class="hint edu-foot">主线把「咖啡课、打卡、豆子笔记」串成一个故事。每章的目标都看你<b>已有的记录</b>（以前打过的卡也算），不要求去某一家特定的店。只点选项不会跳章。全部章节走完后，还要在 <b>${Story.EPI_NEED}</b> 家不同的店打过卡，尾声才会到来。路上的选择关乎旧情、信任，也关乎你怎么守这条巷子；它们决定尾声是哪一种，不决定你能不能进下一章。<a href="#/loyalty">集卡册 ›</a></div>`;
+    <div class="hint edu-foot">主线把「咖啡课、打卡、豆子笔记」串成一个爱恨还没结清的故事。每章的目标都看你<b>已有的记录</b>（以前打过的卡也算），不要求去某一家特定的店。只点选项不会跳章。全部章节走完后，还要在 <b>${Story.EPI_NEED}</b> 家不同的店打过卡，尾声才会到来。选择是伤，也是饶恕：旧情、背叛、你怎么守这条可能失去的巷子。它们决定尾声是哪一种，不决定你能不能进下一章。<a href="#/loyalty">集卡册 ›</a></div>`;
   app.onclick = e => { const g = e.target.closest('[data-gift]'); if (g && !g.disabled) { const w = g.dataset.gift; if (Story.canGift(w) && Idle.spendBeans(Story.GIFT_BEANS) && Story.gift(w)) { SFXplay('harvest'); toast(`❤ ${Story.nameOf(w)} 好感 +1`); render(); } return; }
     const pg = e.target.closest('[data-page]'); if (pg) return pgOpen(pg.dataset.page);
     const b = e.target.closest('[data-play]'); if (!b) return; const id = b.dataset.play; storyPlay(id, {replay: !!b.dataset.replay}); }; }
@@ -1024,7 +1030,7 @@ function storyPlay(id, opt = {}) { if (!window.Story) return; const sc = Story.s
     if (b === null) { d.classList.remove('alone'); stStage('n'); box.classList.remove('narr'); $('#sdAva').innerHTML = '<span class="edu-ava st-ava st-seal">📜</span>'; $('#sdName').textContent = sc.kind === 'side' ? '支线' : '主线'; clearInterval(tm); tm = null; $('#sdText').innerHTML = rwHtml(); }
     else if (b.w === 'choice') { box.classList.remove('narr'); box.classList.add('choosing'); box.dataset.who = 'choice'; sdBg(d, b.bg); $('#sdAva').innerHTML = stAva('you'); paintNpc(d); stStage('choice'); $('#sdName').textContent = '你的回答'; clearInterval(tm); tm = null; full = '';
       $('#sdText').innerHTML = `<div class="sd-ask">${esc(b.ask)}</div><div class="sd-opts">${b.opts.map((o, k) => `<button class="sd-opt" data-i="${k}">${esc(o.t)}</button>`).join('')}</div>`; }
-    else { box.classList.toggle('narr', b.w === 'n'); box.dataset.who = b.w; sdBg(d, b.bg); $('#sdAva').innerHTML = stAva(b.w); paintNpc(d); stStage(b.w); d.classList.toggle('alone', !!b.alone); if (isEp) finaleBeat(b); doFx(b.fx); $('#sdName').innerHTML = b.name ? `${esc(b.name)}${ST_ROLE[b.w] ? ` <small>${b.w === 'laobei' && isXuan() ? '退隐的烘豆师' : ST_ROLE[b.w]}</small>` : ''}` : ''; typeIn(b.t); }
+    else { box.classList.toggle('narr', b.w === 'n'); box.dataset.who = b.w; sdBg(d, b.bg); $('#sdAva').innerHTML = stAva(b.w); paintNpc(d); stStage(b.w); d.classList.toggle('alone', !!b.alone); if (isEp) finaleBeat(b); doFx(b.fx); $('#sdName').innerHTML = b.name ? `${esc(b.name)}${ST_ROLE[b.w] ? ` <small>${b.w === 'laobei' && (isXuan() || (isV() && !isR())) ? '退隐的烘豆师' : ST_ROLE[b.w]}</small>` : ''}` : ''; typeIn(b.t); }
     d.style.setProperty('--sd-box', (box.offsetHeight + 26) + 'px'); $('#sdPage').textContent = b === null ? '' : `${i + 1}/${L.length}`; $('#sdNext').textContent = last ? (b === null ? '✔ 收下' : '✔ 完') : '▼ 继续'; $('#sdSkip').classList.toggle('hidden', !replay && b === null); };
   const end = () => { clearInterval(tm); inkT.forEach(clearTimeout); window.removeEventListener('resize', inkLayout); if (isEp) musicBack(); d.remove(); if (!replay) { storyHold = true; npcHold = true; SFXplay(rw ? 'harvest' : 'blip'); drawHud();
       if (rw) { coinBurst(null, rw.c, before); xpPop(null, Math.round(rw.c / 2), L0); const L1 = levelInfo(); if (L1.lv > L0.lv) setTimeout(() => toast(`⬆️ 升级！Lv.${L1.lv} ${L1.title}`, 2600), 1300); }
@@ -1309,8 +1315,10 @@ function loyaltyView() {
   const filters = [['all', '店章'], ['miss', '未盖'], ...regions.map(r => [r.id, r.name]), ['story', '故事'], ['sets', xuan ? '套印' : '套卡']];
   const showCafes = lyFilter !== 'story' && lyFilter !== 'sets';
   const cafes = M.cafes.filter(c => lyFilter === 'miss' ? !c.owned : (lyFilter === 'all' || lyFilter === 'story' || lyFilter === 'sets' || c.region === lyFilter));
-  const stamp = c => `<button class="ly-stamp${c.owned ? '' : ' miss'}" data-cafe="${esc(c.id)}"><span class="ly-seal" aria-hidden="true">${c.owned ? '印' : ''}</span><small>${esc(c.short)}</small>${c.owned ? `<span class="stars">${'★'.repeat(c.stars)}${'☆'.repeat(3 - c.stars)}</span>` : '<small>未盖</small>'}</button>`;
-  const story = c => `<button class="ly-story${c.owned ? '' : ' miss'}" data-card="${esc(c.id)}"><span class="ly-seal ${c.tag || ''}">${c.owned ? (c.tag === 'hero' ? '侠' : '情') : ''}</span><small>${esc(c.face)}</small></button>`;
+  const valleyBook = isV() && !isR() && window.Valley && Valley.sealSprite;
+  const seal = (id, kind, on, tag) => valleyBook ? `<span class="ly-seal ly-drawn ${tag || ''}" data-seal="${esc(id)}" data-kind="${kind}" data-on="${on ? 1 : 0}"></span>` : `<span class="ly-seal ${tag || ''}" aria-hidden="true">${on ? (kind === 'hero' ? '侠' : kind === 'cafe' ? '印' : '情') : ''}</span>`;
+  const stamp = c => `<button class="ly-stamp${c.owned ? '' : ' miss'}" data-cafe="${esc(c.id)}">${seal(c.id, 'cafe', c.owned)}<small>${esc(c.short)}</small>${c.owned ? `<span class="stars">${'★'.repeat(c.stars)}${'☆'.repeat(3 - c.stars)}</span>` : '<small>未盖</small>'}</button>`;
+  const story = c => `<button class="ly-story${c.owned ? '' : ' miss'}" data-card="${esc(c.id)}">${seal(c.id, c.kind === 'end' ? 'end' : (c.tag === 'hero' ? 'hero' : 'love'), c.owned, c.tag)}<small>${esc(c.face)}</small></button>`;
   const setRow = s => `<div class="ly-set"><div class="top"><b>${esc(s.name)}</b><span>${s.have}/${s.need}</span></div><small>${esc(s.line)}${s.claimed ? ' · 已兑换「' + esc(s.title) + '」' : ''}</small>${s.ready && !s.claimed ? `<button class="btn" data-set="${esc(s.id)}">兑换 🪙${s.c} · ${esc(s.title)}</button>` : ''}</div>`;
   app.innerHTML = `<div class="ly-cover"><div class="ly-kicker">${xuan ? '豆籍卡 · 江湖通行印' : 'LOYALTY · 集卡册'}</div><b>${xuan ? '墨尔本通行印' : '墨尔本咖啡集卡'}</b><p>${xuan ? '每到一家店，盖一枚到访印。再去，印上加星。故事走到的地方，会多一张卡。没有抽卡。' : '每家店第一次打卡盖一印，再去升星。故事卡跟着章节、支线和结局来。不抽卡，不付费。'}</p>
     <div class="ly-stats"><span><b>${M.stamped}</b>已盖印</span><span><b>${M.cards.filter(c => c.owned).length}/${M.cards.length}</b>故事卡</span><span><b>${M.sets.filter(s => s.claimed).length}/${M.sets.length}</b>套卡</span></div></div>
@@ -1320,6 +1328,7 @@ function loyaltyView() {
     ${lyFilter === 'story' || lyFilter === 'all' ? `<div class="section-title">${xuan ? '故事页' : '故事卡'}</div><div class="ly-grid">${M.cards.map(story).join('')}</div>` : ''}
     ${lyFilter === 'sets' || lyFilter === 'all' ? `<div class="section-title">${xuan ? '区域套印' : '区域套卡'}</div><div class="ly-sets">${M.sets.map(setRow).join('')}</div><p class="hint">凑齐一个区域里还在营业的店章，可以兑换一次称号和金币。成就和图鉴还是原来的，这里只记店和故事。</p>` : ''}
     ${lyFilter !== 'all' && lyFilter !== 'story' && lyFilter !== 'sets' ? '' : ''}`;
+  if (valleyBook) app.querySelectorAll('[data-seal]').forEach(el => { el.textContent = ''; try { el.appendChild(Valley.sealSprite(el.dataset.seal, el.dataset.kind, el.dataset.on === '1')); } catch (err) {} });
   $('#lyTabs').onclick = e => { const b = e.target.closest('[data-ly]'); if (!b) return; lyFilter = b.dataset.ly; loyaltyView(); };
   app.onclick = e => {
     const set = e.target.closest('[data-set]');

@@ -14,15 +14,15 @@ const SETS = [
 ];
 // secret cards stay silhouettes until earned (ending names are not shown early)
 const CARDS = [
-  {id: 'pro', kind: 'main', name: '序章 · 巷口的灯', line: '今天的巷口也亮着。', tag: 'love'},
-  {id: 'ch1', kind: 'main', ch: 1, name: '第一章 · 雨后的小巷', line: '先闻，再决定爱不爱。', tag: 'love'},
-  {id: 'ch2', kind: 'main', ch: 2, name: '第二章 · 豆袋上的名字', line: '慢慢找，别一个人赶路。', tag: 'love'},
-  {id: 'ch3', kind: 'main', ch: 3, name: '第三章 · 河对岸的火', line: '她问凭什么是你。你没有躲开。', tag: 'love'},
-  {id: 'ch4', kind: 'main', ch: 4, name: '第四章 · 九个大气压', line: '两个人争出来的一杯，后来成了旧情。', tag: 'love'},
-  {id: 'ch5', kind: 'main', ch: 5, name: '第五章 · 奶泡里的人情', line: '你选择站在巷口的哪一边。', tag: 'hero'},
-  {id: 'ch6', kind: 'main', ch: 6, name: '第六章 · 清澈', line: '信可以晚一点给。人先坐下来。', tag: 'love'},
-  {id: 'ch7', kind: 'main', ch: 7, name: '第七章 · 舌尖的地图', line: '他写那封信时，还坐在桌子对面。', tag: 'love'},
-  {id: 'ch8', kind: 'main', ch: 8, name: '第八章 · 咖啡魂', line: '座位、关门，或先听完。都是一种守。', tag: 'hero'},
+  {id: 'pro', kind: 'main', name: '序章 · 巷口的灯', line: '灯还亮着。有人怕它灭，才不敢走。', tag: 'love'},
+  {id: 'ch1', kind: 'main', ch: 1, name: '第一章 · 雨后的小巷', line: '先闻，再决定还爱不爱。', tag: 'love'},
+  {id: 'ch2', kind: 'main', ch: 2, name: '第二章 · 豆袋上的名字', line: '慢慢喝是慈悲。跑，也是一种伤。', tag: 'love'},
+  {id: 'ch3', kind: 'main', ch: 3, name: '第三章 · 河对岸的火', line: '她问凭什么是你。回答是刀，或是座位。', tag: 'love'},
+  {id: 'ch4', kind: 'main', ch: 4, name: '第四章 · 九个大气压', line: '争的不是粉。是你能不能听我一次。', tag: 'love'},
+  {id: 'ch5', kind: 'main', ch: 5, name: '第五章 · 奶泡里的人情', line: '你挡在巷口。家还没被收走。', tag: 'hero'},
+  {id: 'ch6', kind: 'main', ch: 6, name: '第六章 · 清澈', line: '恨了一年的人，终于把信交出来。', tag: 'love'},
+  {id: 'ch7', kind: 'main', ch: 7, name: '第七章 · 舌尖的地图', line: '舌头回来了。对面挂上了第一百二十八块招牌。', tag: 'love'},
+  {id: 'ch8', kind: 'main', ch: 8, name: '第八章 · 咖啡魂', line: '椅子、关门，或先听完。都是把恨放在哪。', tag: 'hero'},
   {id: 'ch9', kind: 'main', ch: 9, name: '第九章 · 第一颗豆', line: '簿子不属于谁。人可以先坐下。', tag: 'hero'},
   {id: 'side:s-city1', kind: 'side', name: '支线 · 电车站的伞', line: '每个人都有一杯不好意思说的咖啡。', tag: 'love'},
   {id: 'side:s-city2', kind: 'side', name: '支线 · 小巷里的规矩', line: '让一让路，也是巷子里的人情。', tag: 'hero'},
@@ -37,9 +37,9 @@ const CARDS = [
   {id: 'mile:10', kind: 'mile', need: 10, name: '初行十店', line: '十家店，十条巷。今天也亮着。', tag: 'hero'},
   {id: 'mile:25', kind: 'mile', need: 25, name: '半城茶香', line: '走了半座城，杯子还温。', tag: 'love'},
   {id: 'mile:51', kind: 'mile', need: 51, name: '五十一盏灯', line: '不同的店超过五十家。结局的门，从这里开。', tag: 'hero'},
-  {id: 'end:tea', kind: 'end', end: 'tea', secret: 1, name: '结局 · 人走茶凉', line: '你喝完了最后一杯。', tag: 'hero'},
-  {id: 'end:lamp', kind: 'end', end: 'lamp', secret: 1, name: '结局 · 灯火未熄', line: '空白页还在，灯也还在。', tag: 'love'},
-  {id: 'end:first', kind: 'end', end: 'first', secret: 1, name: '结局 · 第一颗', line: '澈与小豆把铺子重新打开。', tag: 'love'},
+  {id: 'end:tea', kind: 'end', end: 'tea', secret: 1, name: '结局 · 人走茶凉', line: '爱还在。人灭了。雨里只剩一只空杯。', tag: 'hero'},
+  {id: 'end:lamp', kind: 'end', end: 'lamp', secret: 1, name: '结局 · 灯火未熄', line: '空白把告别按住。灯还为没说完的爱亮着。', tag: 'love'},
+  {id: 'end:first', kind: 'end', end: 'first', secret: 1, name: '结局 · 第一颗', line: '恨让出座位。铺子重新开了门。', tag: 'love'},
 ];
 const byId = Object.fromEntries(CARDS.map(c => [c.id, c]));
 
@@ -121,8 +121,16 @@ function paint(info) {
   if (typeof document === 'undefined') return '';
   const c = document.createElement('canvas'); c.width = 640; c.height = 860;
   const g = c.getContext('2d'), xuan = !!info.xuan, valley = !!info.valley && !xuan;
-  g.fillStyle = xuan ? '#e8dcc0' : valley ? '#5ea83c' : '#f6efe2'; g.fillRect(0, 0, 640, 860);
-  if (valley) { g.fillStyle = '#f6e7c1'; g.fillRect(40, 78, 560, 720); g.fillStyle = '#7a4a25'; g.fillRect(520, 96, 40, 28); g.fillStyle = '#fdf7ec'; g.fillRect(530, 102, 18, 16); g.fillStyle = '#c98f55'; g.fillRect(524, 112, 8, 6); }
+  g.fillStyle = xuan ? '#e8dcc0' : valley ? '#7ec24a' : '#f6efe2'; g.fillRect(0, 0, 640, 860);
+  if (valley) {
+    g.fillStyle = '#8ec8ea'; g.fillRect(0, 0, 640, 150);
+    g.fillStyle = '#b7dc78'; g.fillRect(0, 130, 640, 40);
+    g.fillStyle = '#fff1c4'; g.fillRect(36, 86, 568, 730);
+    g.fillStyle = '#a33b32'; g.fillRect(250, 100, 150, 28); g.fillStyle = '#7a2c26'; g.fillRect(236, 122, 178, 10);
+    g.fillStyle = '#f3d7a4'; g.fillRect(268, 132, 114, 70); g.fillStyle = '#6b3f1d'; g.fillRect(308, 156, 28, 40);
+    g.fillStyle = '#ffe08a'; g.fillRect(278, 148, 22, 18);
+    g.strokeStyle = '#e2b06a'; g.lineWidth = 8; g.strokeRect(56, 168, 528, 620);
+  }
   g.strokeStyle = xuan ? '#2a2018' : valley ? '#3a2414' : '#4a4038'; g.lineWidth = 10; g.strokeRect(28, 28, 584, 804);
   g.strokeStyle = xuan ? '#9c6b22' : valley ? '#c98f55' : '#c4a574'; g.lineWidth = valley ? 6 : 2; g.strokeRect(48, 48, 544, 764);
   g.fillStyle = xuan ? '#2a2018' : '#3a2414';
