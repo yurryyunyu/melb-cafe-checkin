@@ -75,6 +75,7 @@ a{color:inherit}
 .btn{display:block;width:100%;padding:10px;font-size:23px;font-weight:700;font-family:var(--hand);background:var(--slate);color:#fff;cursor:pointer;margin-top:12px;text-align:center;text-decoration:none;box-shadow:3px 3px 0 var(--pencil);text-shadow:0 1px 0 rgba(0,0,0,.15)}
 .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--pencil)}
 .game-btn{background:var(--hatch-pink),var(--pink)}
+a.go-here small{display:block;margin-top:2px;font-size:12px;font-weight:650;letter-spacing:.04em;opacity:.9}
 .btn.ghost{background:#fffdf8;color:var(--ink);text-shadow:none}
 .btn.danger{background:#fffdf8;color:#b23;border-color:#b23;box-shadow:3px 3px 0 #b23}
 .row{display:flex;gap:10px}.row>*{flex:1}
