@@ -6,7 +6,9 @@ html[data-theme=jrpg]{
   --px:"FusionPixel","PingFang SC","Noto Sans CJK SC",monospace;
   --gold:#ffcd75;--hp:#4ade80;--mp:#60a5fa;--jt:#fff;--jdim:#aab4ff;
 }
-html[data-theme=jrpg],html[data-theme=jrpg] body{font-family:var(--px);color:var(--jt);-webkit-font-smoothing:none;font-smooth:never;
+html[data-theme=jrpg],html[data-theme=jrpg] body{font-family:var(--px);color:var(--jt);-webkit-font-smoothing:none;font-smooth:never}
+/* Blue shell only for a bare jrpg document. 田园 (data-skin) and 古风 (data-xuan) must not inherit this page color. */
+html[data-theme=jrpg]:not([data-skin]):not([data-xuan]),html[data-theme=jrpg]:not([data-skin]):not([data-xuan]) body{
   background-color:#0b0f2a;background-image:radial-gradient(#ffffff22 1px,transparent 1.5px),radial-gradient(#ffffff14 1px,transparent 1.5px);background-size:46px 46px,23px 23px;background-position:0 0,11px 13px}
 html[data-theme=jrpg] *{letter-spacing:0}
 html[data-theme=jrpg] .pxs,html[data-theme=jrpg] canvas{image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;image-rendering:pixelated}
