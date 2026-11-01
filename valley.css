@@ -1,12 +1,12 @@
 /* ================= 🌾 Cozy valley theme (default) — overrides the pixel/JRPG base via html[data-skin=valley] ================= */
 html[data-theme][data-skin=valley]{
-  --cream:#f6e7c1;--cream2:#fbf3dc;--ink:#4a2c14;--ink2:#7a5636;--wood:#9a6232;--woodL:#c98f55;--woodD:#5e3519;--woodX:#3a2414;--gold:#f5c542;--vgreen:#5fae3c;
+  --cream:#fff1c4;--cream2:#fff8e0;--ink:#3a2414;--ink2:#6b4424;--wood:#a86b32;--woodL:#e2b06a;--woodD:#5a3014;--woodX:#2c1a0e;--gold:#ffd56a;--vgreen:#6aaa34;
   --win:var(--cream);
-  --winb:inset 0 0 0 2px var(--woodL),inset 0 0 0 4px var(--wood),inset 0 0 0 5px var(--woodD),0 3px 0 var(--woodX),0 5px 10px rgba(58,36,20,.25);
+  --winb:inset 0 0 0 2px #fff6d4,inset 0 0 0 5px var(--woodL),inset 0 0 0 8px var(--wood),0 4px 0 var(--woodX),0 7px 0 rgba(44,26,14,.12);
   --jt:var(--ink);--jdim:var(--ink2);
 }
-html[data-theme][data-skin=valley],html[data-theme][data-skin=valley] body{color:var(--ink);background-color:#6fbf4f;
-  background-image:radial-gradient(#5aa83c 1.2px,transparent 1.6px),radial-gradient(#8fd66a 1px,transparent 1.5px),radial-gradient(#ffd6e5 1px,transparent 1.6px);background-size:22px 22px,30px 30px,97px 97px;background-position:0 0,11px 15px,40px 20px}
+html[data-theme][data-skin=valley],html[data-theme][data-skin=valley] body{color:var(--ink);background-color:#7ec24a;
+  background-image:radial-gradient(#f0d48a 1.15px,transparent 1.7px),radial-gradient(#5a9a32 1.2px,transparent 1.6px),radial-gradient(#ffd0c4 1px,transparent 1.6px),linear-gradient(#8ec8ea 0 72px,#b7dc78 72px 140px,#7ec24a 140px);background-size:26px 26px,18px 18px,86px 86px,100% 100%;background-position:0 0,9px 13px,36px 18px,0 0;background-attachment:fixed}
 /* wooden-framed parchment panels */
 html[data-theme][data-skin=valley] .jwin,html[data-theme][data-skin=valley] .vwin,html[data-theme][data-skin=valley] .card,html[data-theme][data-skin=valley] .stat,html[data-theme][data-skin=valley] .bdg,html[data-theme][data-skin=valley] .region,
 html[data-theme][data-skin=valley] .player,html[data-theme][data-skin=valley] .rec,html[data-theme][data-skin=valley] .hero,html[data-theme][data-skin=valley] .cel-card,html[data-theme][data-skin=valley] #sheet,html[data-theme][data-skin=valley] .map-legend,
@@ -94,13 +94,13 @@ html[data-theme][data-skin=valley] .rate-menu{background:var(--cream2);border:3p
 .vh.pop{animation:hpop .7s steps(5)}
 @keyframes hpop{0%{transform:scale(2.4)}60%{transform:scale(.8)}100%{transform:none}}
 /* 💬 dialogue: wood frame + name tag */
-html[data-theme][data-skin=valley]:not([data-ranch]) #dlg{padding:18px 12px 14px;border-radius:8px;margin-top:12px;background:linear-gradient(180deg,#fff8e6 0 16px,#f6e7c1);border:4px solid var(--woodX);box-shadow:inset 0 0 0 3px var(--woodL),0 4px 0 var(--woodX);color:var(--ink);text-shadow:none}
+html[data-theme][data-skin=valley]:not([data-ranch]) #dlg{padding:18px 12px 14px;border-radius:8px;margin-top:12px;background:linear-gradient(180deg,#fff8e4 0 18px,#f6e2b4);border:4px solid var(--woodX);box-shadow:inset 0 0 0 3px #e8c27a,inset 0 0 0 6px #fff6d8,0 4px 0 var(--woodX);color:var(--ink);text-shadow:none}
 html[data-theme][data-skin=valley]:not([data-ranch]) .today-card{background:linear-gradient(180deg,#fff8e4,#f3e0b4);border:4px solid var(--woodX);border-radius:8px;box-shadow:inset 0 0 0 3px var(--woodL),0 4px 0 var(--woodX)}
 html[data-theme][data-skin=valley]:not([data-ranch]) .today-card .td-k{color:var(--woodD);letter-spacing:.18em}
 html[data-theme][data-skin=valley]:not([data-ranch]) .home-more{background:var(--cream);border:4px solid var(--woodX);border-radius:8px;box-shadow:inset 0 0 0 3px var(--woodL),0 3px 0 var(--woodX)}
 html[data-theme][data-skin=valley]:not([data-ranch]) .home-more>summary{color:var(--ink)}
-html[data-theme][data-skin=valley] .dlg-face{width:64px;height:64px;border:3px solid var(--woodX);border-radius:4px;box-shadow:inset 0 0 0 2px #fff6;background:#f6d8a8}
-html[data-theme][data-skin=valley] .dlg-name{position:absolute;top:-14px;left:12px;background:linear-gradient(#ffd27a,#e8a54a);color:var(--ink);border:2px solid var(--woodX);border-radius:4px;padding:1px 8px;font-size:13px;box-shadow:0 2px 0 var(--woodX)}
+html[data-theme][data-skin=valley] .dlg-face{width:72px;height:72px;border:3px solid var(--woodX);border-radius:6px;box-shadow:inset 0 0 0 3px #e8c27a,inset 0 0 0 5px #fff6d8,0 3px 0 var(--woodX);background:linear-gradient(#ffe7b0,#f0c27a)}
+html[data-theme][data-skin=valley] .dlg-name{position:absolute;top:-16px;left:12px;background:linear-gradient(#ffe7a0,#e2a24a);color:var(--ink);border:3px solid var(--woodX);border-radius:4px;padding:2px 10px;font-size:13px;box-shadow:inset 0 0 0 2px #fff6d0,0 2px 0 var(--woodX)}
 html[data-theme][data-skin=valley] .dlg-text{color:var(--ink);font-size:15px}
 html[data-theme][data-skin=valley] .dlg-next{color:var(--wood)}
 /* ---------- 🗺️ cozy pixel town map ---------- */

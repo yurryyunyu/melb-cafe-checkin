@@ -48,8 +48,8 @@ function clock() {
 
 // ---------- seasonal palette ----------
 const PALS = {
-  spring: {grass: ['#7ed45c', '#5aae3e', '#a6ea86', '#3c9228'], leaf: ['#f6b3cd', '#e98fb3', '#ffd9e7', '#c76a91'], fl: ['#ff9ec4', '#fff3f7', '#ffd85e', '#b58bff'], ground: '#4ea336'},
-  summer: {grass: ['#62c844', '#46a030', '#86dc5c', '#2f7e22'], leaf: ['#3ea834', '#2e8424', '#6ec84e', '#1e6418'], fl: ['#ffd23f', '#ff7b54', '#ffffff', '#ff5e8a'], ground: '#348626'},
+  spring: {grass: ['#8ed45c', '#6aaa38', '#d6ee88', '#4e9228'], leaf: ['#f6b3cd', '#e98fb3', '#ffd9e7', '#c76a91'], fl: ['#ff9ec4', '#fff6e0', '#ffd56a', '#ffb45a'], ground: '#c4a15a'},
+  summer: {grass: ['#78cc4e', '#5aaa34', '#c6e878', '#3e8e24'], leaf: ['#4eae38', '#3a8c28', '#8ed468', '#2a7418'], fl: ['#ffd56a', '#ff8a5a', '#fff6d8', '#ff6e8a'], ground: '#c4964a'},
   autumn: {grass: ['#a9b84b', '#94a53f', '#c4c95d', '#7e8e35'], leaf: ['#f08a2c', '#d6641e', '#ffb648', '#a5431a'], fl: ['#e2552a', '#f2a03d', '#9a4ab0', '#ffd96a'], ground: '#7e8e35'},
   winter: {grass: ['#eef4fa', '#dde8f2', '#ffffff', '#c3d3e2'], leaf: null, fl: ['#d33a3a', '#2f7a3a', '#ffffff', '#b02a2a'], ground: '#c3d3e2'}};
 
@@ -142,33 +142,118 @@ function shop(id, lit, season = 'spring', night = false) {
   const key = [id, lit, season, night, STYLE].join('|'); if (shopCache[key]) return shopCache[key];
   const R = rng(hash(id) ^ 0x51ed), [rf, rd] = pick(R, ROOFS), wall = pick(R, WALLS), awn = pick(R, AWN), P = Pix(32, 32), W = season === 'winter' && STYLE !== 'ranch';
   const fl = ((STYLE === 'ranch' ? RPALS : PALS)[season] || PALS.spring).fl;
-  P.rect(0, 30, 32, 2, W ? '#d5cbb8' : '#c4a56a');
-  P.rect(13, 28, 8, 4, W ? '#efe6d4' : '#e8c98a');
-  P.rect(14, 28, 6, 1, W ? '#fff' : '#f6e2b0');
-  P.rect(22, 3, 4, 6, '#8a4030'); P.rect(22, 3, 4, 1, '#c86a50'); P.rect(23, 4, 1, 4, '#a85a42');
-  if (lit) { P.set(23, 1, 'rgba(255,255,255,.85)'); P.set(24, 0, 'rgba(255,255,255,.65)'); P.set(22, 2, 'rgba(255,255,255,.5)'); }
-  for (let y = 5; y <= 12; y++) { const inset = Math.round((12 - y) * 0.95); P.rect(1 + inset, y, 30 - inset * 2, 1, y % 2 ? rf : rd); }
-  P.rect(1, 12, 30, 2, rd); P.rect(0, 13, 32, 1, shade(rd, -30));
-  if (W) { for (let y = 5; y <= 7; y++) { const inset = Math.round((12 - y) * 0.95); P.rect(1 + inset, y, 30 - inset * 2, 1, '#ffffff'); } P.rect(22, 2, 4, 1, '#fff'); }
-  P.rect(12, 7, 9, 6, '#5a3418'); P.rect(13, 8, 7, 4, '#f6e7c1');
-  P.rect(15, 9, 3, 2, '#fdf7ec'); P.set(14, 10, '#fdf7ec'); P.set(18, 10, '#fdf7ec'); P.rect(15, 8, 3, 1, '#7a4a25');
-  P.rect(2, 14, 28, 16, wall);
-  for (let y = 17; y < 30; y += 4) P.rect(2, y, 28, 1, shade(wall, -22));
-  for (let x = 1; x < 31; x++) { const stripe = ((x / 3) | 0) % 2; P.set(x, 14, stripe ? awn : '#fff8ea'); P.set(x, 15, stripe ? awn : '#fff8ea'); P.set(x, 16, stripe ? shade(awn, -28) : '#f0e0c0'); }
-  for (let x = 2; x < 30; x += 3) P.set(x, 17, shade(awn, -18));
   const glass = lit && night ? '#ffe08a' : night ? '#3d4a6e' : '#c5ecff', glow = lit && night ? '#fff6c0' : night ? '#5a6a90' : '#ffffff';
-  P.rect(3, 19, 12, 8, '#3a2414'); P.rect(4, 20, 10, 6, glass);
-  P.rect(8, 20, 1, 6, '#3a2414'); P.rect(4, 22, 10, 1, '#3a2414');
-  P.set(5, 21, glow); P.set(11, 21, glow);
-  if (lit && night) P.rect(4, 25, 10, 1, '#ffe9a0');
-  P.rect(2, 27, 14, 2, '#5a3418'); P.rect(3, 27, 12, 1, '#8a5a33');
-  [[4, fl[0]], [7, fl[1]], [10, fl[2]], [13, fl[3]]].forEach(([x, c]) => { P.set(x, 26, W ? '#fff' : c); P.set(x, 27, W ? '#2f6a3a' : '#3f8f2b'); });
-  P.rect(18, 19, 9, 11, '#3a2414'); P.rect(19, 20, 7, 10, '#8a5a33');
-  P.rect(20, 21, 5, 3, shade('#8a5a33', 30)); P.rect(20, 25, 5, 4, shade('#8a5a33', -16));
-  P.set(24, 24, '#f5c542'); P.rect(19, 29, 7, 1, '#5e3519'); P.rect(17, 30, 11, 1, '#c9b18a');
-  P.rect(28, 25, 3, 5, '#a85a32'); P.rect(28, 23, 3, 2, W ? '#2f6a3a' : '#3f9a3a'); P.set(29, 22, W ? '#d33a3a' : fl[0]); P.set(28, 24, W ? '#fff' : fl[2]);
+  // warm dirt path and stone step
+  P.rect(0, 30, 32, 2, W ? '#d5cbb8' : '#c4a15a');
+  P.rect(16, 28, 8, 4, W ? '#efe6d4' : '#e8c98a');
+  P.rect(17, 28, 6, 1, W ? '#fff' : '#f6e2b0');
+  P.rect(4, 30, 8, 2, W ? '#c8b8a4' : '#a88858');
+  // chimney + a puff of smoke when the shop is alive
+  P.rect(24, 2, 4, 6, '#8a4030'); P.rect(24, 2, 4, 1, '#c86a50'); P.rect(25, 3, 1, 4, '#a85a42');
+  if (lit) { P.set(25, 0, 'rgba(255,255,255,.9)'); P.set(26, 1, 'rgba(255,255,255,.65)'); P.set(23, 1, 'rgba(255,248,220,.55)'); }
+  // shingled roof with a timber edge
+  for (let y = 4; y <= 11; y++) { const inset = Math.round((11 - y) * 1.05); P.rect(1 + inset, y, 30 - inset * 2, 1, y % 2 ? rf : rd); }
+  P.rect(1, 11, 30, 2, rd); P.rect(0, 12, 32, 1, shade(rd, -36));
+  if (W) { for (let y = 4; y <= 6; y++) { const inset = Math.round((11 - y) * 1.05); P.rect(1 + inset, y, 30 - inset * 2, 1, '#ffffff'); } P.rect(24, 1, 4, 1, '#fff'); }
+  // hanging wooden sign (cup) under the left eave
+  P.rect(3, 9, 1, 3, '#5e3519'); P.rect(2, 12, 9, 5, '#6b3f1d'); P.rect(3, 13, 7, 3, '#f6e7c1');
+  P.rect(5, 13, 3, 2, '#fff8e8'); P.set(6, 13, '#6b3f1d'); P.rect(8, 14, 1, 1, '#c98f55');
+  // plaster wall, timber posts, a warm wood band
+  P.rect(2, 13, 28, 17, wall);
+  P.rect(2, 13, 2, 17, '#6b3f1d'); P.rect(15, 13, 2, 17, '#6b3f1d'); P.rect(28, 13, 2, 17, '#5e3519');
+  for (let y = 16; y < 29; y += 5) P.rect(4, y, 11, 1, shade(wall, -18));
+  // striped awning over the window only — the door stays timber
+  for (let x = 3; x < 15; x++) { const stripe = ((x / 2) | 0) % 2; P.set(x, 14, stripe ? awn : '#fff8ea'); P.set(x, 15, stripe ? shade(awn, -24) : '#f0e0c0'); }
+  // window: curtains, crossbar, a flower on the sill
+  P.rect(4, 17, 10, 8, '#3a2414'); P.rect(5, 18, 8, 6, glass);
+  P.rect(8, 18, 1, 6, '#3a2414'); P.rect(5, 20, 8, 1, '#3a2414');
+  P.rect(5, 18, 2, 6, shade(awn, 30)); P.rect(11, 18, 2, 4, shade(glass, -18));
+  P.set(6, 19, glow); P.set(10, 19, glow);
+  if (lit && night) { P.rect(5, 23, 8, 1, '#ffe9a0'); P.set(7, 21, '#fff6c0'); }
+  P.rect(4, 25, 10, 2, '#5a3418'); P.rect(5, 25, 8, 1, '#8a5a33');
+  P.set(6, 24, W ? '#fff' : fl[0]); P.set(9, 24, W ? '#d8e8f0' : fl[2]); P.set(7, 26, W ? '#2f6a3a' : '#3f8f2b');
+  // cottage door with a round light and a brass knob
+  P.rect(18, 17, 8, 13, '#3a2414'); P.rect(19, 18, 6, 11, '#8a5a33');
+  P.rect(20, 19, 4, 3, shade('#8a5a33', 36)); P.rect(20, 23, 4, 5, shade('#8a5a33', -18));
+  P.ell(22, 20.2, 1.6, 1.6, lit && night ? '#ffe08a' : '#f6e7c1'); P.set(23, 24, '#f5c542');
+  P.rect(18, 29, 8, 1, '#5e3519');
+  // flower box + a small lantern post
+  [[5, fl[0]], [8, fl[1]], [11, fl[3]]].forEach(([x, c]) => { P.set(x, 27, W ? '#fff' : c); P.set(x, 28, W ? '#2f6a3a' : '#3f8f2b'); });
+  P.rect(29, 20, 2, 8, '#5e3519'); P.rect(28, 18, 4, 3, '#3a2414'); P.rect(29, 19, 2, 1, lit ? '#ffe08a' : '#f6e7c1');
+  // a little ivy on the left post when it isn't winter
+  if (!W) { P.set(3, 18, '#3f8f2b'); P.set(3, 20, '#5aaa44'); P.set(2, 22, '#3f8f2b'); P.set(4, 23, fl[0]); }
   P.outline(OUT);
   return (shopCache[key] = P.canvas());
+}
+// wax-seal faces for the valley loyalty booklet (original, drawn here)
+const sealCache = {};
+function sealSprite(id, kind, on) {
+  const key = [id, kind, on ? 1 : 0].join('|');
+  if (!sealCache[key]) {
+    const P = Pix(36, 36), R = rng(hash(String(id) + kind) ^ 0x5ea1);
+    const wax = on ? (kind === 'hero' ? '#8a3a2a' : kind === 'love' ? '#a85a55' : kind === 'end' ? '#6a4030' : '#c4843a') : '#b7aa96';
+    const ink = on ? '#fff6d8' : '#8a7d6c';
+    P.ell(18, 18, 15, 15, shade(wax, -28)); P.ell(18, 17.5, 13.2, 13.2, wax); P.ell(15, 14, 6, 4, shade(wax, 28));
+    if (!on) { P.ell(18, 17.5, 8, 8, shade(wax, 18)); }
+    else if (kind === 'love') { P.rect(14, 16, 3, 3, ink); P.rect(19, 16, 3, 3, ink); P.rect(15, 19, 7, 2, ink); P.rect(16, 21, 5, 2, ink); P.set(18, 23, ink); }
+    else if (kind === 'hero') { P.rect(17, 10, 2, 12, ink); P.rect(14, 12, 8, 2, ink); P.rect(16, 22, 4, 3, '#e8c56a'); }
+    else if (kind === 'end') { P.rect(16, 11, 4, 6, ink); P.rect(14, 16, 8, 2, ink); P.set(18, 22, '#ffe08a'); P.set(17, 23, '#ffe08a'); }
+    else {
+      const roof = ['#c9503c', '#3f7fbf', '#5f9e4a', '#d98a2b'][(R() * 4) | 0];
+      P.rect(12, 20, 12, 7, ink); P.rect(13, 15, 10, 5, roof); P.rect(16, 22, 3, 5, '#6b3f1d'); P.rect(13, 21, 3, 3, '#fff6c0');
+    }
+    P.outline('#3a2414');
+    sealCache[key] = P.canvas();
+  }
+  const src = sealCache[key], c = document.createElement('canvas'); c.width = 36; c.height = 36; c.className = 'ly-seal-cv'; c.getContext('2d').drawImage(src, 0, 0); return c;
+}
+// code-drawn story backdrops for the valley dialogue (no external art)
+const plateCache = {};
+function scenePlate(name) {
+  const n = ['alley', 'night', 'oldshop', 'forge', 'river', 'market', 'dawn', 'rain', 'duel', 'map'].includes(name) ? name : 'alley';
+  if (plateCache[n]) return plateCache[n];
+  const c = document.createElement('canvas'); c.width = 160; c.height = 240; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  const px = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+  const night = n === 'night' || n === 'rain' || n === 'duel';
+  if (n === 'oldshop' || n === 'forge') {
+    px(0, 0, 160, 96, '#3a2414');
+    px(0, 0, 160, 28, n === 'forge' ? '#5a2418' : '#2a3358');
+    px(18, 8, 28, 18, n === 'forge' ? '#ffb45a' : '#ffe08a'); px(22, 12, 8, 8, '#fff6c0');
+    px(8, 30, 144, 58, '#8a5a33'); px(12, 34, 136, 48, '#c4924a');
+    px(16, 38, 8, 44, '#5e3519'); px(136, 38, 8, 44, '#5e3519'); px(16, 52, 128, 6, '#5e3519');
+    px(36, 40, 22, 16, '#fff8e8'); px(70, 40, 22, 16, '#fff8e8'); px(104, 40, 22, 16, '#6b3f1d');
+    px(40, 44, 14, 8, '#3b2416'); px(74, 44, 14, 8, '#3b2416');
+    px(124, 18, 8, 22, '#5e3519'); px(120, 14, 16, 8, '#ffe08a'); px(124, 16, 8, 4, '#fff6c0');
+    if (n === 'forge') { px(48, 58, 64, 16, '#5a2418'); px(60, 52, 40, 10, '#ff8a3a'); }
+    px(0, 88, 160, 152, '#6b3f1d'); px(16, 108, 128, 10, '#c4924a'); px(24, 128, 112, 8, '#5e3519');
+    px(32, 148, 22, 16, '#fff8e8'); px(64, 148, 22, 16, '#fff8e8'); px(96, 148, 22, 16, '#fff8e8');
+    px(36, 152, 14, 8, '#3b2416'); px(68, 152, 14, 8, '#3b2416'); px(100, 152, 14, 8, '#3b2416');
+  } else {
+    const sky = n === 'dawn' ? '#f2b06a' : n === 'rain' ? '#6a7c92' : night ? '#243058' : '#7ec4ea';
+    px(0, 0, 160, 42, sky);
+    px(0, 36, 160, 18, night ? '#3d6a3a' : '#b7dc78');
+    px(0, 50, 160, 46, night ? '#2f6a34' : '#67b84a');
+    px(48, 62, 64, 34, '#c4a15a');
+    // cottage sits high so the dialogue box does not cover it
+    px(52, 28, 56, 34, '#f6e2b4'); px(46, 24, 68, 8, '#a33b32'); px(42, 30, 76, 4, '#7a2c26');
+    px(90, 14, 8, 16, '#8a4030'); px(88, 12, 12, 4, '#c86a50');
+    if (!night && n !== 'rain') { px(96, 8, 4, 4, 'rgba(255,255,255,.85)'); px(100, 4, 3, 3, 'rgba(255,255,255,.6)'); }
+    px(60, 36, 16, 12, night || n === 'dawn' ? '#ffe08a' : '#b7e6ff'); px(66, 36, 2, 12, '#5e3519'); px(60, 41, 16, 2, '#5e3519');
+    px(86, 38, 14, 20, '#6b3f1d'); px(90, 42, 6, 6, night ? '#ffe08a' : '#f6e7c1');
+    px(54, 58, 28, 4, '#5e3519'); px(58, 56, 4, 4, '#ff9ec4'); px(68, 56, 4, 4, '#ffd56a');
+    px(28, 40, 4, 22, '#5e3519'); px(24, 36, 12, 6, n === 'rain' ? '#9ab0c4' : '#ffe08a');
+    if (n === 'river') { px(0, 58, 46, 18, '#4fa2d8'); px(6, 64, 16, 2, '#d7f4ff'); }
+    if (n === 'market') { px(8, 34, 28, 18, '#e07a5f'); px(12, 38, 20, 8, '#fff6d8'); }
+    if (n === 'duel') { px(8, 36, 12, 28, '#1a1a22'); px(140, 34, 12, 30, '#3a2a22'); }
+    if (n === 'rain') for (let i = 0; i < 24; i++) px((i * 19) % 160, (i * 11) % 70, 1, 5, 'rgba(230,240,255,.75)');
+    if (n === 'map') { g.globalAlpha = .35; px(0, 0, 160, 96, '#efe6d4'); g.globalAlpha = 1; }
+    px(0, 88, 160, 152, night ? '#245c30' : '#5aaa3c');
+    px(40, 100, 80, 90, '#c4a15a');
+    for (let i = 0; i < 10; i++) px(8 + i * 16, 110 + (i % 4) * 18, 3, 5, night ? '#3f8a40' : '#8ed45c');
+    px(70, 150, 20, 28, '#6b3f1d'); px(66, 146, 28, 6, '#ffe08a');
+  }
+  plateCache[n] = c.toDataURL();
+  return plateCache[n];
 }
 function shade(hex, d) { const n = parseInt(hex.slice(1), 16), c = v => Math.max(0, Math.min(255, v + d)); return '#' + [c(n >> 16), c((n >> 8) & 255), c(n & 255)].map(v => v.toString(16).padStart(2, '0')).join(''); }
 
@@ -448,5 +533,5 @@ function daySummary(el, info, onClose) {
   el.querySelector('#lvOk').onclick = () => { J.SFX.play('confirm'); onClose(); };
 }
 
-window.Valley = {clock, seasonOf, SEASON, setStyle, get style() { return STYLE; }, tiles, shop, villager, greeting, heartsHtml, itemSprite, itemZh, kindOf, isFood, quality, coinIcon, coinImg, heroSheet, drawHero, critter, kit, say, portraitEl, harvest, daySummary, seedPacket, Pix};
+window.Valley = {clock, seasonOf, SEASON, setStyle, get style() { return STYLE; }, tiles, shop, villager, greeting, heartsHtml, itemSprite, itemZh, kindOf, isFood, quality, coinIcon, coinImg, heroSheet, drawHero, critter, kit, say, portraitEl, harvest, daySummary, seedPacket, Pix, sealSprite, scenePlate};
 })();
