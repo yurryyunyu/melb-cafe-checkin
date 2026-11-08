@@ -2,7 +2,8 @@
 window.SEED_CAFES = [
   {id:"codeblackspencer", short:"Code Black Spencer", name:"Code Black Coffee (Spencer St)", suburb:"Melbourne CBD", address:"630 Little Collins St, Melbourne VIC 3000", lat:-37.81787, lng:144.95386, tags:["Southern Cross 对面","烘焙商"]},
   {id:"patricia", short:"Patricia", name:"Patricia Coffee Brewers", suburb:"Melbourne CBD", address:"Cnr Little Bourke St & Little William St, Melbourne VIC 3000", lat:-37.81395, lng:144.95865, tags:["站着喝","手冲"]},
-  {id:"hardwaresoc", short:"Hardware Societe", name:"Hardware Société", suburb:"Melbourne CBD", address:"120 Hardware St, Melbourne VIC 3000", lat:-37.81196, lng:144.96053, tags:["法式早午餐","排队名店"]},
+  // hardwaresoc address corrected 2026-11-09: official visit page lists 123 Hardware Street (walk-in only); stored 120 was the original room. Nominatim for 123 Hardware Street: -37.81208, 144.96040.
+  {id:"hardwaresoc", short:"Hardware Societe", name:"Hardware Société", suburb:"Melbourne CBD", address:"123 Hardware St, Melbourne VIC 3000", lat:-37.81208, lng:144.96040, tags:["法式早午餐","排队名店"]},
   {id:"maker", short:"Maker", name:"Maker Coffee (Little Bourke)", suburb:"Melbourne CBD", address:"387 Little Bourke St, Melbourne VIC 3000", lat:-37.81373, lng:144.96136, tags:["单品","极简风"]},
   {id:"bbb", short:"Brother Baba Budan", name:"Brother Baba Budan", suburb:"Melbourne CBD", address:"359 Little Bourke St, Melbourne VIC 3000", lat:-37.81350, lng:144.96208, tags:["椅子天花板","小店"]},
   {id:"bench", short:"Bench", name:"Bench Coffee Co (Lt Collins)", suburb:"Melbourne CBD", address:"321 Little Collins St, Melbourne VIC 3000", lat:-37.81528, lng:144.96423, tags:["Dacquoise","手冲"]},
@@ -23,7 +24,8 @@ window.SEED_CAFES = [
   {id:"toppaddock", name:"Top Paddock", suburb:"Richmond", address:"658 Church St, Richmond VIC 3121", lat:-37.83300, lng:144.99602, tags:["早午餐","松饼"]},
   {id:"pillarofsalt", name:"Pillar of Salt", suburb:"Richmond", address:"541 Church St, Richmond VIC 3121", lat:-37.82967, lng:144.99742, tags:["早午餐"]},
   {id:"auntypegs", name:"Aunty Peg's", suburb:"Collingwood", address:"200 Wellington St, Collingwood VIC 3066", lat:-37.80275, lng:144.98689, tags:["Proud Mary 旗下","手冲"]},
-  {id:"everyday", name:"Everyday Coffee", suburb:"Collingwood", address:"36-38 Sackville St, Collingwood VIC 3066", lat:-37.79825, lng:144.98589, tags:["烘焙商","小店"]},
+  // everyday: permanently closed (re-checked 2026-11-09): brand farewell post 2026-10-25 announced last day at 36-38 Sackville St as Saturday 2026-11-07 (lease ended, site making way for housing). Roasting, online sales and Everyday Midtown continue. Kept for check-in history, like Hash.
+  {id:"everyday", closed:true, name:"Everyday Coffee", suburb:"Collingwood", address:"36-38 Sackville St, Collingwood VIC 3066", lat:-37.79825, lng:144.98589, tags:["烘焙商","小店"]},
   {id:"monkbodhi", name:"Monk Bodhi Dharma", suburb:"Balaclava", address:"Rear 202 Carlisle St, Balaclava VIC 3183", lat:-37.86826, lng:144.99081, tags:["素食","隐藏小店"]},
   {id:"twobirds", name:"Two Birds One Stone", suburb:"South Yarra", address:"12 Claremont St, South Yarra VIC 3141", lat:-37.83807, lng:144.99392, tags:["早午餐"]},
   {id:"au79", name:"AU79 (Richmond Traders)", short:"AU79", suburb:"Richmond", address:"240 Church St (cnr Bridge Rd), Richmond VIC 3121", lat:-37.81807, lng:144.99906, tags:["烘焙商","早午餐"]},
@@ -132,7 +134,7 @@ window.SAMPLE_MENU_EXTRA = {
   leaguehonest: [{name:"Bowl of Coffee", type:"drink"}, {name:"Single Origin Espresso", type:"drink"}, {name:"Almond Croissant", type:"food"}],
   timeaftertime: [{name:"Charcoal Croissant (ricotta & fig)", type:"food"}, {name:"Matcha Charcoal Croissant", type:"food"}, {name:"Time Traveller", type:"drink"}, {name:"Matcha Latte", type:"drink"}],
   squareone: [{name:"Chilli Whipped Ricotta", type:"food"}, {name:"Seasonal Omelette", type:"food"}, {name:"Ube Waffle", type:"food"}, {name:"Cold Brew", type:"drink"}],
-  operator25: [{name:"Breakfast Tortillas", type:"food"}, {name:"Vanilla Sago with Rhubarb", type:"food"}, {name:"Pressed Lamb Shoulder", type:"food"}],
+  operator25: [{name:"Singapore Chilli Crab Omelette", type:"food"}, {name:"Mango Sago", type:"food"}, {name:"HK Bubble Waffle", type:"food"}],
   saintdreux: [{name:"Wagyu Katsu Sando", type:"food"}, {name:"Egg Sando", type:"food"}, {name:"Kurobuta Pork Katsu Sando", type:"food"}, {name:"Hojicha Latte", type:"drink"}],
   bakemono: [{name:"Shokupan Loaf", type:"food"}, {name:"Almond Yuzu Croissant", type:"food"}, {name:"Berry Danish", type:"food"}],
   touchwood: [{name:"Buttermilk Waffle", type:"food"}, {name:"Touchwood Eggs", type:"food"}, {name:"Rose Latte", type:"drink"}],
@@ -145,7 +147,7 @@ window.SAMPLE_MENU_EXTRA = {
   rosso: [{name:"Make-Your-Own Coffee Session", type:"drink"}, {name:"Single Origin Cupping", type:"drink"}, {name:"Brunch Plate", type:"food"}],
   roslynthai: [{name:"Pork Congee", type:"food"}, {name:"Coconut Pandan Chiffon", type:"food"}, {name:"Kaya Toast Set", type:"food"}, {name:"Thai Milk Tea", type:"drink"}],
   cham: [{name:"Egg Coffee", type:"drink"}, {name:"Banana Latte", type:"drink"}, {name:"Croissant Banh Mi", type:"food"}, {name:"Chicken Pho", type:"food"}],
-  baguettestudios: [{name:"Bulgogi Cheesesteak Baguette", type:"food"}, {name:"Jambon-Fromage", type:"food"}, {name:"Pretzel Croissant", type:"food"}, {name:"Kouign-amann", type:"food"}],
+  baguettestudios: [{name:"Jambon-Fromage", type:"food"}, {name:"Pretzel Croissant", type:"food"}],
   bobbys: [{name:"Traditional Cornish Pasty", type:"food"}, {name:"Rye Sourdough", type:"food"}, {name:"Danish", type:"food"}],
   udomhouse: [{name:"Pandan Kaya Toast", type:"food"}, {name:"Thai Curry Pie", type:"food"}, {name:"A Pi Rom (iced)", type:"drink"}, {name:"Thai Iced Coffee", type:"drink"}],
   padre: [{name:"Daddy's Girl Espresso", type:"drink"}, {name:"Hey Buddy Filter", type:"drink"}, {name:"Bacon & Egg Tart", type:"food"}],
