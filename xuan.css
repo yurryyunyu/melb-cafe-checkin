@@ -376,3 +376,70 @@ html[data-xuan] :is(.card,.today-card,.edu-entry,.story-cur,.story-ch) :is(.name
 html[data-xuan] :is(.card .sub,.card .hint,.today-card p,.today-card .td-k,.edu-entry small,.story-cur small,.story-ch small){color:#7a6248;text-shadow:none}
 html[data-xuan] .dlg-face{border-radius:50%;box-shadow:0 0 0 3px #f6edd4,0 0 0 5px #c9a45a,0 0 14px rgba(255,176,80,.45)}
 html[data-xuan] #tabbar{box-shadow:inset 0 18px 22px rgba(255,186,96,.1),inset 0 1px 0 #1a0e07,0 -3px 8px rgba(50,30,10,.3)}
+/* v45 山水天幕 · ink-wash backdrop behind every page (古风 only). Original CSS + SVG art.
+   Layers: warm glow → slow god-rays → sun/moon → far peaks → mist → mid hills (pagoda) → mist → near pines → birds → rain → phase veil.
+   Tied to live Melbourne weather/phase via html[data-live-wx] / html[data-live-phase] (set by applyLiveSky). Transforms/opacity only — no blur filters. */
+#xsky{display:none}
+html[data-theme=jrpg][data-xuan]{background:#efe6d2 url("img/xuan/paper.webp") 0 0/384px 384px repeat!important}
+html[data-xuan] body,html[data-theme=jrpg][data-xuan] body{background:none!important}
+html[data-xuan] #xsky{display:block;position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;--xsy:0;
+  background:radial-gradient(ellipse 90% 55% at 72% 8%,rgba(255,232,190,.7),transparent 70%),linear-gradient(180deg,rgba(250,242,226,.6),rgba(236,224,200,0) 60%,rgba(214,222,206,.35))}
+#xsky>i{position:absolute;display:block;will-change:transform}
+#xsky .xs-glow{inset:-10% -10% 40%;background:radial-gradient(circle at 74% 16%,rgba(255,214,140,.55),rgba(255,214,140,.18) 22%,transparent 46%);transition:opacity 1.2s}
+#xsky .xs-rays{left:74%;top:16%;width:220vmax;height:220vmax;margin:-110vmax 0 0 -110vmax;opacity:.22;
+  background:repeating-conic-gradient(from 0deg,rgba(255,226,160,.0) 0deg 7deg,rgba(255,226,160,.55) 9deg 11deg,rgba(255,226,160,0) 13deg 21deg);
+  -webkit-mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 14%,transparent 38%);mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 14%,transparent 38%);animation:xs-spin 160s linear infinite;transition:opacity 1.2s}
+#xsky .xs-sun{left:74%;top:16%;width:clamp(54px,15vmin,120px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle at 42% 40%,#fffaf0,#ffe2a8 40%,#f3b866 68%,rgba(243,184,102,0) 71%);box-shadow:0 0 40px 18px rgba(255,206,130,.35);opacity:.9;transition:opacity 1.2s}
+#xsky :is(.xs-far,.xs-mid,.xs-near){left:0;right:0;background-repeat:repeat-x;background-position:center bottom}
+#xsky .xs-far{bottom:24vh;height:38vh;background-image:url("img/xuan/sky-far.svg");background-size:auto 100%;opacity:.5;transform:translate3d(0,calc(var(--xsy) * -.025px),0)}
+#xsky .xs-mid{bottom:10vh;height:30vh;background-image:url("img/xuan/sky-mid.svg");background-size:auto 100%;background-position:30% bottom;opacity:.46;transform:translate3d(0,calc(var(--xsy) * -.05px),0)}
+#xsky .xs-near{bottom:-2vh;height:22vh;background-image:url("img/xuan/sky-near.svg");background-size:auto 100%;background-position:70% bottom;opacity:.4;transform:translate3d(0,calc(var(--xsy) * -.08px),0)}
+#xsky .xs-mist{left:-50%;width:200%;height:16vh;opacity:.75;background:radial-gradient(ellipse 22% 50% at 18% 50%,rgba(255,252,244,.9),transparent 70%),radial-gradient(ellipse 26% 42% at 52% 56%,rgba(255,252,244,.8),transparent 70%),radial-gradient(ellipse 20% 46% at 84% 46%,rgba(255,252,244,.85),transparent 70%);transition:opacity 1.2s}
+#xsky .xs-mist.m1{bottom:30vh;animation:xs-drift 90s ease-in-out infinite alternate}
+#xsky .xs-mist.m2{bottom:12vh;height:14vh;animation:xs-drift 70s ease-in-out -30s infinite alternate-reverse}
+#xsky .xs-birds{left:18%;top:24%;width:46px;height:16px;opacity:.38;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 16'%3E%3Cg fill='none' stroke='%23384440' stroke-width='1.3' stroke-linecap='round'%3E%3Cpath d='M2 7q3-3 6 0q3-3 6 0'/%3E%3Cpath d='M20 3q2.4-2.4 4.8 0q2.4-2.4 4.8 0'/%3E%3Cpath d='M33 11q2-2 4 0q2-2 4 0'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;animation:xs-fly 48s linear infinite}
+#xsky .xs-rain{inset:-20% -10% 0;opacity:0;background:repeating-linear-gradient(103deg,transparent 0 13px,rgba(92,112,124,.28) 13px 14px,transparent 14px 31px);transition:opacity 1.2s}
+#xsky .xs-veil{inset:0;opacity:0;transition:opacity 1.2s,background 1.2s}
+@keyframes xs-spin{to{transform:rotate(360deg)}}
+@keyframes xs-drift{from{transform:translate3d(-6%,0,0)}to{transform:translate3d(6%,0,0)}}
+@keyframes xs-fly{0%{transform:translate3d(-30vw,0,0)}100%{transform:translate3d(110vw,-4vh,0)}}
+@keyframes xs-rain{from{transform:translate3d(0,-40px,0)}to{transform:translate3d(-9px,0,0)}}
+/* weather: cloud = greyer, no rays; rain = thick mist + streaks, cool tint; sun/hot = brighter rays */
+html[data-xuan][data-live-wx=cloud] #xsky .xs-rays,html[data-xuan][data-live-wx=rain] #xsky .xs-rays{opacity:0}
+html[data-xuan][data-live-wx=cloud] #xsky .xs-sun{opacity:.45}
+html[data-xuan][data-live-wx=cloud] #xsky .xs-glow{opacity:.55}
+html[data-xuan][data-live-wx=rain] #xsky .xs-sun,html[data-xuan][data-live-wx=rain] #xsky .xs-birds{opacity:0}
+html[data-xuan][data-live-wx=rain] #xsky .xs-glow{opacity:.25}
+html[data-xuan][data-live-wx=rain] #xsky .xs-mist{opacity:1;height:22vh}
+html[data-xuan][data-live-wx=rain] #xsky .xs-rain{opacity:1;animation:xs-rain .7s linear infinite}
+html[data-xuan][data-live-wx=rain] #xsky .xs-veil,html[data-xuan][data-live-wx=cloud] #xsky .xs-veil{opacity:1;background:linear-gradient(180deg,rgba(150,164,170,.26),rgba(196,204,200,.12) 60%,rgba(220,224,214,.2))}
+html[data-xuan][data-live-wx=hot] #xsky .xs-rays,html[data-xuan][data-live-wx=sun] #xsky .xs-rays{opacity:.3}
+/* phase: dawn rose, dusk 晚霞 gold-crimson, night moon + indigo ink */
+html[data-xuan][data-live-phase=dawn] #xsky .xs-veil{opacity:1;background:linear-gradient(180deg,rgba(255,176,150,.28),rgba(255,222,190,.12) 55%,transparent)}
+html[data-xuan][data-live-phase=dusk] #xsky{background:linear-gradient(180deg,rgba(255,150,96,.42),rgba(255,198,130,.28) 38%,rgba(196,120,120,.16) 70%,rgba(110,80,110,.18))}
+html[data-xuan][data-live-phase=dusk] #xsky .xs-sun{top:30%;opacity:1;background:radial-gradient(circle at 44% 42%,#fff2d6,#ffb36a 42%,#e8643a 68%,rgba(232,100,58,0) 71%);box-shadow:0 0 60px 26px rgba(255,140,80,.42)}
+html[data-xuan][data-live-phase=dusk] #xsky .xs-rays{top:30%;opacity:.34}
+html[data-xuan][data-live-phase=dusk] #xsky .xs-glow{background:radial-gradient(circle at 74% 30%,rgba(255,170,96,.6),rgba(255,140,90,.2) 26%,transparent 54%)}
+html[data-xuan][data-live-phase=dusk] #xsky .xs-mist{filter:none;opacity:.6;background:radial-gradient(ellipse 22% 50% at 18% 50%,rgba(255,214,170,.8),transparent 70%),radial-gradient(ellipse 26% 42% at 52% 56%,rgba(255,200,160,.7),transparent 70%),radial-gradient(ellipse 20% 46% at 84% 46%,rgba(255,214,170,.75),transparent 70%)}
+html[data-xuan][data-live-phase=night] #xsky{background:linear-gradient(180deg,#141a33,#26304f 48%,#3a3a52 80%,#4a4256)}
+html[data-xuan][data-live-phase=night] #xsky .xs-rays,html[data-xuan][data-live-phase=night] #xsky .xs-birds{opacity:0}
+html[data-xuan][data-live-phase=night] #xsky .xs-sun{opacity:.95;width:clamp(40px,10vmin,80px);background:radial-gradient(circle at 40% 38%,#fffdf4,#e9ecf6 52%,#b8c2dc 68%,rgba(184,194,220,0) 71%);box-shadow:0 0 50px 16px rgba(200,214,255,.22)}
+html[data-xuan][data-live-phase=night] #xsky .xs-glow{background:radial-gradient(circle at 74% 16%,rgba(190,206,255,.22),transparent 40%),radial-gradient(1px 1px at 12% 12%,#fff,transparent),radial-gradient(1px 1px at 30% 6%,#fff,transparent),radial-gradient(1.4px 1.4px at 46% 20%,#fff,transparent),radial-gradient(1px 1px at 58% 8%,#fff,transparent),radial-gradient(1px 1px at 88% 30%,#fff,transparent),radial-gradient(1.2px 1.2px at 20% 32%,#fff,transparent),radial-gradient(1px 1px at 92% 6%,#fff,transparent)}
+html[data-xuan][data-live-phase=night] #xsky :is(.xs-far,.xs-mid,.xs-near){opacity:.7;filter:brightness(.38) saturate(.6)}
+html[data-xuan][data-live-phase=night] #xsky .xs-mist{opacity:.16}
+html[data-xuan][data-live-phase=night][data-live-wx=rain] #xsky .xs-mist{opacity:.3}
+html[data-xuan][data-live-phase=night] #xsky .xs-veil{opacity:0}
+html[data-xuan][data-live-phase=night] #xsky .xs-rain{background:repeating-linear-gradient(103deg,transparent 0 13px,rgba(190,206,230,.22) 13px 14px,transparent 14px 31px)}
+/* cards: a touch of silk translucency so the 山水 breathes through; text stays ink-on-silk */
+html[data-xuan] :is(.card,.today-card){background:linear-gradient(180deg,rgba(255,250,243,.93) 0%,rgba(244,228,198,.9) 100%)}
+html[data-xuan][data-live-phase=night] :is(#app>.empty,#app>.hint,#app>p,#app>.list-count,#app>.count){color:#efe4cc}
+@media (prefers-reduced-motion:reduce){#xsky>i{animation:none!important;transform:none}#xsky .xs-sun{transform:translate(-50%,-50%)}#xsky .xs-birds{display:none}}
+/* 🏷️ v45 logos in 古风: xuan-paper roundel with a thin gold ring + inner silk hairline; monogram reads like a seal (朱 vermilion on paper) */
+html[data-xuan] .cafe-logo{background:#f7f0e2;box-shadow:0 0 0 1px #fdf8ec,0 0 0 2.2px #c9a45a,0 0 0 3px rgba(122,84,34,.35),0 2px 6px rgba(70,42,16,.18)}
+html[data-xuan] .cafe-logo.cl-sm{width:28px;height:28px;margin-right:9px;vertical-align:-7px}
+html[data-xuan] .cafe-logo.cl-lg{width:58px;height:58px;box-shadow:0 0 0 1.5px #fdf8ec,0 0 0 3px #c9a45a,0 0 0 4px rgba(122,84,34,.4),0 0 16px rgba(255,190,110,.35),0 4px 10px rgba(70,42,16,.2)}
+html[data-xuan] .cafe-logo.mono{background:radial-gradient(circle at 40% 35%,#fffaf0,#f1e3c4);color:#a8322a}
+html[data-xuan] .cafe-logo.mono::before{font-family:var(--xserif,"Noto Serif SC","Songti SC",Georgia,serif);font-weight:700}
+html[data-xuan] .cafe-logo.mono::after{content:"";position:absolute;inset:3px;border-radius:50%;border:1px solid rgba(168,50,42,.35)}
+html[data-xuan] .hero-id{gap:14px}

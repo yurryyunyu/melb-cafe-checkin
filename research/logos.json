@@ -1,0 +1,608 @@
+{
+ "codeblackspencer": {
+  "file": "img/logos/codeblackspencer.webp",
+  "source_url": "https://codeblackcoffee.com.au/cdn/shop/files/cb-logo-black.svg?v=1765919215&width=1920",
+  "confidence": "high",
+  "note": "Code Black Coffee wordmark from site header (shared by all Code Black venues)"
+ },
+ "patricia": {
+  "file": "img/logos/patricia.webp",
+  "source_url": "https://patriciacoffee.com.au/cdn/shop/files/Patricia_Logo_0d075c8c-7a24-49f4-9539-6bc603228857.png?height=196&v=1727313403",
+  "confidence": "high",
+  "note": "script wordmark from site header"
+ },
+ "hardwaresoc": {
+  "file": "img/logos/hardwaresoc.webp",
+  "source_url": "https://images.squarespace-cdn.com/content/v1/6202a63f39310b632ffdebe9/6fb6a1ce-cca2-4887-bc79-81eae01bd706/HS_Logos_2021Update_PrimaryLogo_Stacked_Black.png?format=1500w",
+  "confidence": "high",
+  "note": "header wordmark"
+ },
+ "maker": {
+  "file": "img/logos/maker.webp",
+  "source_url": "https://makercoffee.com.au/cdn/shop/files/logo.svg?v=1763979326&width=340",
+  "confidence": "high",
+  "note": "MAKER wordmark (white) from header"
+ },
+ "bbb": {
+  "file": null,
+  "source_url": "https://sevenseeds.com.au/pages/brother-baba-budan",
+  "confidence": null,
+  "note": "site is Seven Seeds page; no Brother Baba Budan mark found — not using parent brand"
+ },
+ "bench": {
+  "file": "img/logos/bench.webp",
+  "source_url": "https://benchcoffee.co/cdn/shop/files/BENCHCOFFEECO_1d52582b-74b1-451c-b34e-1a28ed2ca1f9.png?v=1677372270&width=400",
+  "confidence": "high",
+  "note": "Bench Coffee Co. wordmark"
+ },
+ "dukes": {
+  "file": "img/logos/dukes.webp",
+  "source_url": "https://www.dukescoffee.com.au/cdn/shop/t/29/assets/dukes-favicon.png?v=76108442996949478401793743140",
+  "confidence": "high",
+  "note": "site icon (brand mark)"
+ },
+ "codeblackflinders": {
+  "file": "img/logos/codeblackflinders.webp",
+  "source_url": "https://codeblackcoffee.com.au/cdn/shop/files/cb-logo-black.svg?v=1765919215&width=1920",
+  "confidence": "high",
+  "note": "Code Black Coffee wordmark (brand-wide)"
+ },
+ "littlerogue": {
+  "file": "img/logos/littlerogue.webp",
+  "source_url": "https://www.littlerogue.com.au/Little%20Rogue_Symbol_25px_White.svg",
+  "confidence": "high",
+  "note": "site symbol SVG (white)"
+ },
+ "marketlane": {
+  "file": "img/logos/marketlane.webp",
+  "source_url": "https://marketlane.com.au/cdn/shop/files/apple-touch-icon-57x57.png",
+  "confidence": "medium",
+  "note": "M apple-touch icon, only 57px source (soft when enlarged)"
+ },
+ "sevenseeds": {
+  "file": "img/logos/sevenseeds.webp",
+  "source_url": "https://sevenseeds.com.au/cdn/shop/files/Seven-Seeds-Coffee-Stacked.png",
+  "confidence": "high",
+  "note": "Seven Seeds stacked logo (favicon source file)"
+ },
+ "proudmary": {
+  "file": "img/logos/proudmary.webp",
+  "source_url": "https://www.proudmarycoffee.com.au/cdn/shop/files/PM-FAVICON.png?v=1624952807",
+  "confidence": "high",
+  "note": "Proud Mary hand icon"
+ },
+ "higherground": {
+  "file": "img/logos/higherground.webp",
+  "source_url": "https://highergroundmelbourne.com.au/icons/icon-256x256.png?v=4825ba1d1244f3bcfecde13cba9d3cae",
+  "confidence": "high",
+  "note": "HG apple-touch icon 256"
+ },
+ "industrybeans": {
+  "file": "img/logos/industrybeans.webp",
+  "source_url": "https://industrybeans.com/cdn/shop/files/Industry_Beans_Square_logo_2b8de68d-5f73-4b2f-90e1-2b06501a8943.png?v=1695603470&width=180",
+  "confidence": "high",
+  "note": "iB apple-touch icon"
+ },
+ "lune": {
+  "file": "img/logos/lune.webp",
+  "source_url": "inline header SVG, https://lunecroissanterie.com/",
+  "confidence": "high",
+  "note": "inline header SVG wordmark"
+ },
+ "stali": {
+  "file": "img/logos/stali.webp",
+  "source_url": "https://stali.com.au/cdn/shop/files/sa-logo.png?v=1712035500&width=96",
+  "confidence": "high",
+  "note": "ST. ALi wordmark"
+ },
+ "hash": {
+  "file": null,
+  "source_url": null,
+  "confidence": null,
+  "note": "no verified site"
+ },
+ "krimper": {
+  "file": "img/logos/krimper.webp",
+  "source_url": "https://www.krimper.com.au/images/logo.png",
+  "confidence": "high",
+  "note": "header logo.png"
+ },
+ "axil": {
+  "file": "img/logos/axil.webp",
+  "source_url": "https://axilcoffee.com.au/cdn/shop/files/logo.png?v=1689858783",
+  "confidence": "high",
+  "note": "og:image is the Axil Coffee logo"
+ },
+ "codeblack": {
+  "file": "img/logos/codeblack.webp",
+  "source_url": "https://codeblackcoffee.com.au/cdn/shop/files/cb-logo-black.svg?v=1765919215&width=1920",
+  "confidence": "high",
+  "note": "Code Black Coffee wordmark"
+ },
+ "toppaddock": {
+  "file": "img/logos/toppaddock.webp",
+  "source_url": "https://thetoppaddock.com/TP_LOGO_BW_Neg.png",
+  "confidence": "high",
+  "note": "site icon = TOP PADDOCK wordmark"
+ },
+ "pillarofsalt": {
+  "file": "img/logos/pillarofsalt.webp",
+  "source_url": "https://www.pillarofsalt.com.au/wp-content/uploads/2019/03/cropped-fav-192x192.png",
+  "confidence": "medium",
+  "note": "site icon (brick/salt-block mark); no header logo to cross-check"
+ },
+ "auntypegs": {
+  "file": null,
+  "source_url": "https://www.proudmarycoffee.com.au/pages/aunty-pegs",
+  "confidence": null,
+  "note": "site is Proud Mary page; no own Aunty Peg's mark found"
+ },
+ "everyday": {
+  "file": "img/logos/everyday.webp",
+  "source_url": "https://everyday-coffee.com/cdn/shop/files/Everyday_Mug_Logo.gif",
+  "confidence": "high",
+  "note": "Everyday mug logo (favicon source)"
+ },
+ "monkbodhi": {
+  "file": "img/logos/monkbodhi.webp",
+  "source_url": "https://www.monkbodhidharma.com/monk-bodhi-dharma11.gif",
+  "confidence": "high",
+  "note": "header logo gif"
+ },
+ "twobirds": {
+  "file": "img/logos/twobirds.webp",
+  "source_url": "https://twobirdsonestonecafe.com.au/wp-content/uploads/2026/07/favicon-300x300.png",
+  "confidence": "high",
+  "note": "two birds icon"
+ },
+ "au79": {
+  "file": "img/logos/au79.webp",
+  "source_url": "https://www.au79cafe.com.au/wp-content/uploads/2018/04/favicon.png",
+  "confidence": "high",
+  "note": "Au gold mark"
+ },
+ "makerrichmond": {
+  "file": "img/logos/makerrichmond.webp",
+  "source_url": "https://makercoffee.com.au/cdn/shop/files/logo.svg?v=1763979326&width=340",
+  "confidence": "high",
+  "note": "MAKER wordmark (brand-wide)"
+ },
+ "zest": {
+  "file": "img/logos/zest.webp",
+  "source_url": "https://www.zestcoffee.com.au/cdn/shop/files/04_FA_ZEST_LOGOS_LOCKUP_SECONDARY_CMYK_BLACK.png?v=1744710609&width=760",
+  "confidence": "high",
+  "note": "ZEST wordmark"
+ },
+ "veneziano": {
+  "file": "img/logos/veneziano.webp",
+  "source_url": "https://venezianocoffee.com.au/cdn/shop/files/LOGO.jpg?v=1785127989&width=400",
+  "confidence": "high",
+  "note": "Veneziano Coffee Roasters badge"
+ },
+ "heart": {
+  "file": "img/logos/heart.webp",
+  "source_url": "https://www.instagram.com/heartcoffeemelbourne/",
+  "confidence": "medium",
+  "note": "Instagram profile picture (HEART wordmark)"
+ },
+ "dutton": {
+  "file": "img/logos/dutton.webp",
+  "source_url": "https://www.instagram.com/tickledpinkrichmond/",
+  "confidence": "medium",
+  "note": "Instagram profile picture (Dutton Cafeteria / Tickled Pink)"
+ },
+ "vacation": {
+  "file": "img/logos/vacation.webp",
+  "source_url": "https://vacationcoffee.com.au/cdn/shop/files/VACATION-Identity_300x300.png?v=1614339482",
+  "confidence": "high",
+  "note": "VACATION wordmark"
+ },
+ "midi": {
+  "file": "img/logos/midi.webp",
+  "source_url": "https://www.instagram.com/midi.3121/",
+  "confidence": "medium",
+  "note": "Instagram profile picture (MIDI wordmark)"
+ },
+ "c279": {
+  "file": "img/logos/c279.webp",
+  "source_url": "https://images.squarespace-cdn.com/content/v1/5ca6bbd9f4e5314e82fe546f/1554431211960-VBGIAUDNL4PJLQFTU49I/20190405_logo+279.png?format=2500w",
+  "confidence": "medium",
+  "note": "279 graphic from site (header image)"
+ },
+ "path": {
+  "file": "img/logos/path.webp",
+  "source_url": "https://www.pathmelbourne.com/ (PATH LOGO_BLACK.png)",
+  "confidence": "high",
+  "note": "img alt \"Path Coffee logo\""
+ },
+ "lebajo": {
+  "file": "img/logos/lebajo.webp",
+  "source_url": "https://assets.super.so/361f6fbb-bfba-4d99-8b8f-c49ac7331471/images/4740ed8b-5ee5-43a4-95f5-5922e22770b3/lebajo_logo_milkbar_small_invisible.png?width=1600",
+  "confidence": "medium",
+  "note": "header illustration image (croc); only image on site"
+ },
+ "otherside": {
+  "file": "img/logos/otherside.webp",
+  "source_url": "https://other-side.au/cdn/shop/files/LOGO_1.png?v=1669631737&width=500",
+  "confidence": "high",
+  "note": "OTHERSIDE wordmark"
+ },
+ "codeblacknorth": {
+  "file": "img/logos/codeblacknorth.webp",
+  "source_url": "https://codeblackcoffee.com.au/cdn/shop/files/cb-logo-black.svg?v=1765919215&width=1920",
+  "confidence": "high",
+  "note": "Code Black Coffee wordmark (brand-wide)"
+ },
+ "smallbatch": {
+  "file": "img/logos/smallbatch.webp",
+  "source_url": "https://www.smallbatch.com.au/wp-content/uploads/2013/05/logo-black-1024x1024.png",
+  "confidence": "high",
+  "note": "logo-black-1024 from site"
+ },
+ "auctionrooms": {
+  "file": "img/logos/auctionrooms.webp",
+  "source_url": "https://www.auctionroomscafe.com.au/_astro/logo.ClQDPLZl.png",
+  "confidence": "high",
+  "note": "img alt \"Auction Rooms Logo\""
+ },
+ "mork": {
+  "file": "img/logos/mork.webp",
+  "source_url": "https://www.morkchocolate.com.au/wp-content/themes/morkchocolate/assets/img/logo@2x.png",
+  "confidence": "high",
+  "note": "Mörk badge logo"
+ },
+ "palette": {
+  "file": "img/logos/palette.webp",
+  "source_url": "https://palettemelbourne.square.site/uploads/b/a947d566d75c751b8021c6f9027be64b9369dfbe9744c89a0b9d5e033efe332f/transparent bg logo_1594784857.png",
+  "confidence": "medium",
+  "note": "logo from site structured data (wordmark)"
+ },
+ "core": {
+  "file": "img/logos/core.webp",
+  "source_url": "https://static.wixstatic.com/media/5c109d_1e4f170902b4447ea0e174f54adf5095%7Emv2.png/v1/fill/w_192%2Ch_192%2Clg_1%2Cusm_0.66_1.00_0.01/5c109d_1e4f170902b4447ea0e174f54adf5095%7Emv2.png",
+  "confidence": "high",
+  "note": "Core Roasters icon"
+ },
+ "wideopenroad": {
+  "file": "img/logos/wideopenroad.webp",
+  "source_url": "https://wideopenroad.com.au/cdn/shop/files/WIDE_LOGO_HORIZONTAL_lrg.png?v=1716874283&width=3167",
+  "confidence": "high",
+  "note": "WIDE OPEN RD wordmark"
+ },
+ "disciple": {
+  "file": "img/logos/disciple.webp",
+  "source_url": "https://www.discipleroasters.com.au/cdn/shop/files/disciple-logo-full-logo1_1000x296.jpg?v=1614303856",
+  "confidence": "high",
+  "note": "Disciple Coffee Hustlers wordmark"
+ },
+ "kohinodeshi": {
+  "file": null,
+  "source_url": "https://www.instagram.com/kohinodeshi/",
+  "confidence": null,
+  "note": "Instagram blocked profile image"
+ },
+ "marketlanebrunswick": {
+  "file": "img/logos/marketlanebrunswick.webp",
+  "source_url": "https://marketlane.com.au/cdn/shop/files/apple-touch-icon-57x57.png",
+  "confidence": "medium",
+  "note": "M apple-touch icon, only 57px source"
+ },
+ "lunar": {
+  "file": null,
+  "source_url": "https://www.lunarbyhikari.com.au/",
+  "confidence": null,
+  "note": "site logo is plain text"
+ },
+ "ona": {
+  "file": "img/logos/ona.webp",
+  "source_url": "https://images.squarespace-cdn.com/content/v1/660111b5cd7a7d0d0629ddff/79592869-c310-41e8-98a9-49c365661af1/favicon.ico?format=100w",
+  "confidence": "high",
+  "note": "ONA feathers icon"
+ },
+ "benchroastery": {
+  "file": "img/logos/benchroastery.webp",
+  "source_url": "https://benchcoffee.co/cdn/shop/files/BENCHCOFFEECO_1d52582b-74b1-451c-b34e-1a28ed2ca1f9.png?v=1677372270&width=400",
+  "confidence": "high",
+  "note": "Bench Coffee Co. wordmark"
+ },
+ "leaguehonest": {
+  "file": "img/logos/leaguehonest.webp",
+  "source_url": "https://leagueofhonestcoffee.com.au/cdn/shop/files/lohc_1_300x300.png?v=1613691538",
+  "confidence": "high",
+  "note": "League of Honest Coffee logo"
+ },
+ "timeaftertime": {
+  "file": "img/logos/timeaftertime.webp",
+  "source_url": "https://www.instagram.com/timeaftertime_mel/",
+  "confidence": "medium",
+  "note": "Instagram profile picture (t.a.t)"
+ },
+ "squareone": {
+  "file": "img/logos/squareone.webp",
+  "source_url": "https://squareonecoffee.com.au/cdn/shop/files/SQ1_logo.png?height=108&v=1755432952",
+  "confidence": "high",
+  "note": "Square One wordmark"
+ },
+ "operator25": {
+  "file": null,
+  "source_url": "https://operator25.com.au/",
+  "confidence": null,
+  "note": "site blocks bots / no logo image"
+ },
+ "saintdreux": {
+  "file": null,
+  "source_url": "https://benchcoffee.co/pages/saint-dreux",
+  "confidence": null,
+  "note": "site is a Bench page; no own Saint Dreux mark found"
+ },
+ "bakemono": {
+  "file": "img/logos/bakemono.webp",
+  "source_url": "https://www.bakemonobakers.com.au/assets/logos/bakemono-monster-mark.png",
+  "confidence": "high",
+  "note": "Bakemono circular logo"
+ },
+ "touchwood": {
+  "file": "img/logos/touchwood.webp",
+  "source_url": "https://www.touchwoodcafe.com/images/touchwood-swatch.svg",
+  "confidence": "high",
+  "note": "header logo SVG"
+ },
+ "reunion": {
+  "file": null,
+  "source_url": null,
+  "confidence": null,
+  "note": "no verified site"
+ },
+ "fiftyacres": {
+  "file": null,
+  "source_url": "https://fiftyacres.net.au/",
+  "confidence": null,
+  "note": "no logo image found"
+ },
+ "bakerofthings": {
+  "file": "img/logos/bakerofthings.webp",
+  "source_url": "https://bakerofthings.com.au/cdn/shop/files/BakerofThings_Logo_Blue_F_150dpi_6696fa06-ba91-47dd-834e-767972f6346c.png?v=1748307974&width=352",
+  "confidence": "high",
+  "note": "Baker of Things heart-box mark"
+ },
+ "suupaa": {
+  "file": "img/logos/suupaa.webp",
+  "source_url": "https://suupaa.au/favicons/favicon.png",
+  "confidence": "high",
+  "note": "site icon (naruto mark)"
+ },
+ "longstreet": {
+  "file": "img/logos/longstreet.webp",
+  "source_url": "https://images.squarespace-cdn.com/content/v1/57d4d2a15016e199d1da5191/1480996092279-5J78CUCYKW6FWGMBK369/favicon.ico?format=100w",
+  "confidence": "high",
+  "note": "L icon"
+ },
+ "warkoprichmond": {
+  "file": "img/logos/warkoprichmond.webp",
+  "source_url": "https://www.warkop.com.au/uploads/b/3b8250f006874cff494ac13468f6f3d32fc1093e76a137adedee536b15c39dfa/2021-03-21_16-07-13_1616303246.jpg",
+  "confidence": "high",
+  "note": "Warkop badge from structured data"
+ },
+ "rosso": {
+  "file": "img/logos/rosso.webp",
+  "source_url": "https://rossoroastingco.com.au/cdn/shop/files/Rosso_Logo_Icon_R_Black-01.png?v=1673824965&width=180",
+  "confidence": "high",
+  "note": "Rosso R mark"
+ },
+ "roslynthai": {
+  "file": "img/logos/roslynthai.webp",
+  "source_url": "https://www.roslynthaicafe.com.au/uploads/b/865bcc2c0682231d73269f5cc806f57534626b071306ef40ea0d261883914f93/LOGO_1699238025.jpg",
+  "confidence": "medium",
+  "note": "logo from site structured data"
+ },
+ "cham": {
+  "file": "img/logos/cham.webp",
+  "source_url": "https://www.instagram.com/cham_melbourne/",
+  "confidence": "medium",
+  "note": "Instagram profile picture (CHÀM)"
+ },
+ "baguettestudios": {
+  "file": null,
+  "source_url": "https://www.baguettestudios.com/",
+  "confidence": null,
+  "note": "only image is an address graphic, not a logo"
+ },
+ "bobbys": {
+  "file": "img/logos/bobbys.webp",
+  "source_url": "https://cdn.prod.website-files.com/6618c76904cf9a4c7fd3957c/6a595ac38b206384e7a62f0b_Stamp.jpg",
+  "confidence": "high",
+  "note": "Bobby's asterisk mark"
+ },
+ "udomhouse": {
+  "file": "img/logos/udomhouse.webp",
+  "source_url": "https://www.udomhousemelb.com/uploads/b/c856bcfa185efbeba7285183092483f1223d04b7407e67ade8c656580b994a2e/Udom%20Sawasdee_1782780126.JPG",
+  "confidence": "medium",
+  "note": "logo illustration from site structured data"
+ },
+ "padre": {
+  "file": "img/logos/padre.webp",
+  "source_url": "https://www.padrecoffee.com.au/cdn/shop/files/Padre_crown_White.png?height=90&v=1768368848",
+  "confidence": "medium",
+  "note": "Padre crown mark (white, small source)"
+ },
+ "mokum": {
+  "file": "img/logos/mokum.webp",
+  "source_url": "https://img1.wsimg.com/isteam/ip/30067007-ef9f-4cc6-9996-e5bc35a9bc58/Mokum%20logo%20with%20text.png/:/rs=w:180,h:180,m",
+  "confidence": "high",
+  "note": "Mokum tulip logo"
+ },
+ "luxfoundry": {
+  "file": null,
+  "source_url": "https://www.luxfoundry.com.au/",
+  "confidence": null,
+  "note": "no logo image found"
+ },
+ "wildlife": {
+  "file": "img/logos/wildlife.webp",
+  "source_url": "https://wildlifebakery.com/cdn/shop/files/bakery-logo.png?height=96&v=1759895431",
+  "confidence": "high",
+  "note": "WILD LIFE wordmark"
+ },
+ "imaasayoru": {
+  "file": "img/logos/imaasayoru.webp",
+  "source_url": "https://cdn.prod.website-files.com/63dc88e6c6c674afcebe10df/63f17fd4466e624c46555acf_ima_brandmark_ORIGINA-m.jpg",
+  "confidence": "high",
+  "note": "ima apple-touch icon (Ima Project brand)"
+ },
+ "brunswickeats": {
+  "file": "img/logos/brunswickeats.webp",
+  "source_url": "https://www.instagram.com/brunswickeats3057/",
+  "confidence": "medium",
+  "note": "Instagram profile picture (Brunswick Eats badge)"
+ },
+ "calere": {
+  "file": "img/logos/calere.webp",
+  "source_url": "https://www.calerecoffee.com.au/uploads/b/237dbad83f2efef2b726e66a5aba7e9ab99e29c860e2657c00f433dd51f2d5bc/08%20Calere%20Coffee-Tagline_1722755274.png",
+  "confidence": "high",
+  "note": "Calēre Coffee wordmark from structured data"
+ },
+ "sircharles": {
+  "file": "img/logos/sircharles.webp",
+  "source_url": "https://images.squarespace-cdn.com/content/v1/5a14ad342278e73e3d52ce79/1527763706716-QUCSRH7N8K4DO0CM1RIS/SIR+CHARLES+LOGO+BLACK+-+v2.jpg?format=2500w",
+  "confidence": "high",
+  "note": "Sir Charles building logo"
+ },
+ "lumenpeople": {
+  "file": "img/logos/lumenpeople.webp",
+  "source_url": "https://lumenpeople.com/assets/images/apple-touch-icon.png?v=406cd6b4",
+  "confidence": "high",
+  "note": "Lumen apple-touch icon"
+ },
+ "cibi": {
+  "file": "img/logos/cibi.webp",
+  "source_url": "https://cibi.com.au/cdn/shop/files/Cibi_Web_Logo-01_190x@2x.png?v=1613154596",
+  "confidence": "high",
+  "note": "CIBI wordmark"
+ },
+ "allpress": {
+  "file": "img/logos/allpress.webp",
+  "source_url": "inline svg on https://allpress.com/en-au/cafes",
+  "confidence": "high",
+  "note": "Allpress header SVG wordmark"
+ },
+ "goodmeasure": {
+  "file": "img/logos/goodmeasure.webp",
+  "source_url": "https://goodmeasure.site/wp-content/uploads/2026/10/good-measure-logo.png",
+  "confidence": "high",
+  "note": "GM badge"
+ },
+ "atelierenso": {
+  "file": "img/logos/atelierenso.webp",
+  "source_url": "https://www.instagram.com/atelierenso/",
+  "confidence": "medium",
+  "note": "Instagram profile picture (ensō circle)"
+ },
+ "florian": {
+  "file": "img/logos/florian.webp",
+  "source_url": "https://www.floriancarlton.com.au/favicon/apple-touch-icon.png",
+  "confidence": "high",
+  "note": "Florian sun apple-touch icon"
+ },
+ "sleepys": {
+  "file": "img/logos/sleepys.webp",
+  "source_url": "https://images.squarespace-cdn.com/content/v1/662efbf5d636ca10fc1a2169/924d1fe0-4aae-47c6-955f-3984a1f7f780/favicon.ico?format=100w",
+  "confidence": "high",
+  "note": "S roundel icon"
+ },
+ "standingroom": {
+  "file": "img/logos/standingroom.webp",
+  "source_url": "https://cdn.shopify.com/s/files/1/0365/9310/7076/files/sr-favicon.png?v=1785217879",
+  "confidence": "high",
+  "note": "Standing Room figure icon"
+ },
+ "taiyosun": {
+  "file": "img/logos/taiyosun.webp",
+  "source_url": "https://www.instagram.com/kissa.taiyo.sun/",
+  "confidence": "medium",
+  "note": "Instagram profile picture (kissaten cat)"
+ },
+ "uncledrew": {
+  "file": "img/logos/uncledrew.webp",
+  "source_url": "https://static.wixstatic.com/media/f61d87_784656a3ad4a4e01a5717dcbc5719926.jpg",
+  "confidence": "high",
+  "note": "header logo image"
+ },
+ "prior": {
+  "file": null,
+  "source_url": "https://priorthornbury.com.au/",
+  "confidence": null,
+  "note": "site cert/403"
+ },
+ "threebagsfull": {
+  "file": null,
+  "source_url": "https://threebagsfullcafe.com.au/",
+  "confidence": null,
+  "note": "site behind bot captcha"
+ },
+ "daybaker": {
+  "file": "img/logos/daybaker.webp",
+  "source_url": "https://images.squarespace-cdn.com/content/v1/69093cd7e797032eeb096188/1762213083312-8ST5LO87FORYEAXB8X6B/favicon.ico?format=100w",
+  "confidence": "high",
+  "note": "Daybaker icon"
+ },
+ "moonmart": {
+  "file": "img/logos/moonmart.webp",
+  "source_url": "https://www.moonmart.com.au/ (Moon_Mart_Logo.jpg)",
+  "confidence": "high",
+  "note": "Moon Mart logo file (Moon_Mart_Logo)"
+ },
+ "juniper": {
+  "file": "img/logos/juniper.webp",
+  "source_url": "https://www.instagram.com/juniper.eatery/",
+  "confidence": "medium",
+  "note": "Instagram profile picture (JUNiPER wordmark)"
+ },
+ "journeyman": {
+  "file": "img/logos/journeyman.webp",
+  "source_url": "https://images.squarespace-cdn.com/content/v1/5db7ad1e9f1c8452b0e828fa/ab048d67-22bf-4939-b7a3-9d3040cdbe97/favicon.ico?format=100w",
+  "confidence": "high",
+  "note": "jm icon"
+ },
+ "hobba": {
+  "file": null,
+  "source_url": "https://www.hobba.com.au/",
+  "confidence": null,
+  "note": "no logo image found"
+ },
+ "monarch": {
+  "file": "img/logos/monarch.webp",
+  "source_url": "https://www.monarchcakes.com.au/images/logo.gif",
+  "confidence": "high",
+  "note": "Monarch Cakes logo (white)"
+ },
+ "rudimentary": {
+  "file": "img/logos/rudimentary.webp",
+  "source_url": "https://images.squarespace-cdn.com/content/v1/552f7c4ee4b0ab38febd4388/7c15f436-ec69-472b-8a09-4f03ada1b326/favicon.ico?format=100w",
+  "confidence": "high",
+  "note": "R icon"
+ },
+ "coracle": {
+  "file": null,
+  "source_url": "https://www.coracledining.com/",
+  "confidence": null,
+  "note": "site logo is plain text"
+ },
+ "bawa": {
+  "file": "img/logos/bawa.webp",
+  "source_url": "https://static.wixstatic.com/media/681e95_12213a9d3aeb4e809ebedaaead0d25cf%7Emv2.jpg/v1/fill/w_192%2Ch_192%2Clg_1%2Cusm_0.66_1.00_0.01/681e95_12213a9d3aeb4e809ebedaaead0d25cf%7Emv2.jpg",
+  "confidence": "high",
+  "note": "B icon"
+ },
+ "arlo": {
+  "file": "img/logos/arlo.webp",
+  "source_url": "https://cdn.prod.website-files.com/64e44386ac0a920731c08707/6555bfc2306f1ab129277ba4_arlo-webclop.png",
+  "confidence": "high",
+  "note": "A apple-touch icon"
+ },
+ "homebody": {
+  "file": "img/logos/homebody.webp",
+  "source_url": "https://homebodyunion.com/cdn/shop/files/112.png?v=1753769719\\u0026width=500",
+  "confidence": "high",
+  "note": "Homebody Union wordmark (white)"
+ }
+}

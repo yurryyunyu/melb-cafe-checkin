@@ -130,3 +130,9 @@ Tests: `/workspace/pwtest/testgreview.mjs`. It checks the button URLs, checks th
 ## License
 
 MIT, see [LICENSE](LICENSE). Third-party libraries in `vendor/` (Leaflet, three.js, Tesseract.js, Fusion Pixel font, etc.) remain under their own licenses.
+
+## 🏷️ Cafe logos (v45, logos.js)
+Each cafe card shows the cafe's own logo as a round badge, and the detail header shows a larger one next to the name. 86 of the 101 cafes have a real logo, taken from the official site (header logo, inline SVG, apple-touch icon or structured-data logo) or, where the cafe only has Instagram, the profile picture. Files are in `img/logos/{id}.webp` (256px square, padded, about 0.4MB in total and precached). The source URL, confidence and a note for each cafe are in `research/logos.json`. When no logo could be confirmed (for example, the site is a parent brand's page or text-only), the badge shows initials instead. No logo is borrowed from another business or made up. 古风 uses a xuan-paper roundel with a thin gold ring, and the monogram is a vermilion seal.
+
+## 🏔️ 山水天幕 backdrop (v45, 古风 only)
+`#xsky` sits behind every page in 古风. It has layered ink-wash peaks (`img/xuan/sky-far|mid|near.svg`, original SVG with a pagoda and pines), drifting mist bands, a sun with slow god-rays, and birds. The scroll parallax is driven by a single CSS var. It follows the live Melbourne sky through `html[data-live-wx]` and `html[data-live-phase]`: rain gives thick mist and streaks, cloud gives a grey veil with no rays, dusk gives a 晚霞 gold-crimson sun, and night gives a moon, stars and darkened ridges. Only transforms and opacity are animated, and `prefers-reduced-motion` stops all motion. Cards got a little silk translucency so the landscape shows through. The old tiled radial on `html` that showed seams every 384px is replaced by the plain paper tile.
