@@ -610,3 +610,11 @@ html[data-theme=sketch] .npc-card.unknown{border:1.5px dashed #555}
 .sr-btns{width:100%}.sr-btns .btn{flex:1 1 40%;margin:0}
 .sca-q.done .eq-o.ans,.sca-q.done .eq-o.ans.pick{border-color:#3f8f2b;background:#e4f3dc;box-shadow:0 0 0 1px #3f8f2b inset;color:#1f4a17}
 .sca-q.done .eq-o.pick:not(.ans){border-color:#c8403a;background:#fbe2df}
+/* 🏷️ cafe logos (logos.js): round badge on cards, larger next to the detail title; monogram when no verified logo */
+.cafe-logo{position:relative;border:0;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none;width:26px;height:26px;margin-right:7px;vertical-align:-6px;border-radius:50%;overflow:hidden;background:#f7f0e2;box-shadow:0 0 0 1.5px rgba(60,44,28,.55);color:#3a2414}
+.cafe-logo img{width:100%;height:100%;object-fit:cover;display:block}
+.cafe-logo.mono::before{content:attr(data-mono);font:700 11px/1 Georgia,"Songti SC","Noto Serif SC",serif;letter-spacing:.02em}
+.cafe-logo.cl-lg{width:52px;height:52px;margin:0;vertical-align:middle;box-shadow:0 0 0 2px rgba(60,44,28,.55),0 3px 8px rgba(40,26,12,.18)}
+.cafe-logo.cl-lg.mono::before{font-size:20px}
+.hero-id{display:flex;align-items:center;gap:12px;margin:4px 0 8px}
+.hero-id h2{margin:0;min-width:0}

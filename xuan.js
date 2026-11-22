@@ -273,6 +273,12 @@ function splash(force) {
   const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 700); };
   el.addEventListener('click', close); setTimeout(close, force ? 60000 : 3600);
 }
+// v45 山水天幕 parallax: one passive scroll listener, rAF-throttled, writes a single CSS var (no layout reads beyond scrollY)
+(function skyParallax() {
+  if (typeof document === 'undefined' || !window.matchMedia || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let q = false; const sky = () => document.getElementById('xsky');
+  addEventListener('scroll', () => { if (q) return; q = true; requestAnimationFrame(() => { q = false; const el = sky(); if (el && on()) el.style.setProperty('--xsy', Math.min(4000, Math.round(scrollY))); }); }, {passive: true});
+})();
 if (on()) preload();
 window.Xuan = {on, C, SERIF, pavilion, iconUrl, drawHero, portrait, box, paintGround, decorate, kit, splash, mountains, paperTex, preload, img: n => BASE + n + '.webp', kindOf, sceneCanvas, skyCanvas, ready: () => Promise.all(['hero', 'keeper', ...KINDS.map(k => 'b-' + k)].map(n => { const im = img(n); return ok(im) ? 1 : new Promise(r => { im.addEventListener('load', r, {once: true}); im.addEventListener('error', r, {once: true}); }); }))};
 })();
