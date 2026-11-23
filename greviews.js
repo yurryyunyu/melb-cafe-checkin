@@ -54,6 +54,6 @@ async function mount(box, c) {
   state.calls++; box.innerHTML = '<div class="gr-loading hint">⏳ 正在读取 Google 评价…</div>';
   try { const d = await fetchReviews(c); if (!box.isConnected) return; box.innerHTML = panelHtml(d, c); state.last = 'ok';
     box.querySelectorAll('.gr-text').forEach(t => { const lh = parseFloat(getComputedStyle(t).lineHeight) || 19; if (t.scrollHeight > lh * 4.5) { t.classList.add('clip'); t.title = '点一下展开'; t.onclick = () => t.classList.toggle('open'); } }); }
-  catch (e) { console.warn('Google reviews unavailable:', e && e.message); state.last = 'fail:' + (e && e.message); if (box.isConnected) box.innerHTML = `<div class="gr-fail hint">暂时读不到 Google 评价（key 无效、额度用完或网络问题）· 点上面的按钮去 Google 地图看</div>`; } }
+  catch (e) { console.warn('Google reviews unavailable:', e && e.message); state.last = 'fail:' + (e && e.message); if (box.isConnected) box.innerHTML = `<div class="gr-fail hint">暂时读不到 Google 评价，可以点上面的按钮去 Google 地图看</div>`; } }
 window.GReviews = {hasKey: !!KEY, url, btnHtml, chipHtml, mount, placeIdOf, starsHtml, get state() { return state; }};
 })();

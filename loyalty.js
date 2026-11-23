@@ -41,6 +41,8 @@ const CARDS = [
   {id: 'end:lamp', kind: 'end', end: 'lamp', secret: 1, name: '结局 · 灯火未熄', line: '空白把告别按住。灯还为没说完的爱亮着。', tag: 'love'},
   {id: 'end:first', kind: 'end', end: 'first', secret: 1, name: '结局 · 第一颗', line: '恨让出座位。铺子重新开了门。', tag: 'love'},
 ];
+if (root.Qsss && Qsss.cards) Array.prototype.push.apply(CARDS, Qsss.cards());
+
 const byId = Object.fromEntries(CARDS.map(c => [c.id, c]));
 
 const obj = o => (o && typeof o === 'object' && !Array.isArray(o) ? o : {});
@@ -79,6 +81,7 @@ function sync(ctx) {
   (story.sides || []).forEach(id => grant('side:' + id, added));
   [10, 25, 51].forEach(n => { if (unique >= n) grant('mile:' + n, added); });
   if (story.ending && unique > 50) grant('end:' + story.ending, added);
+  (ctx.qsss || []).forEach(n => grant('qsss:' + n, added));
   if (added.length) dirty = true;
   if (dirty) save();
   return {stamps: fresh, cards: added};
@@ -108,6 +111,7 @@ function faceName(card, owned) {
   if (card.kind === 'mile') return card.need + ' 家不同的店';
   if (card.ch) return '第 ' + card.ch + ' 章';
   if (card.id === 'pro') return '序章';
+  if (card.kind === 'qsss') return '《七时四十》第 ' + card.ch + ' 章';
   return '未收集';
 }
 function model(ctx) {
